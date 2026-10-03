@@ -39,19 +39,26 @@ public class LoginModel(AppDbContext db) : PageModel
         }
 
         string userName = Data.User.NormalizeUserName(UserName);
-        User? user = await db.Users.SingleOrDefaultAsync(u => u.UserName == userName);
+        // Projection sur les seules colonnes utiles : la connexion s'exécute avant l'application des migrations
+        // (page /update d'AnthoDingo.Update), elle doit fonctionner même si une migration ajoute des colonnes à Users.
+        User? user = await db.Users
+            .Where(u => u.UserName == userName)
+            .Select(u => new User { Id = u.Id, UserName = u.UserName, PasswordHash = u.PasswordHash, DisplayName = u.DisplayName, IsAdmin = u.IsAdmin })
+            .SingleOrDefaultAsync();
         PasswordVerificationResult result = Hasher.VerifyHashedPassword(user!, user?.PasswordHash ?? DummyHash, Password);
 
         if (user is null || result == PasswordVerificationResult.Failed)
         {
+            await TryLogAsync(LogSeverity.Warning, "Échec de connexion.", userName);
             ModelState.AddModelError(string.Empty, "Nom d'utilisateur ou mot de passe incorrect.");
             return Page();
         }
+        await TryLogAsync(LogSeverity.Info, "Connexion réussie.", user.UserName);
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            user.PasswordHash = Hasher.HashPassword(user, Password);
-            await db.SaveChangesAsync();
+            string newHash = Hasher.HashPassword(user, Password);
+            await db.Users.Where(u => u.Id == user.Id).ExecuteUpdateAsync(s => s.SetProperty(u => u.PasswordHash, newHash));
         }
 
         List<Claim> claims =
@@ -69,5 +76,8 @@ public class LoginModel(AppDbContext db) : PageModel
 
         return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");
     }
+
+    private Task TryLogAsync(LogSeverity severity, string message, string userName) =>
+        db.TryLogAsync(severity, LogEntry.Authentication, message, userName, HttpContext.Connection.RemoteIpAddress?.ToString());
 }
 

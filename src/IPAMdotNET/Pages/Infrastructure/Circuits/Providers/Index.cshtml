@@ -1,0 +1,42 @@
+@page
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Providers.IndexModel
+@{
+    ViewData["Title"] = "Fournisseurs de circuits";
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center gap-2">
+        <span><i class="bi bi-building"></i> Fournisseurs de circuits</span>
+        <a asp-page="../Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-plug"></i> Circuits</a>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Providers.Count == 0)
+    {
+        <p class="ipam-empty">Aucun fournisseur.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Nom</th><th>Contact</th><th>Description</th><th class="text-end">Circuits</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (ProviderRow row in Model.Providers)
+                {
+                    <tr>
+                        <td>@row.Provider.Name</td>
+                        <td>@row.Provider.Contact</td>
+                        <td>@row.Provider.Description</td>
+                        <td class="text-end">@row.CircuitCount</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Provider.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

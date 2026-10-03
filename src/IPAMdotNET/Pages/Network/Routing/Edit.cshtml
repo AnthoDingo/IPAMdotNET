@@ -1,0 +1,54 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Network.Routing.EditModel
+@{
+    ViewData["Title"] = Model.Peer.Id == 0 ? "Nouveau pair BGP" : $"Pair BGP {Model.Peer.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label asp-for="Peer.Name" class="form-label"></label>
+                <input asp-for="Peer.Name" class="form-control" />
+                <span asp-validation-for="Peer.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Peer.VrfId" class="form-label"></label>
+                <select asp-for="Peer.VrfId" asp-items="Model.Vrfs" class="form-select">
+                    <option value="">Aucune (table globale)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Peer.LocalAs" class="form-label"></label>
+                <input asp-for="Peer.LocalAs" class="form-control" min="1" />
+                <span asp-validation-for="Peer.LocalAs" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Peer.LocalAddress" class="form-label"></label>
+                <input asp-for="Peer.LocalAddress" class="form-control font-monospace" />
+                <span asp-validation-for="Peer.LocalAddress" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Peer.PeerAs" class="form-label"></label>
+                <input asp-for="Peer.PeerAs" class="form-control" min="1" />
+                <span asp-validation-for="Peer.PeerAs" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Peer.PeerAddress" class="form-label"></label>
+                <input asp-for="Peer.PeerAddress" class="form-control font-monospace" />
+                <span asp-validation-for="Peer.PeerAddress" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Peer.Description" class="form-label"></label>
+                <textarea asp-for="Peer.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Peer.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <p class="form-text">Le type (iBGP / eBGP) est déduit : iBGP si les deux AS sont identiques.</p>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Peer.Id, "ce pair"))" />
+</div>

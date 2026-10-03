@@ -1,0 +1,23 @@
+@page
+@model IPAMdotNet.Pages.Tools.Instructions.IndexModel
+@{
+    ViewData["Title"] = "Instructions";
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-info-circle"></i> Instructions</span>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="Edit" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+        }
+    </div>
+    @if (string.IsNullOrWhiteSpace(Model.Text))
+    {
+        <p class="ipam-empty">Aucune instruction n'a été rédigée.</p>
+    }
+    else
+    {
+        <div style="white-space: pre-line">@Model.Text</div>
+    }
+</div>

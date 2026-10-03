@@ -1,0 +1,62 @@
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
+@model List<CustomFieldInput>
+
+@if (Model.Count > 0)
+{
+    <fieldset class="row g-3 mb-3">
+        <legend class="fs-6 fw-semibold border-bottom pb-1 mb-0">Champs personnalisés</legend>
+        @foreach (CustomFieldInput input in Model)
+        {
+            CustomField field = input.Field;
+            string name = $"{CustomFieldForm.Prefix}[{field.Id}]";
+            string id = $"custom-{field.Id}";
+            string? error = ViewData.ModelState[name]?.Errors.FirstOrDefault()?.ErrorMessage;
+            <div class="@(field.Type == CustomFieldType.LongText ? "col-12" : "col-md-6")">
+                @if (field.Type == CustomFieldType.Boolean)
+                {
+                    <div class="form-check mt-md-4">
+                        <input class="form-check-input" type="checkbox" id="@id" name="@name" value="true" checked="@(input.Value == "true")" />
+                        <label class="form-check-label" for="@id">@field.Name</label>
+                    </div>
+                }
+                else
+                {
+                    <label class="form-label" for="@id">@field.Name@(field.Required ? " *" : "")</label>
+                    @switch (field.Type)
+                    {
+                        case CustomFieldType.LongText:
+                            <textarea class="form-control" id="@id" name="@name" rows="3" maxlength="2000">@input.Value</textarea>
+                            break;
+                        case CustomFieldType.Number:
+                            <input class="form-control" id="@id" name="@name" inputmode="decimal" value="@input.Value" />
+                            break;
+                        case CustomFieldType.Date:
+                            <input class="form-control" id="@id" name="@name" type="date" value="@input.Value" />
+                            break;
+                        case CustomFieldType.List:
+                            <select class="form-select" id="@id" name="@name">
+                                <option value=""></option>
+                                @foreach (string option in field.OptionList)
+                                {
+                                    <option value="@option" selected="@(option == input.Value)">@option</option>
+                                }
+                            </select>
+                            break;
+                        default:
+                            <input class="form-control" id="@id" name="@name" maxlength="2000" value="@input.Value" />
+                            break;
+                    }
+                }
+                @if (!string.IsNullOrEmpty(field.Description))
+                {
+                    <div class="form-text">@field.Description</div>
+                }
+                @if (error is not null)
+                {
+                    <span class="text-danger">@error</span>
+                }
+            </div>
+        }
+    </fieldset>
+}

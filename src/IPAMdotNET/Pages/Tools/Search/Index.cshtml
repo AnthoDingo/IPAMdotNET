@@ -1,0 +1,220 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Tools.Search.IndexModel
+@{
+    ViewData["Title"] = "Recherche";
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-search"></i> Recherche</div>
+    <form method="get" class="d-flex gap-2">
+        <input asp-for="Q" class="form-control" placeholder="Adresse IP, réseau CIDR, nom, VLAN, identifiant de circuit…" autofocus aria-label="Recherche" />
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+    </form>
+    <div class="form-text">Une adresse IP trouve les sous-réseaux qui la contiennent ; un réseau CIDR, ceux qui le contiennent ou qu'il contient.</div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Q))
+{
+    @if (Model.Total == 0)
+    {
+        <div class="ipam-panel"><p class="ipam-empty">Aucun résultat pour « @Model.Q ».</p></div>
+    }
+
+    @if (Model.Subnets.Count > 0)
+    {
+        <div class="ipam-panel mb-3">
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Sous-réseaux (@Model.Subnets.Count)</div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Sous-réseau</th><th>Section</th><th>Description</th><th>VLAN</th><th>VRF</th></tr></thead>
+                <tbody>
+                    @foreach (Subnet subnet in Model.Subnets)
+                    {
+                        <tr>
+                            <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a></td>
+                            <td><a asp-page="/Sections/Index" asp-route-id="@subnet.SectionId">@subnet.Section?.Name</a></td>
+                            <td>@subnet.Description</td>
+                            <td>@subnet.Vlan?.Number</td>
+                            <td>@subnet.Vrf?.Name</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.Devices.Count > 0)
+    {
+        <div class="ipam-panel mb-3">
+            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> Équipements (@Model.Devices.Count)</div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Nom d'hôte</th><th>Adresse IP</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    @foreach (Device device in Model.Devices)
+                    {
+                        <tr>
+                            <td><a asp-page="/Infrastructure/Devices/Index" asp-fragment="device-@device.Id">@device.Hostname</a></td>
+                            <td class="font-monospace">@device.IpAddress</td>
+                            <td>@device.DeviceType?.Name</td>
+                            <td>@device.Description</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="row g-3">
+        @if (Model.Vlans.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-hdd-network"></i> VLAN (@Model.Vlans.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Vlan vlan in Model.Vlans)
+                        {
+                            <li><a asp-page="/Network/Vlans/Index">@vlan.Number – @vlan.Name</a> <span class="text-body-secondary">@vlan.Description</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.Vrfs.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-shuffle"></i> VRF (@Model.Vrfs.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Vrf vrf in Model.Vrfs)
+                        {
+                            <li><a asp-page="/Network/Vrfs/Index">@vrf.Name</a> <span class="font-monospace text-body-secondary">@vrf.RouteDistinguisher</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.Locations.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-geo-alt"></i> Emplacements (@Model.Locations.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Location location in Model.Locations)
+                        {
+                            <li><a asp-page="/Infrastructure/Locations/Details" asp-route-id="@location.Id">@location.Name</a> <span class="text-body-secondary">@location.Address</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.Customers.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-people"></i> Clients (@Model.Customers.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Customer customer in Model.Customers)
+                        {
+                            <li><a asp-page="/Infrastructure/Customers/Details" asp-route-id="@customer.Id">@customer.Name</a> <span class="text-body-secondary">@customer.City</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.Circuits.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-plug"></i> Circuits (@Model.Circuits.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Circuit circuit in Model.Circuits)
+                        {
+                            <li><a asp-page="/Infrastructure/Circuits/Index" asp-fragment="circuit-@circuit.Id">@circuit.Cid</a> <span class="text-body-secondary">@circuit.Provider?.Name</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.NatRules.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-arrow-left-right"></i> NAT (@Model.NatRules.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (NatRule rule in Model.NatRules)
+                        {
+                            <li><a asp-page="/Network/Nat/Index">@rule.Name</a> <span class="font-monospace text-body-secondary">@rule.Source → @rule.Destination</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.BgpPeers.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-signpost-split"></i> Pairs BGP (@Model.BgpPeers.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (BgpPeer peer in Model.BgpPeers)
+                        {
+                            <li><a asp-page="/Network/Routing/Index">@peer.Name</a> <span class="font-monospace text-body-secondary">AS@(peer.PeerAs) @peer.PeerAddress</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.Nameservers.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-globe"></i> Serveurs de noms (@Model.Nameservers.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Nameserver nameserver in Model.Nameservers)
+                        {
+                            <li><a asp-page="/Network/Nameservers/Index">@nameserver.Name</a> <span class="font-monospace text-body-secondary">@nameserver.Servers.Replace(";", ", ")</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.CustomValues.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-input-cursor-text"></i> Champs personnalisés (@Model.CustomValues.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (CustomFieldValue value in Model.CustomValues)
+                        {
+                            (string Label, string Page, bool HasDetails) type = ChangeLog.Types[value.Field!.EntityType];
+                            <li>
+                                @if (type.HasDetails)
+                                {
+                                    <a asp-page="@type.Page" asp-route-id="@value.EntityId">@type.Label n°@value.EntityId</a>
+                                }
+                                else
+                                {
+                                    <a asp-page="@type.Page">@type.Label n°@value.EntityId</a>
+                                }
+                                <span class="text-body-secondary">@value.Field.Name : @value.Value</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Model.PstnPrefixes.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-telephone"></i> Préfixes RTC (@Model.PstnPrefixes.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (PstnPrefix prefix in Model.PstnPrefixes)
+                        {
+                            <li><a class="font-monospace" asp-page="/Infrastructure/Pstn/Details" asp-route-id="@prefix.Id">@prefix.Prefix</a> <span class="text-body-secondary">@prefix.Name</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+}

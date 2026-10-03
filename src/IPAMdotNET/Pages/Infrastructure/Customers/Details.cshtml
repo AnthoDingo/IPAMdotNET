@@ -1,0 +1,37 @@
+@page "{id:int}"
+@model IPAMdotNet.Pages.Infrastructure.Customers.DetailsModel
+@{
+    ViewData["Title"] = Model.Customer.Name;
+    string city = string.Join(" ", new[] { Model.Customer.PostCode, Model.Customer.City }.Where(s => !string.IsNullOrEmpty(s)));
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-people"></i> @Model.Customer.Name</span>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="Edit" asp-route-id="@Model.Customer.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+        }
+    </div>
+    <dl class="row mb-0 ipam-details">
+        <dt class="col-sm-4 col-xl-3">Adresse</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @(Model.Customer.Address ?? "—")
+            @if (city.Length > 0) { <br />@city }
+            @if (!string.IsNullOrEmpty(Model.Customer.State)) { <br />@Model.Customer.State }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">Contact</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Customer.ContactPerson ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">Téléphone</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Customer.ContactPhone ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">E-mail</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (Model.Customer.ContactMail is null) { <text>—</text> } else { <a href="mailto:@Model.Customer.ContactMail">@Model.Customer.ContactMail</a> }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">Notes</dt>
+        <dd class="col-sm-8 col-xl-9" style="white-space: pre-line">@(Model.Customer.Note ?? "—")</dd>
+        <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
+    </dl>
+</div>
+
+<partial name="_LinkedObjects" model="Model.Linked" />

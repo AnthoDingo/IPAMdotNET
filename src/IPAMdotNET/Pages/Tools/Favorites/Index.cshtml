@@ -1,0 +1,37 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Tools.Favorites.IndexModel
+@{
+    ViewData["Title"] = "Sous-réseaux favoris";
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title"><i class="bi bi-star"></i> Mes sous-réseaux favoris</div>
+    @if (Model.Subnets.Count == 0)
+    {
+        <p class="ipam-empty">Aucun favori. Ajoutez-en depuis la fiche d'un sous-réseau avec l'étoile <i class="bi bi-star"></i>.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Sous-réseau</th><th>Section</th><th>Description</th><th>VLAN</th><th>VRF</th><th></th></tr></thead>
+            <tbody>
+                @foreach (Subnet subnet in Model.Subnets)
+                {
+                    <tr>
+                        <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a></td>
+                        <td><a asp-page="/Sections/Index" asp-route-id="@subnet.SectionId">@subnet.Section?.Name</a></td>
+                        <td>@subnet.Description</td>
+                        <td>@(subnet.Vlan is null ? "" : $"{subnet.Vlan.Number} – {subnet.Vlan.Name}")</td>
+                        <td>@subnet.Vrf?.Name</td>
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="Remove" asp-route-subnetId="@subnet.Id" class="m-0">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Retirer des favoris"><i class="bi bi-star-fill text-warning"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

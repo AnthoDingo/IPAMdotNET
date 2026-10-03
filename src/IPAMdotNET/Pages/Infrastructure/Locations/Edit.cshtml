@@ -1,0 +1,43 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Locations.EditModel
+@{
+    ViewData["Title"] = Model.Location.Id == 0 ? "Nouvel emplacement" : $"Emplacement {Model.Location.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <label asp-for="Location.Name" class="form-label"></label>
+                <input asp-for="Location.Name" class="form-control" />
+                <span asp-validation-for="Location.Name" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Location.Address" class="form-label"></label>
+                <input asp-for="Location.Address" class="form-control" />
+                <span asp-validation-for="Location.Address" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Location.Latitude" class="form-label"></label>
+                <input asp-for="Location.Latitude" class="form-control" placeholder="48.8566" />
+                <span asp-validation-for="Location.Latitude" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Location.Longitude" class="form-label"></label>
+                <input asp-for="Location.Longitude" class="form-control" placeholder="2.3522" />
+                <span asp-validation-for="Location.Longitude" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Location.Description" class="form-label"></label>
+                <textarea asp-for="Location.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Location.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Location.Id, "cet emplacement"))" />
+</div>

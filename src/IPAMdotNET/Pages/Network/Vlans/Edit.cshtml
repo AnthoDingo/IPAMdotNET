@@ -1,0 +1,31 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Network.Vlans.EditModel
+@{
+    ViewData["Title"] = Model.Vlan.Id == 0 ? "Nouveau VLAN" : $"VLAN {Model.Vlan.Number}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Vlan.Number" class="form-label"></label>
+            <input asp-for="Vlan.Number" class="form-control" min="1" max="4094" />
+            <span asp-validation-for="Vlan.Number" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Vlan.Name" class="form-label"></label>
+            <input asp-for="Vlan.Name" class="form-control" />
+            <span asp-validation-for="Vlan.Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Vlan.Description" class="form-label"></label>
+            <textarea asp-for="Vlan.Description" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Vlan.Description" class="text-danger"></span>
+        </div>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Vlan.Id, "ce VLAN"))" />
+</div>

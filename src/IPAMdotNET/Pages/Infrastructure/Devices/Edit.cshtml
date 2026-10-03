@@ -1,0 +1,61 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Devices.EditModel
+@{
+    ViewData["Title"] = Model.Device.Id == 0 ? "Nouvel équipement" : $"Équipement {Model.Device.Hostname}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Device.Hostname" class="form-label"></label>
+                <input asp-for="Device.Hostname" class="form-control" />
+                <span asp-validation-for="Device.Hostname" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Device.IpAddress" class="form-label"></label>
+                <input asp-for="Device.IpAddress" class="form-control font-monospace" placeholder="10.0.0.1" />
+                <span asp-validation-for="Device.IpAddress" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Device.DeviceTypeId" class="form-label"></label>
+                <select asp-for="Device.DeviceTypeId" asp-items="Model.Types" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Device.LocationId" class="form-label"></label>
+                <select asp-for="Device.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Device.CustomerId" class="form-label"></label>
+                <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Device.RackId" class="form-label"></label>
+                <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">Aucun</option></select>
+                <span asp-validation-for="Device.RackId" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Device.RackStart" class="form-label"></label>
+                <input asp-for="Device.RackStart" class="form-control" min="1" max="60" />
+                <span asp-validation-for="Device.RackStart" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Device.RackSize" class="form-label"></label>
+                <input asp-for="Device.RackSize" class="form-control" min="1" max="60" />
+                <span asp-validation-for="Device.RackSize" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Device.Description" class="form-label"></label>
+                <textarea asp-for="Device.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Device.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <p class="form-text">Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).</p>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Device.Id, "cet équipement"))" />
+</div>

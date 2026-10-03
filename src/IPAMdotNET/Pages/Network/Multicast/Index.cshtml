@@ -1,0 +1,17 @@
+@page
+@model IPAMdotNet.Pages.Network.Multicast.IndexModel
+@{
+    ViewData["Title"] = "Multicast";
+}
+
+<h1 class="h5 mb-3"><i class="bi bi-broadcast"></i> Réseaux multicast</h1>
+<p class="text-body-secondary">Sous-réseaux compris dans 224.0.0.0/4 (IPv4) ou ff00::/8 (IPv6).</p>
+
+@if (Model.Sections.Count == 0)
+{
+    <div class="ipam-panel"><p class="ipam-empty">Aucun réseau multicast.</p></div>
+}
+else
+{
+    <partial name="_SectionSubnets" model="Model.Sections" />
+}

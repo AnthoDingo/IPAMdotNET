@@ -145,6 +145,188 @@ body {
     font-weight: 600;
 }
 
+.ipam-empty {
+    color: var(--bs-secondary-color);
+    font-style: italic;
+    margin: 0;
+}
+
+.bi {
+    margin-right: .25rem;
+}
+
+.ipam-form {
+    max-width: 56rem;
+}
+
+.ipam-panel-title .btn {
+    margin: -.25rem 0;
+}
+
+.ipam-details dt {
+    font-weight: 600;
+}
+
+.ipam-details dd {
+    margin-bottom: .4rem;
+}
+
+/* Vue de face d'un rack */
+.ipam-rack {
+    width: 100%;
+    max-width: 30rem;
+    border-collapse: collapse;
+    font-size: .8rem;
+}
+
+.ipam-rack th {
+    width: 2.5rem;
+    text-align: right;
+    padding-right: .5rem;
+    color: var(--bs-secondary-color);
+    font-weight: normal;
+}
+
+.ipam-rack td {
+    border: 1px solid var(--ipam-border);
+    height: 1.4rem;
+}
+
+.ipam-rack-empty {
+    background: var(--ipam-panel-head-bg);
+}
+
+.ipam-rack-device {
+    background: color-mix(in srgb, var(--ipam-accent) 18%, var(--ipam-panel-bg));
+    border-left: 3px solid var(--ipam-accent) !important;
+    padding: 0 .5rem;
+    vertical-align: middle;
+}
+
+.ipam-rack-device span {
+    color: var(--bs-secondary-color);
+    margin-left: .5rem;
+}
+
+/* Recherche du bandeau */
+.ipam-search {
+    gap: .25rem;
+}
+
+.ipam-search .form-control {
+    width: 18rem;
+    background: color-mix(in srgb, var(--ipam-header-fg) 10%, transparent);
+    border-color: var(--ipam-header-muted);
+    color: var(--ipam-header-fg);
+}
+
+.ipam-search .form-control::placeholder {
+    color: var(--ipam-header-muted);
+}
+
+/* Menus déroulants Outils / Administration : une colonne par groupe */
+.ipam-mega {
+    display: flex;
+    gap: .5rem;
+}
+
+.ipam-mega-col {
+    min-width: 13rem;
+}
+
+@media (max-width: 991.98px) {
+    .ipam-mega {
+        flex-direction: column;
+    }
+}
+
+/* Colonne gauche */
+.ipam-sidebar {
+    padding: .5rem 0;
+}
+
+.ipam-side-group + .ipam-side-group {
+    border-top: 1px solid var(--ipam-border);
+    margin-top: .5rem;
+    padding-top: .5rem;
+}
+
+.ipam-side-title {
+    color: var(--bs-secondary-color);
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .25rem 1rem;
+}
+
+.ipam-sidebar .nav-link {
+    color: var(--bs-body-color);
+    padding: .3rem 1rem;
+}
+
+.ipam-sidebar .nav-link:hover {
+    background: var(--ipam-menubar-hover);
+}
+
+.ipam-sidebar .nav-link.active {
+    background: var(--ipam-menubar-hover);
+    color: var(--ipam-accent);
+    font-weight: 600;
+}
+
+.ipam-subnet-tree .nav-link {
+    font-size: .85rem;
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+}
+
+.ipam-sidebar .nav-link.disabled {
+    color: var(--bs-secondary-color);
+    opacity: .6;
+}
+
+/* Tuiles des pages Outils / Administration */
+.ipam-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: .75rem;
+}
+
+.ipam-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    padding: 1rem .5rem;
+    border: 1px solid var(--ipam-border);
+    border-radius: .375rem;
+    color: var(--bs-body-color);
+    text-align: center;
+    text-decoration: none;
+}
+
+.ipam-tile .bi {
+    font-size: 1.6rem;
+    color: var(--ipam-accent);
+    margin: 0;
+}
+
+a.ipam-tile:hover {
+    background: var(--ipam-menubar-hover);
+    color: var(--bs-body-color);
+}
+
+.ipam-tile.disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.ipam-tile small {
+    color: var(--bs-secondary-color);
+    font-size: .75rem;
+}
+
 /* Pied de page */
 .ipam-footer {
     border-top: 1px solid var(--ipam-border);

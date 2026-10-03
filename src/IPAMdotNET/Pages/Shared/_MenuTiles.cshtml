@@ -1,0 +1,28 @@
+@model IReadOnlyList<MenuGroup>
+
+@foreach (MenuGroup group in Model)
+{
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title">@group.Label</div>
+        <div class="ipam-tiles">
+            @foreach (MenuItem item in group.Items)
+            {
+                if (item.Page is null)
+                {
+                    <span class="ipam-tile disabled" title="Bientôt disponible">
+                        <i class="bi bi-@item.Icon"></i>
+                        <span>@item.Label</span>
+                        <small>Bientôt disponible</small>
+                    </span>
+                }
+                else
+                {
+                    <a class="ipam-tile" asp-page="@item.Page">
+                        <i class="bi bi-@item.Icon"></i>
+                        <span>@item.Label</span>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+}

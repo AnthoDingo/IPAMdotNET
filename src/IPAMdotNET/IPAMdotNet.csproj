@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <Version>0.1.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -10,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="AnthoDingo.Setup" Version="2.1.1" />
+    <PackageReference Include="AnthoDingo.Update" Version="1.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -20,6 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
+    <Content Update="appsettings.local.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>

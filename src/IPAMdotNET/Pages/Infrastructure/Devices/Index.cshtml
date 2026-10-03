@@ -1,0 +1,69 @@
+@page
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
+@model IPAMdotNet.Pages.Infrastructure.Devices.IndexModel
+@{
+    ViewData["Title"] = "Équipements";
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-hdd"></i> Équipements</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Devices.Count == 0)
+    {
+        <p class="ipam-empty">Aucun équipement.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Nom d'hôte</th><th>Adresse IP</th><th>Type</th><th>Emplacement</th><th>Rack</th><th>Client</th><th>Description</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (Device device in Model.Devices)
+                {
+                    <tr id="device-@device.Id">
+                        <td>@device.Hostname</td>
+                        <td class="font-monospace">@device.IpAddress</td>
+                        <td>@device.DeviceType?.Name</td>
+                        <td>
+                            @if (device.Location is not null)
+                            {
+                                <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@device.Location.Id">@device.Location.Name</a>
+                            }
+                        </td>
+                        <td>
+                            @if (device.Rack is not null)
+                            {
+                                <a asp-page="/Infrastructure/Racks/Details" asp-route-id="@device.Rack.Id">@device.Rack.Name</a>
+                                @if (device.RackStart is not null)
+                                {
+                                    <span class="text-body-secondary">U@(device.RackStart)@(device.RackSize > 1 ? $"–{device.RackEnd}" : "")</span>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (device.Customer is not null)
+                            {
+                                <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@device.Customer.Id">@device.Customer.Name</a>
+                            }
+                        </td>
+                        <td>@device.Description</td>
+                        @foreach (CustomField field in Model.CustomFields)
+                        {
+                            <td>@CustomFieldForm.Display(field, Model.CustomValues.GetValueOrDefault(device.Id)?.GetValueOrDefault(field.Id))</td>
+                        }
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@device.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

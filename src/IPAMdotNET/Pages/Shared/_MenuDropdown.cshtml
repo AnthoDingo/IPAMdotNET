@@ -1,0 +1,21 @@
+@model IReadOnlyList<MenuGroup>
+
+<div class="ipam-mega">
+    @foreach (MenuGroup group in Model)
+    {
+        <div class="ipam-mega-col">
+            <h6 class="dropdown-header">@group.Label</h6>
+            @foreach (MenuItem item in group.Items)
+            {
+                if (item.Page is null)
+                {
+                    <span class="dropdown-item disabled" title="Bientôt disponible"><i class="bi bi-@item.Icon"></i> @item.Label</span>
+                }
+                else
+                {
+                    <a class="dropdown-item" asp-page="@item.Page"><i class="bi bi-@item.Icon"></i> @item.Label</a>
+                }
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,44 @@
+name: Bug report
+description: Incorrect behavior or an error in IPAMdotNet.
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happens, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click on …
+        3. See …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Released version or commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database engine
+      options:
+        - SQL Server
+        - PostgreSQL
+        - MySQL
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack trace
+      description: Console output or Administration › Logs. Remove any sensitive data.
+      render: text

@@ -1,0 +1,38 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.CustomFields.IndexModel
+@{
+    ViewData["Title"] = "Champs personnalisés";
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-input-cursor-text"></i> Champs personnalisés</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+    </div>
+    <p class="text-body-secondary">Champs supplémentaires affichés dans les formulaires, les fiches et les listes du type d'objet choisi.</p>
+    @if (Model.Fields.Count == 0)
+    {
+        <p class="ipam-empty">Aucun champ personnalisé.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Objet</th><th>Nom</th><th>Type</th><th>Obligatoire</th><th class="text-end">Ordre</th><th class="text-end">Valeurs</th><th></th></tr></thead>
+            <tbody>
+                @foreach (CustomFieldRow row in Model.Fields)
+                {
+                    <tr>
+                        <td>@ChangeLog.Types[row.Field.EntityType].Label</td>
+                        <td>@row.Field.Name</td>
+                        <td>@Html.DisplayFor(_ => row.Field.Type)</td>
+                        <td>@(row.Field.Required ? "Oui" : "Non")</td>
+                        <td class="text-end">@row.Field.Order</td>
+                        <td class="text-end">@row.ValueCount</td>
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Field.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

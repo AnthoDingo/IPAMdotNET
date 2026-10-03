@@ -1,0 +1,52 @@
+@page "{id:int?}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Network.Nat.EditModel
+@{
+    ViewData["Title"] = Model.Rule.Id == 0 ? "Nouvelle règle NAT" : $"NAT {Model.Rule.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label asp-for="Rule.Name" class="form-label"></label>
+                <input asp-for="Rule.Name" class="form-control" />
+                <span asp-validation-for="Rule.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Rule.Type" class="form-label"></label>
+                <select asp-for="Rule.Type" asp-items="Html.GetEnumSelectList<NatType>()" class="form-select"></select>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Rule.Source" class="form-label"></label>
+                <input asp-for="Rule.Source" class="form-control font-monospace" placeholder="10.0.0.0/24" />
+                <span asp-validation-for="Rule.Source" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Rule.SourcePort" class="form-label"></label>
+                <input asp-for="Rule.SourcePort" class="form-control" min="1" max="65535" />
+                <span asp-validation-for="Rule.SourcePort" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Rule.Destination" class="form-label"></label>
+                <input asp-for="Rule.Destination" class="form-control font-monospace" placeholder="203.0.113.10" />
+                <span asp-validation-for="Rule.Destination" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Rule.DestinationPort" class="form-label"></label>
+                <input asp-for="Rule.DestinationPort" class="form-control" min="1" max="65535" />
+                <span asp-validation-for="Rule.DestinationPort" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Rule.Description" class="form-label"></label>
+                <textarea asp-for="Rule.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Rule.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Rule.Id, "cette règle"))" />
+</div>

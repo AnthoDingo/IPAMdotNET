@@ -1,0 +1,25 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Administration.Sections.EditModel
+@{
+    ViewData["Title"] = Model.Section.Id == 0 ? "Nouvelle section" : $"Section {Model.Section.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Section.Name" class="form-label"></label>
+            <input asp-for="Section.Name" class="form-control" />
+            <span asp-validation-for="Section.Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Section.Description" class="form-label"></label>
+            <textarea asp-for="Section.Description" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Section.Description" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Section.Id, "cette section"))" />
+</div>

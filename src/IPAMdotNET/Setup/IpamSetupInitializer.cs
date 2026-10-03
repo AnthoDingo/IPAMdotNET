@@ -11,6 +11,15 @@ public sealed class IpamSetupInitializer : ISetupInitializer
     {
         await using AppDbContext db = AppDbContext.Create(provider, connectionString);
         await db.Database.MigrateAsync(ct);
+
+        // Types d'équipements par défaut de phpIPAM.
+        if (!await db.DeviceTypes.AnyAsync(ct))
+        {
+            string[] names = ["Commutateur", "Routeur", "Pare-feu", "Concentrateur", "Point d'accès sans fil",
+                "Base de données", "Poste de travail", "Ordinateur portable", "Autre"];
+            db.DeviceTypes.AddRange(names.Select(name => new DeviceType { Name = name }));
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     public async Task CreateAdminAsync(DbProvider provider, string connectionString, AdminAccount admin, CancellationToken ct = default)

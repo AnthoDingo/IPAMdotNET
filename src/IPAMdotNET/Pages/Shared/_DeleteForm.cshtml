@@ -1,0 +1,9 @@
+@model DeleteForm
+
+@if (Model.Id != 0)
+{
+    <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Id" class="mt-3 pt-3 border-top"
+          onsubmit="return confirm('Supprimer @Model.Label ?');">
+        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Supprimer @Model.Label</button>
+    </form>
+}

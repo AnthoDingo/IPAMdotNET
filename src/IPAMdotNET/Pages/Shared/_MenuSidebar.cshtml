@@ -1,0 +1,28 @@
+@model IReadOnlyList<MenuGroup>
+@{
+    // Entrée active : la page courante est dans le même dossier que la page de l'entrée (ex. /Network/Vlans/Edit -> /Network/Vlans/Index).
+    string current = ViewContext.RouteData.Values["page"] as string ?? "";
+}
+
+@foreach (MenuGroup group in Model)
+{
+    <div class="ipam-side-group">
+        <div class="ipam-side-title">@group.Label</div>
+        <ul class="nav flex-column">
+            @foreach (MenuItem item in group.Items)
+            {
+                <li class="nav-item">
+                    @if (item.Page is null)
+                    {
+                        <span class="nav-link disabled" title="Bientôt disponible"><i class="bi bi-@item.Icon"></i> @item.Label</span>
+                    }
+                    else
+                    {
+                        bool active = current.StartsWith(item.Page[..(item.Page.LastIndexOf('/') + 1)], StringComparison.OrdinalIgnoreCase);
+                        <a class="nav-link @(active ? "active" : "")" asp-page="@item.Page"><i class="bi bi-@item.Icon"></i> @item.Label</a>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}

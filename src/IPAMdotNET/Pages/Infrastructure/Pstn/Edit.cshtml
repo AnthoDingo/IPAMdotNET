@@ -1,0 +1,47 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Pstn.EditModel
+@{
+    ViewData["Title"] = Model.Prefix.Id == 0 ? "Nouveau préfixe RTC" : $"Préfixe {Model.Prefix.Prefix}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Prefix.Prefix" class="form-label"></label>
+                <input asp-for="Prefix.Prefix" class="form-control font-monospace" placeholder="+33 1" />
+                <span asp-validation-for="Prefix.Prefix" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="Prefix.Name" class="form-label"></label>
+                <input asp-for="Prefix.Name" class="form-control" />
+                <span asp-validation-for="Prefix.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Prefix.Start" class="form-label"></label>
+                <input asp-for="Prefix.Start" class="form-control font-monospace" min="0" />
+                <span asp-validation-for="Prefix.Start" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Prefix.Stop" class="form-label"></label>
+                <input asp-for="Prefix.Stop" class="form-control font-monospace" min="0" />
+                <span asp-validation-for="Prefix.Stop" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Prefix.DeviceId" class="form-label"></label>
+                <select asp-for="Prefix.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-12">
+                <label asp-for="Prefix.Description" class="form-label"></label>
+                <textarea asp-for="Prefix.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Prefix.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <p class="form-text">La hiérarchie est calculée automatiquement : un préfixe est rangé sous le plus long préfixe qui le commence.</p>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Prefix.Id, "ce préfixe et tous ses numéros"))" />
+</div>
