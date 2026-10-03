@@ -14,6 +14,7 @@ public static class SettingsStore
     public const string ServerPrefix = "Server";
     public const string MailPrefix = "Mail";
     public const string WidgetsPrefix = "Widgets";
+    public const string ScanPrefix = "Scan";
 
     // ponytail: cache par processus, rechargé à chaque enregistrement ; en multi-instance, les autres instances
     // ne voient le changement qu'au redémarrage (passer à un cache distribué si besoin).

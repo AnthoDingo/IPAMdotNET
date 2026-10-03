@@ -6,8 +6,9 @@
 
 ## Serveur — écarts restants avec phpIPAM
 
-- [ ] Agents de scan : dépend des adresses IP (découverte).
-- [ ] Étiquettes : gestion faite (4 étiquettes système + personnalisées) ; reste à les appliquer aux adresses IP (affichage, regroupement des plages, mise à jour par le scan).
+- [x] Agent de scan intégré (ping, découverte IPv4, mise à jour des étiquettes) ; désactivable.
+- [ ] Agents de scan distants (phpIPAM : agents installés dans d'autres réseaux qui remontent leurs résultats par l'API) ; scan par ports TCP en plus du ping.
+- [x] Étiquettes : gestion, affichage dans les adresses, regroupement des plages, mise à jour par le scan.
 - [ ] Langues : l'interface est en français uniquement ; une traduction suppose d'extraire tous les textes (ressources .resx).
 - [ ] API : écriture (création / modification), droits par clé, recherche.
 - [ ] LDAP : synchronisation des groupes de l'annuaire, création automatique des comptes à la première connexion ; tester sur un vrai annuaire (seul le cas « annuaire injoignable » a pu l'être).
@@ -17,7 +18,8 @@
 ## Partie Réseau — écarts restants avec phpIPAM
 
 - [ ] Tester les migrations et les pages réseau sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).
-- [ ] Adresses IP dans les sous-réseaux (et taux d'occupation, widgets Top 10 du tableau de bord).
+- [x] Adresses IP dans les sous-réseaux (taux d'occupation, Top 10, recherche, API, CSV).
+- [ ] Adresses IP : champs personnalisés, plages (ajout en masse), vue « carte » des adresses libres/occupées.
 - [x] Permissions par section (groupes + accès par défaut, voir partie Serveur).
 - [ ] Domaines L2 pour les VLAN (aujourd'hui un numéro de VLAN est unique globalement).
 - [ ] NAT : lier source/destination aux objets sous-réseaux/adresses et à un équipement (aujourd'hui saisie d'une adresse ou d'un réseau).
@@ -26,10 +28,10 @@
 
 ## Outils — écarts restants avec phpIPAM
 
-- [ ] Demandes d'adresses : créer l'adresse IP à l'acceptation et proposer la première adresse libre (dépend des adresses IP) ; notifications par e-mail.
+- [ ] Demandes d'adresses : proposer la première adresse libre au traitement (l'adresse est désormais créée à l'acceptation).
 - [ ] Journal : afficher les noms au lieu des identifiants pour les clés étrangères (VLAN, VRF…), historique sur la fiche de chaque objet.
 - [ ] Instructions : mise en forme (Markdown) — aujourd'hui texte brut.
-- [ ] Recherche : adresses IP individuelles (dépend des adresses IP).
+- [x] Recherche : adresses IP individuelles (IP exacte, nom d'hôte, MAC, propriétaire).
 
 ## Maintenance — écarts restants avec phpIPAM
 

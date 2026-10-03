@@ -26,8 +26,9 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<Nameserver> Nameservers { get; private set; } = [];
     public List<PstnPrefix> PstnPrefixes { get; private set; } = [];
     public List<CustomFieldValue> CustomValues { get; private set; } = [];
+    public List<IpAddress> Addresses { get; private set; } = [];
 
-    public int Total => Subnets.Count + Vlans.Count + Vrfs.Count + Devices.Count + Locations.Count + Customers.Count
+    public int Total => Addresses.Count + Subnets.Count +Vlans.Count + Vrfs.Count + Devices.Count + Locations.Count + Customers.Count
         + Circuits.Count + NatRules.Count + BgpPeers.Count + Nameservers.Count + PstnPrefixes.Count + CustomValues.Count;
 
     public async Task OnGetAsync()
@@ -43,6 +44,22 @@ public class IndexModel(AppDbContext db) : PageModel
 
         SectionAccess access = await SectionAccess.ForAsync(db, User);
         Subnets = await SearchSubnetsAsync(access.Readable(db.Subnets), query, text);
+        IQueryable<IpAddress> addresses = db.IpAddresses.Include(a => a.Subnet).Include(a => a.Tag)
+            .Where(a => access.Readable(db.Subnets).Any(s => s.Id == a.SubnetId));
+        if (IPAddress.TryParse(query, out IPAddress? exact))
+        {
+            byte[] bytes = Ip.ToBytes(exact);
+            addresses = addresses.Where(a => a.Address == bytes);
+        }
+        else
+        {
+            string mac = IpAddress.NormalizeMac(query) ?? text;
+            addresses = addresses.Where(a => (a.Hostname != null && a.Hostname.ToLower().Contains(text))
+                || (a.Description != null && a.Description.ToLower().Contains(text))
+                || (a.Owner != null && a.Owner.ToLower().Contains(text))
+                || (a.MacAddress != null && a.MacAddress.Contains(mac)));
+        }
+        Addresses = await addresses.OrderBy(a => a.Address).Take(Limit).ToListAsync();
         Vlans = await db.Vlans
             .Where(v => v.Name.ToLower().Contains(text) || (v.Description != null && v.Description.ToLower().Contains(text))
                 || v.Number == number)

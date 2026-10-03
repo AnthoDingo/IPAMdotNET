@@ -28,8 +28,10 @@ public class EditModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnPostAsync(int? id)
     {
         Tag.Id = id ?? 0;
-        // Le caractère système ne se modifie pas depuis le formulaire.
-        Tag.Locked = id is not null && await db.Tags.AnyAsync(t => t.Id == id && t.Locked);
+        // Le caractère système (et la clé utilisée par l'agent de scan) ne se modifie pas depuis le formulaire.
+        Tag? existing = id is null ? null : await db.Tags.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id);
+        Tag.Locked = existing?.Locked ?? false;
+        Tag.SystemKey = existing?.SystemKey;
         Tag.BackgroundColor = Tag.BackgroundColor.ToLowerInvariant();
         Tag.TextColor = Tag.TextColor.ToLowerInvariant();
         if (await db.Tags.AnyAsync(t => t.Name == Tag.Name && t.Id != Tag.Id))

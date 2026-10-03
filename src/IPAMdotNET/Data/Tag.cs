@@ -33,4 +33,13 @@ public class Tag
 
     [Display(Name = "Étiquette système")]
     public bool Locked { get; set; }
+
+    /// <summary>Identifiant stable des étiquettes système (le nom peut être modifié) : utilisé par l'agent de scan.</summary>
+    [MaxLength(20)]
+    public string? SystemKey { get; set; }
+
+    public const string OfflineKey = "offline";
+    public const string UsedKey = "used";
+    public const string ReservedKey = "reserved";
+    public const string DhcpKey = "dhcp";
 }

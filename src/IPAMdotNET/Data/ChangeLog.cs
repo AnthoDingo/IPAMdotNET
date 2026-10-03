@@ -63,5 +63,6 @@ public class ChangeLog
             [nameof(AuthMethod)] = ("Méthode d'authentification", "/Administration/AuthMethods/Edit", true),
             [nameof(ApiKey)] = ("Clé d'API", "/Administration/ApiKeys/Index", false),
             [nameof(Tag)] = ("Étiquette", "/Administration/Tags/Edit", true),
+            [nameof(IpAddress)] = ("Adresse IP", "/Network/Addresses/Edit", true),
         };
 }

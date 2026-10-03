@@ -21,6 +21,29 @@
         <div class="ipam-panel"><p class="ipam-empty">Aucun résultat pour « @Model.Q ».</p></div>
     }
 
+    @if (Model.Addresses.Count > 0)
+    {
+        <div class="ipam-panel mb-3">
+            <div class="ipam-panel-title"><i class="bi bi-list-ul"></i> Adresses IP (@Model.Addresses.Count)</div>
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Adresse</th><th>Sous-réseau</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th></tr></thead>
+                <tbody>
+                    @foreach (IpAddress address in Model.Addresses)
+                    {
+                        <tr>
+                            <td class="font-monospace"><a href="@Url.Page("/Network/Subnets/Details", new { id = address.SubnetId })#address-@address.Id">@address.Value</a></td>
+                            <td class="font-monospace">@address.Subnet?.Network</td>
+                            <td>@if (address.Tag is not null) { <partial name="_TagBadge" model="address.Tag" /> }</td>
+                            <td>@address.Hostname</td>
+                            <td>@address.Description</td>
+                            <td class="font-monospace small">@address.MacAddress</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
     @if (Model.Subnets.Count > 0)
     {
         <div class="ipam-panel mb-3">

@@ -8,6 +8,8 @@ namespace IPAMdotNet.Api;
 public sealed record SectionDto(int Id, string Name, string? Description);
 public sealed record SubnetDto(int Id, int SectionId, string? Section, string Network, string? Description, int? Vlan, string? Vrf,
     string? Location, string? Customer, IReadOnlyDictionary<string, string>? CustomFields = null);
+public sealed record AddressDto(int Id, int SubnetId, string? Subnet, string Address, string? Hostname, string? Description,
+    string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen);
 public sealed record VlanDto(int Id, int Number, string Name, string? Description);
 public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description);
 public sealed record DeviceDto(int Id, string Hostname, string? IpAddress, string? Type, string? Location, string? Rack, int? RackStart, int? RackSize, string? Description);
@@ -62,6 +64,31 @@ public static class ApiEndpoints
             return Results.Ok(ToDto(subnet, custom));
         });
 
+        api.MapGet("/subnets/{id:int}/addresses", async (AppDbContext db, int id) =>
+            await db.Subnets.AnyAsync(s => s.Id == id)
+                ? Results.Ok((await Addresses(db).Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync()).Select(ToDto))
+                : Results.NotFound(new { error = $"Sous-réseau {id} introuvable." }));
+
+        api.MapGet("/addresses", async (AppDbContext db, string? ip, string? hostname) =>
+        {
+            IQueryable<IpAddress> query = Addresses(db);
+            if (ip is not null)
+            {
+                if (!IPAddress.TryParse(ip, out IPAddress? address))
+                {
+                    return Results.BadRequest(new { error = "Paramètre « ip » : adresse IP invalide." });
+                }
+                byte[] bytes = Ip.ToBytes(address);
+                query = query.Where(a => a.Address == bytes);
+            }
+            if (!string.IsNullOrWhiteSpace(hostname))
+            {
+                string text = hostname.Trim().ToLowerInvariant();
+                query = query.Where(a => a.Hostname != null && a.Hostname.ToLower().Contains(text));
+            }
+            return Results.Ok((await query.OrderBy(a => a.Address).Take(1000).ToListAsync()).Select(ToDto));
+        });
+
         api.MapGet("/vlans", async (AppDbContext db) =>
             await db.Vlans.OrderBy(v => v.Number).Select(v => new VlanDto(v.Id, v.Number, v.Name, v.Description)).ToListAsync());
 
@@ -82,6 +109,13 @@ public static class ApiEndpoints
 
     private static IQueryable<Subnet> Subnets(AppDbContext db) =>
         db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf).Include(s => s.Location).Include(s => s.Customer);
+
+    private static IQueryable<IpAddress> Addresses(AppDbContext db) =>
+        db.IpAddresses.Include(a => a.Subnet).Include(a => a.Tag).Include(a => a.Device);
+
+    private static AddressDto ToDto(IpAddress a) =>
+        new(a.Id, a.SubnetId, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner,
+            a.Tag?.Name, a.Device?.Hostname, a.LastSeen);
 
     private static SubnetDto ToDto(Subnet s, IReadOnlyDictionary<string, string>? custom = null) =>
         new(s.Id, s.SectionId, s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number, s.Vrf?.Name, s.Location?.Name, s.Customer?.Name, custom);

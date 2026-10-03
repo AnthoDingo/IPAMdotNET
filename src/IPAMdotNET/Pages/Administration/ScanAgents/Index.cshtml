@@ -1,0 +1,105 @@
+@page
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
+@model IPAMdotNet.Pages.Administration.ScanAgents.IndexModel
+@{
+    ViewData["Title"] = "Agents de scan";
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
+<div class="row g-3">
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title d-flex align-items-center">
+                <span><i class="bi bi-broadcast-pin"></i> Agent intégré</span>
+                @if (Model.Settings.Enabled)
+                {
+                    <span class="badge text-bg-success ms-auto">Actif</span>
+                }
+                else
+                {
+                    <span class="badge text-bg-secondary ms-auto">Désactivé</span>
+                }
+            </div>
+            <p class="text-body-secondary">Ping des adresses et découverte des hôtes, depuis le serveur IPAMdotNet, pour les sous-réseaux où le scan est activé (fiche du sous-réseau).</p>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="form-check form-switch mb-3">
+                    <input asp-for="Settings.Enabled" class="form-check-input" role="switch" />
+                    <label asp-for="Settings.Enabled" class="form-check-label"></label>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Settings.IntervalMinutes" class="form-label"></label>
+                        <input asp-for="Settings.IntervalMinutes" class="form-control" min="1" max="1440" />
+                        <span asp-validation-for="Settings.IntervalMinutes" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Settings.TimeoutMilliseconds" class="form-label"></label>
+                        <input asp-for="Settings.TimeoutMilliseconds" class="form-control" min="100" max="10000" />
+                        <span asp-validation-for="Settings.TimeoutMilliseconds" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Settings.Parallelism" class="form-label"></label>
+                        <input asp-for="Settings.Parallelism" class="form-control" min="1" max="256" />
+                        <span asp-validation-for="Settings.Parallelism" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input asp-for="Settings.ResolveHostnames" class="form-check-input" role="switch" />
+                            <label asp-for="Settings.ResolveHostnames" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title d-flex align-items-center">
+                <span><i class="bi bi-activity"></i> État</span>
+                @if (Model.Settings.Enabled)
+                {
+                    <form method="post" asp-page-handler="Run" class="ms-auto">
+                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-play"></i>Lancer un cycle maintenant</button>
+                    </form>
+                }
+            </div>
+            <dl class="row ipam-details">
+                <dt class="col-sm-5">Dernier cycle</dt>
+                <dd class="col-sm-7">@(ScanAgent.LastCycleAt?.ToLocalTime().ToString("g") ?? "aucun depuis le démarrage")</dd>
+                <dt class="col-sm-5">Résultat</dt>
+                <dd class="col-sm-7">@(ScanAgent.LastCycleSummary ?? "—")</dd>
+            </dl>
+            <div class="fw-semibold mb-1">Sous-réseaux scannés (@Model.ScannedSubnets.Count)</div>
+            @if (Model.ScannedSubnets.Count == 0)
+            {
+                <p class="ipam-empty">Aucun : activez « Vérifier l'état des hôtes » ou « Découvrir les nouveaux hôtes » dans la fiche d'un sous-réseau.</p>
+            }
+            else
+            {
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Sous-réseau</th><th>Section</th><th>Scan</th><th>Dernier scan</th></tr></thead>
+                    <tbody>
+                        @foreach (Subnet subnet in Model.ScannedSubnets)
+                        {
+                            <tr>
+                                <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a></td>
+                                <td>@subnet.Section?.Name</td>
+                                <td class="small">
+                                    @(subnet.PingCheck ? "état" : "")@(subnet.PingCheck && subnet.Discover ? " + " : "")@(subnet.Discover ? (SubnetScanner.CanDiscover(subnet) ? "découverte" : "découverte (trop grand)") : "")
+                                </td>
+                                <td class="small">@(subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

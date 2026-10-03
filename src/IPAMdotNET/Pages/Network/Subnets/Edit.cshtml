@@ -56,12 +56,21 @@
                         <input asp-for="Subnet.AllowRequests" class="form-check-input" />
                         <label asp-for="Subnet.AllowRequests" class="form-check-label"></label>
                     </div>
+                    <div class="form-check">
+                        <input asp-for="Subnet.PingCheck" class="form-check-input" />
+                        <label asp-for="Subnet.PingCheck" class="form-check-label"></label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="Subnet.Discover" class="form-check-input" />
+                        <label asp-for="Subnet.Discover" class="form-check-label"></label>
+                        <div class="form-text">Agent de scan intégré. La découverte ne s'applique qu'aux sous-réseaux IPv4 d'au plus @IPAMdotNet.Maintenance.SubnetScanner.MaxDiscoveryHosts hôtes.</div>
+                    </div>
                 </div>
             </div>
             <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
             <button type="submit" class="btn btn-primary">Enregistrer</button>
             <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
         </form>
-        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau"))" />
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau et ses adresses"))" />
     }
 </div>

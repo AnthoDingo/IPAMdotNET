@@ -60,6 +60,15 @@ public class Subnet
     [Display(Name = "Ouvert aux demandes d'adresses")]
     public bool AllowRequests { get; set; }
 
+    [Display(Name = "Vérifier l'état des hôtes (ping)")]
+    public bool PingCheck { get; set; }
+
+    [Display(Name = "Découvrir les nouveaux hôtes")]
+    public bool Discover { get; set; }
+
+    [Display(Name = "Dernier scan")]
+    public DateTime? LastScanAt { get; set; }
+
     [NotMapped, ValidateNever]
     public IPNetwork Network => new(Ip.FromBytes(Address), PrefixLength);
 

@@ -177,6 +177,10 @@ public abstract partial class AppDbContext
         {
             return $"{Ip.FromBytes(address)}/{Value(nameof(Subnet.PrefixLength))}";
         }
+        if (entry.Entity is IpAddress && Value(nameof(IpAddress.Address)) is byte[] host)
+        {
+            return Ip.FromBytes(host).ToString();
+        }
         foreach (string name in LabelProperties)
         {
             if (Convert.ToString(Value(name), CultureInfo.InvariantCulture) is { Length: > 0 } text)

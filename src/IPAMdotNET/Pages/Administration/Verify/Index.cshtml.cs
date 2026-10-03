@@ -30,6 +30,7 @@ public class IndexModel(AppDbContext db) : PageModel
         Checks =
         [
             await CheckSubnetsAsync(),
+            await CheckAddressesAsync(),
             await CheckRackPositionsAsync(),
             await CheckPstnNumbersAsync(),
             await CheckRequestsAsync(),
@@ -72,6 +73,27 @@ public class IndexModel(AppDbContext db) : PageModel
             }
         }
         return new CheckResult("Sous-réseaux", "Adresses réseau valides et alignées sur leur préfixe.", problems);
+    }
+
+    /// <summary>Adresses comprises dans leur sous-réseau (un import ou une modification en base peut les en faire sortir).</summary>
+    private async Task<CheckResult> CheckAddressesAsync()
+    {
+        List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Subnet).ToListAsync();
+        List<string> problems = [];
+        foreach (IpAddress address in addresses.Where(a => a.Subnet is { Address.Length: 16 }))
+        {
+            if (address.Address.Length != 16)
+            {
+                problems.Add($"Adresse n°{address.Id} : valeur stockée invalide.");
+                continue;
+            }
+            IPNetwork network = address.Subnet!.Network;
+            if (!Ip.Contains(network, new IPNetwork(address.Value, address.Value.GetAddressBytes().Length * 8)))
+            {
+                problems.Add($"{address.Value} : hors de son sous-réseau {network}.");
+            }
+        }
+        return new CheckResult("Adresses IP", "Adresses comprises dans leur sous-réseau.", problems);
     }
 
     private async Task<CheckResult> CheckRackPositionsAsync()

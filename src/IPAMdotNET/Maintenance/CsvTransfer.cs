@@ -25,6 +25,7 @@ public static class CsvTransfer
         new("vlans", "VLAN", ["numero", "nom", "description"]),
         new("vrfs", "VRF", ["nom", "rd", "description"]),
         new("sous-reseaux", "Sous-réseaux", ["section", "sous_reseau", "description", "vlan", "vrf"]),
+        new("adresses", "Adresses IP", ["section", "sous_reseau", "adresse", "nom_hote", "description", "mac", "proprietaire", "etiquette"]),
         new("equipements", "Équipements", ["nom", "ip", "type", "emplacement", "description"]),
         new("emplacements", "Emplacements", ["nom", "adresse", "latitude", "longitude", "description"]),
         new("clients", "Clients", ["nom", "adresse", "code_postal", "ville", "contact", "telephone", "email", "notes"]),
@@ -47,6 +48,11 @@ public static class CsvTransfer
                 rows.AddRange((await db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf)
                         .OrderBy(s => s.SectionId).ThenBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync())
                     .Select(s => new[] { s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number.ToString(CultureInfo.InvariantCulture), s.Vrf?.Name }));
+                break;
+            case "adresses":
+                rows.AddRange((await db.IpAddresses.Include(a => a.Subnet).ThenInclude(s => s!.Section).Include(a => a.Tag)
+                        .OrderBy(a => a.Subnet!.SectionId).ThenBy(a => a.Address).ToListAsync())
+                    .Select(a => new[] { a.Subnet?.Section?.Name, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner, a.Tag?.Name }));
                 break;
             case "equipements":
                 rows.AddRange((await db.Devices.Include(d => d.DeviceType).Include(d => d.Location).OrderBy(d => d.Hostname).ToListAsync())
@@ -95,6 +101,7 @@ public static class CsvTransfer
                 "vlans" => await VlanAsync(db, Cell, entities, rowErrors),
                 "vrfs" => await VrfAsync(db, Cell, entities, rowErrors),
                 "sous-reseaux" => await SubnetAsync(db, Cell, entities, rowErrors),
+                "adresses" => await AddressAsync(db, Cell, entities, rowErrors),
                 "equipements" => await DeviceAsync(db, Cell, rowErrors),
                 "emplacements" => LocationFromRow(Cell, rowErrors),
                 "clients" => CustomerFromRow(Cell, rowErrors),
@@ -188,6 +195,72 @@ public static class CsvTransfer
             subnet.VrfId = vrf?.Id;
         }
         return subnet;
+    }
+
+    /// <summary>Adresse rattachée au sous-réseau désigné par sa section et son CIDR (qui doivent exister).</summary>
+    private static async Task<IpAddress?> AddressAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
+    {
+        string? sectionName = Required(cell("section"), "section", errors);
+        string? cidr = Required(cell("sous_reseau"), "sous_reseau", errors);
+        string? text = Required(cell("adresse"), "adresse", errors);
+        if (sectionName is null || cidr is null || text is null)
+        {
+            return null;
+        }
+        if (!Ip.TryParseNetwork(cidr, out IPNetwork network))
+        {
+            errors.Add($"« {cidr} » n'est pas un réseau valide.");
+            return null;
+        }
+        byte[] subnetBytes = Ip.ToBytes(network.BaseAddress);
+        Subnet? subnet = await db.Subnets.SingleOrDefaultAsync(s => s.Section!.Name == sectionName && s.Address == subnetBytes && s.PrefixLength == network.PrefixLength);
+        if (subnet is null)
+        {
+            errors.Add($"sous-réseau {network} introuvable dans la section « {sectionName} ».");
+            return null;
+        }
+        if (!IPAddress.TryParse(text, out IPAddress? address) || !Ip.Contains(network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
+        {
+            errors.Add($"« {text} » : adresse invalide ou hors de {network}.");
+            return null;
+        }
+        (System.Numerics.BigInteger first, System.Numerics.BigInteger last) = Ip.UsableRange(network);
+        System.Numerics.BigInteger value = Ip.ToNumber(address);
+        if (subnet.IsIPv4 && (value < first || value > last))
+        {
+            errors.Add($"{address} : adresse réseau ou de diffusion, non attribuable.");
+        }
+        IpAddress entry = new()
+        {
+            SubnetId = subnet.Id,
+            Address = Ip.ToBytes(address),
+            Hostname = cell("nom_hote"),
+            Description = cell("description"),
+            Owner = cell("proprietaire"),
+        };
+        if (await db.IpAddresses.AnyAsync(a => a.SubnetId == subnet.Id && a.Address == entry.Address)
+            || pending.OfType<IpAddress>().Any(a => a.SubnetId == subnet.Id && a.Address.SequenceEqual(entry.Address)))
+        {
+            errors.Add($"{address} existe déjà dans {network}.");
+        }
+        if (cell("mac") is { } mac)
+        {
+            entry.MacAddress = IpAddress.NormalizeMac(mac);
+            if (entry.MacAddress is null)
+            {
+                errors.Add($"adresse MAC « {mac} » invalide.");
+            }
+        }
+        if (cell("etiquette") is { } tagName)
+        {
+            Tag? tag = await db.Tags.SingleOrDefaultAsync(t => t.Name == tagName);
+            if (tag is null)
+            {
+                errors.Add($"étiquette « {tagName} » inconnue.");
+            }
+            entry.TagId = tag?.Id;
+        }
+        return entry;
     }
 
     private static async Task<Device?> DeviceAsync(AppDbContext db, Func<string, string?> cell, List<string> errors)

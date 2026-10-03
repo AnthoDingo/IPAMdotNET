@@ -48,11 +48,16 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
         else
         {
             AssignedAddress = address.ToString();
-            // ponytail: unicité vérifiée sur les seules demandes acceptées, à étendre aux adresses IP quand elles seront gérées.
-            if (await db.IpRequests.AnyAsync(r => r.SubnetId == IpRequest.SubnetId && r.Id != id
-                && r.State == IpRequestState.Approved && r.AssignedAddress == AssignedAddress))
+            byte[] bytes = Ip.ToBytes(address);
+            (System.Numerics.BigInteger first, System.Numerics.BigInteger last) = Ip.UsableRange(IpRequest.Subnet!.Network);
+            System.Numerics.BigInteger value = Ip.ToNumber(address);
+            if (IpRequest.Subnet.IsIPv4 && (value < first || value > last))
             {
-                ModelState.AddModelError(nameof(AssignedAddress), "Cette adresse a déjà été attribuée par une autre demande.");
+                ModelState.AddModelError(nameof(AssignedAddress), "L'adresse réseau et l'adresse de diffusion ne sont pas attribuables.");
+            }
+            else if (await db.IpAddresses.AnyAsync(a => a.SubnetId == IpRequest.SubnetId && a.Address == bytes))
+            {
+                ModelState.AddModelError(nameof(AssignedAddress), "Cette adresse est déjà utilisée dans le sous-réseau.");
             }
         }
         if (!ModelState.IsValid)
@@ -84,6 +89,19 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
         IpRequest.AdminComment = string.IsNullOrWhiteSpace(AdminComment) ? null : AdminComment.Trim();
         IpRequest.ProcessedById = User.UserId();
         IpRequest.ProcessedAt = DateTime.UtcNow;
+        if (state == IpRequestState.Approved && IPAddress.TryParse(AssignedAddress, out IPAddress? address))
+        {
+            // L'adresse acceptée est créée dans le sous-réseau, avec les informations de la demande.
+            db.IpAddresses.Add(new IpAddress
+            {
+                SubnetId = IpRequest.SubnetId,
+                Address = Ip.ToBytes(address),
+                Hostname = IpRequest.Hostname,
+                Owner = IpRequest.Owner,
+                Description = IpRequest.Description.Length > 500 ? IpRequest.Description[..500] : IpRequest.Description,
+                TagId = await db.Tags.Where(t => t.SystemKey == Tag.UsedKey).Select(t => (int?)t.Id).SingleOrDefaultAsync(),
+            });
+        }
         await db.SaveChangesAsync();
         if (IpRequest.RequestedBy?.Email is { } email)
         {
@@ -94,7 +112,8 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
                 $"Votre demande d'adresse dans {IpRequest.Subnet?.Network} ({IpRequest.Description}) {outcome}." +
                 (IpRequest.AdminComment is null ? "" : $"\n\nCommentaire : {IpRequest.AdminComment}") +
                 $"\n\nVos demandes : {Mailer.Link("/Tools/Requests")}");
-        }        return RedirectToPage("Index");
+        }
+        return RedirectToPage("Index");
     }
 
     /// <summary>Charge la demande (suivie) ; false si elle n'existe pas ou est déjà traitée.</summary>

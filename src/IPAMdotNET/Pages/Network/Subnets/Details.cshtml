@@ -23,6 +23,11 @@
     <partial name="_SubnetSidebar" model="@(new SubnetSidebar(Model.Subnet.Section!, Model.Tree, Model.Subnet.Id))" />
 }
 
+@if (Model.Message is not null)
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center">
         <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
@@ -55,6 +60,24 @@
         }
         <dt class="col-sm-4 col-xl-3">Nombre d'adresses</dt>
         <dd class="col-sm-8 col-xl-9">@Ip.AddressCount(network).ToString("N0")</dd>
+        <dt class="col-sm-4 col-xl-3">Utilisation</dt>
+        <dd class="col-sm-8 col-xl-9"><div style="max-width: 24rem"><partial name="_UsageBar" model="(Model.AddressCount, Ip.UsableCount(network))" /></div></dd>
+        <dt class="col-sm-4 col-xl-3">Scan</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (!Model.Subnet.PingCheck && !Model.Subnet.Discover)
+            {
+                <text>Désactivé pour ce sous-réseau</text>
+            }
+            else
+            {
+                @string.Join(" + ", new[] { Model.Subnet.PingCheck ? "état des hôtes" : null, Model.Subnet.Discover ? "découverte" : null }.Where(s => s is not null))
+                <span class="text-body-secondary">— dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
+                @if (!Model.ScanEnabled)
+                {
+                    <span class="badge text-bg-warning">agent désactivé</span>
+                }
+            }
+        </dd>
         <dt class="col-sm-4 col-xl-3">VLAN</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vlan is null ? "—" : $"{Model.Subnet.Vlan.Number} – {Model.Subnet.Vlan.Name}")</dd>
         <dt class="col-sm-4 col-xl-3">VRF</dt>
@@ -93,6 +116,77 @@
         </dd>
         <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
     </dl>
+</div>
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center gap-2">
+        <span><i class="bi bi-list-ul"></i> Adresses (@Model.AddressCount)</span>
+        @if (Model.CanWrite && Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover))
+        {
+            <form method="post" asp-page-handler="Scan" asp-route-id="@Model.Subnet.Id" class="ms-auto">
+                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-broadcast-pin"></i>Scanner maintenant</button>
+            </form>
+        }
+        @if (Model.CanWrite)
+        {
+            <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> Ajouter une adresse</a>
+        }
+    </div>
+    @if (Model.FirstFree is not null)
+    {
+        <p class="small text-body-secondary mb-2">Première adresse libre : <span class="font-monospace">@Model.FirstFree</span></p>
+    }
+    @if (Model.AddressRows.Count == 0)
+    {
+        <p class="ipam-empty">Aucune adresse.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Adresse</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th><th>Propriétaire</th><th>Équipement</th><th>Vue le</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (IPAMdotNet.Pages.Network.Subnets.AddressRow row in Model.AddressRows)
+                {
+                    IpAddress address = row.First;
+                    <tr id="address-@address.Id">
+                        <td class="font-monospace text-nowrap">
+                            @if (row.Count > 1)
+                            {
+                                @address.Value<text> – </text>@row.Last.Value <span class="text-body-secondary small">(@row.Count)</span>
+                            }
+                            else
+                            {
+                                @address.Value
+                            }
+                        </td>
+                        <td>@if (address.Tag is not null && address.Tag.ShowTag) { <partial name="_TagBadge" model="address.Tag" /> }</td>
+                        @if (row.Count > 1)
+                        {
+                            <td colspan="5" class="text-body-secondary">Plage regroupée</td>
+                        }
+                        else
+                        {
+                            <td>@address.Hostname</td>
+                            <td>@address.Description</td>
+                            <td class="font-monospace small">@address.MacAddress</td>
+                            <td>@address.Owner</td>
+                            <td>@address.Device?.Hostname</td>
+                        }
+                        <td class="small text-nowrap">@(address.ExcludePing ? "exclue" : address.LastSeen?.ToLocalTime().ToString("g"))</td>
+                        @if (Model.CanWrite)
+                        {
+                            <td class="text-end">
+                                @if (row.Count == 1)
+                                {
+                                    <a asp-page="/Network/Addresses/Edit" asp-route-id="@address.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 <div class="ipam-panel">

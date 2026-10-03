@@ -7,7 +7,7 @@
     WidgetSettings widgets = Model.Widgets;
 }
 
-@* Widgets du tableau de bord de phpIPAM, affichés selon Administration › Widgets. Les Top 10 attendent la gestion des adresses IP. *@
+@* Widgets du tableau de bord de phpIPAM, affichés selon Administration › Widgets. Top 10 : IPv4 par taux d'occupation, IPv6 par nombre d'adresses. *@
 <div class="row g-3">
     @if (widgets.IsVisible("statistics"))
     {
@@ -18,7 +18,7 @@
                     <tbody>
                         <tr><th scope="row">Sections</th><td class="text-end">@Model.SectionCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Network/Subnets/Index">Sous-réseaux</a></th><td class="text-end">@Model.SubnetCount</td></tr>
-                        <tr><th scope="row">Adresses IP</th><td class="text-end text-body-secondary">—</td></tr>
+                        <tr><th scope="row">Adresses IP</th><td class="text-end">@Model.AddressCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Network/Vlans/Index">VLAN</a></th><td class="text-end">@Model.VlanCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Network/Vrfs/Index">VRF</a></th><td class="text-end">@Model.VrfCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Infrastructure/Devices/Index">Équipements</a></th><td class="text-end">@Model.DeviceCount</td></tr>
@@ -87,8 +87,22 @@
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
                 <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv4</div>
-                <p class="ipam-empty">Aucun sous-réseau IPv4.</p>
-            </div>
+                @if (Model.TopIpv4.Count == 0)
+                {
+                    <p class="ipam-empty">Aucune adresse dans un sous-réseau IPv4.</p>
+                }
+                else
+                {
+                    <table class="table table-sm align-middle mb-0">
+                        @foreach (IPAMdotNet.Networking.SubnetNode node in Model.TopIpv4)
+                        {
+                            <tr>
+                                <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@node.Subnet.Id">@node.Subnet.Network</a></td>
+                                <td style="width: 55%"><partial name="_UsageBar" model="(node.Used, IPAMdotNet.Networking.Ip.UsableCount(node.Subnet.Network))" /></td>
+                            </tr>
+                        }
+                    </table>
+                }            </div>
         </div>
     }
     @if (widgets.IsVisible("top-ipv6"))
@@ -96,8 +110,22 @@
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
                 <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv6</div>
-                <p class="ipam-empty">Aucun sous-réseau IPv6.</p>
-            </div>
+                @if (Model.TopIpv6.Count == 0)
+                {
+                    <p class="ipam-empty">Aucune adresse dans un sous-réseau IPv6.</p>
+                }
+                else
+                {
+                    <table class="table table-sm align-middle mb-0">
+                        @foreach (IPAMdotNet.Networking.SubnetNode node in Model.TopIpv6)
+                        {
+                            <tr>
+                                <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@node.Subnet.Id">@node.Subnet.Network</a></td>
+                                <td style="width: 55%"><partial name="_UsageBar" model="(node.Used, IPAMdotNet.Networking.Ip.UsableCount(node.Subnet.Network))" /></td>
+                            </tr>
+                        }
+                    </table>
+                }            </div>
         </div>
     }
     @if (widgets.IsVisible("changes"))

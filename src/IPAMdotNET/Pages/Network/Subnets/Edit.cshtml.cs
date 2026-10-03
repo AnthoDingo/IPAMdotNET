@@ -99,6 +99,15 @@ public class EditModel(AppDbContext db) : PageModel
                 {
                     ModelState.AddModelError(nameof(Cidr), "Ce sous-réseau existe déjà dans la section.");
                 }
+                // Un sous-réseau existant ne peut pas être réduit au point d'exclure ses propres adresses.
+                int outside = (await db.IpAddresses.Where(a => a.SubnetId == Subnet.Id).Select(a => a.Address).ToListAsync())
+                    .Count(bytes => !Ip.Contains(network, new IPNetwork(Ip.FromBytes(bytes), Ip.FromBytes(bytes).GetAddressBytes().Length * 8)));
+                if (outside > 0)
+                {
+                    ModelState.AddModelError(nameof(Cidr), $"{outside} adresse(s) de ce sous-réseau seraient en dehors de {network}.");
+                }
+                // Le dernier scan est géré par l'agent, pas par le formulaire.
+                Subnet.LastScanAt = Subnet.Id == 0 ? null : await db.Subnets.Where(s => s.Id == Subnet.Id).Select(s => s.LastScanAt).SingleOrDefaultAsync();
             }
             else if (IPNetwork.TryParse(Cidr.Trim(), out IPNetwork corrected))
             {

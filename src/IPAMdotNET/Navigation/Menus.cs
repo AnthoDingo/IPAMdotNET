@@ -57,7 +57,7 @@ public static class Menus
             new("Méthodes d'authentification", "shield-lock", "/Administration/AuthMethods/Index"),
             new("Messagerie", "envelope", "/Administration/Mail/Index"),
             new("API", "code-slash", "/Administration/ApiKeys/Index"),
-            new("Agents de scan", "broadcast-pin"),
+            new("Agents de scan", "broadcast-pin", "/Administration/ScanAgents/Index"),
             new("Langues", "translate"),
             new("Widgets", "grid", "/Administration/Widgets/Index"),
             new("Étiquettes", "tags", "/Administration/Tags/Index"),

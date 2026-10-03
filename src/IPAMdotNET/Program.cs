@@ -79,6 +79,9 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1) }));
 });
 
+// Agent de scan intégré (désactivable dans Administration › Agents de scan).
+builder.Services.AddHostedService<ScanAgent>();
+
 // Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 

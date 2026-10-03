@@ -40,6 +40,11 @@ public class NewModel(AppDbContext db, IDataProtectionProvider protection) : Pag
                 && Ip.Contains(subnet.Network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
             {
                 IpRequest.RequestedAddress = address.ToString();
+                byte[] bytes = Ip.ToBytes(address);
+                if (await db.IpAddresses.AnyAsync(a => a.SubnetId == subnet.Id && a.Address == bytes))
+                {
+                    ModelState.AddModelError("IpRequest.RequestedAddress", "Cette adresse est déjà utilisée : laissez le champ vide pour qu'un administrateur en choisisse une.");
+                }
             }
             else
             {

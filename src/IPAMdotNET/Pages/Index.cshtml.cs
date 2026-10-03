@@ -1,6 +1,8 @@
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
+using System.Numerics;
 using IPAMdotNet.Navigation;
+using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,5 +49,18 @@ public class IndexModel(AppDbContext db) : PageModel
         PendingRequests = await pending.OrderBy(r => r.RequestedAt).Take(5).ToListAsync();
 
         LastChanges = await db.ChangeLogs.OrderByDescending(c => c.Date).ThenByDescending(c => c.Id).Take(8).ToListAsync();
+
+        // Top 10 : IPv4 par taux d'occupation, IPv6 par nombre d'adresses (un pourcentage n'y a pas de sens).
+        AddressCount = await db.IpAddresses.CountAsync();
+        Dictionary<int, int> usage = await SubnetTree.UsageAsync(db.IpAddresses);
+        List<Subnet> readable = await access.Readable(db.Subnets).ToListAsync();
+        List<SubnetNode> used = readable.Where(s => usage.ContainsKey(s.Id)).Select(s => new SubnetNode(s, 0, null, usage[s.Id])).ToList();
+        TopIpv4 = used.Where(n => n.Subnet.IsIPv4)
+            .OrderByDescending(n => (double)n.Used / (double)BigInteger.Max(1, Ip.UsableCount(n.Subnet.Network))).Take(10).ToList();
+        TopIpv6 = used.Where(n => !n.Subnet.IsIPv4).OrderByDescending(n => n.Used).Take(10).ToList();
     }
+
+    public int AddressCount { get; private set; }
+    public List<SubnetNode> TopIpv4 { get; private set; } = [];
+    public List<SubnetNode> TopIpv6 { get; private set; } = [];
 }

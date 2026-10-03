@@ -33,6 +33,25 @@ public sealed class ServerSettings
     public int SessionMinutes { get; set; } = 480;
 }
 
+/// <summary>Agent de scan intégré (Administration › Agents de scan). Préfixe à part : la page Paramètres ne l'écrase pas.</summary>
+public sealed class ScanSettings
+{
+    [Display(Name = "Agent de scan intégré activé")]
+    public bool Enabled { get; set; } = true;
+
+    [Range(1, 1440, ErrorMessage = "Entre 1 et 1440 minutes."), Display(Name = "Intervalle entre deux scans d'un sous-réseau (minutes)")]
+    public int IntervalMinutes { get; set; } = 15;
+
+    [Range(100, 10000, ErrorMessage = "Entre 100 et 10000 ms."), Display(Name = "Délai de réponse au ping (ms)")]
+    public int TimeoutMilliseconds { get; set; } = 1000;
+
+    [Range(1, 256, ErrorMessage = "Entre 1 et 256."), Display(Name = "Pings simultanés")]
+    public int Parallelism { get; set; } = 32;
+
+    [Display(Name = "Résoudre le nom des hôtes découverts (DNS inverse)")]
+    public bool ResolveHostnames { get; set; } = true;
+}
+
 /// <summary>Configuration SMTP (Administration › Messagerie).</summary>
 public sealed class MailSettings
 {

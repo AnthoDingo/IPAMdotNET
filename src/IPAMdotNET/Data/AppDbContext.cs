@@ -35,6 +35,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<AuthMethod> AuthMethods => Set<AuthMethod>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
 
     /// <summary>Ajoute une entrée au journal système.</summary>
     public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
@@ -106,6 +107,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     {
         await PstnPrefixes.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await PstnNumbers.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await IpAddresses.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
     }
 
     public static AppDbContext Create(DbProvider provider, string connectionString) => provider switch
@@ -234,6 +236,15 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
         modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<IpAddress>(entity =>
+        {
+            entity.Property(a => a.Address).HasMaxLength(16);
+            entity.HasIndex(a => new { a.SubnetId, a.Address }).IsUnique();
+            entity.HasOne(a => a.Subnet).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(a => a.Tag).WithMany().OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(a => a.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
         modelBuilder.Entity<Tag>(entity =>
         {
             entity.HasIndex(t => t.Name).IsUnique();

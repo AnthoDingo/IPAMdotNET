@@ -515,6 +515,60 @@ namespace IPAMdotNet.Migrations.MySql
                     b.ToTable("Groups");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.IpAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Address")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varbinary(16)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ExcludePing")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Hostname")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("LastSeen")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MacAddress")
+                        .HasMaxLength(17)
+                        .HasColumnType("varchar(17)");
+
+                    b.Property<string>("Owner")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("SubnetId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TagId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex("SubnetId", "Address")
+                        .IsUnique();
+
+                    b.ToTable("IpAddresses");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.IpRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -887,11 +941,20 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
+                    b.Property<bool>("Discover")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LastScanAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
                     b.Property<int?>("NameserverId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("PingCheck")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("PrefixLength")
                         .HasColumnType("int");
@@ -951,6 +1014,10 @@ namespace IPAMdotNet.Migrations.MySql
 
                     b.Property<bool>("ShowTag")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("SystemKey")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("TextColor")
                         .IsRequired()
@@ -1173,6 +1240,30 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Navigation("Subnet");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.IpAddress", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.HasOne("IPAMdotNet.Data.Subnet", "Subnet")
+                        .WithMany()
+                        .HasForeignKey("SubnetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Subnet");
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.IpRequest", b =>

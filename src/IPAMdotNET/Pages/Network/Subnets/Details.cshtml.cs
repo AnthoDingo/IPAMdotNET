@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Network.Subnets;
 
+/// <summary>Ligne de la liste des adresses : une adresse, ou une plage regroupée (<see cref="Count"/> &gt; 1).</summary>
+public sealed record AddressRow(IpAddress First, IpAddress Last, int Count);
+
 public class DetailsModel(AppDbContext db) : PageModel
 {
     public List<CustomFieldInput> CustomFieldValues { get; private set; } = [];
@@ -55,12 +58,70 @@ public class DetailsModel(AppDbContext db) : PageModel
         int userId = User.UserId();
         IsFavorite = await db.FavoriteSubnets.AnyAsync(f => f.UserId == userId && f.SubnetId == id);
         CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Subnet), id);
+
+        List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Tag).Include(a => a.Device)
+            .Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync();
+        AddressCount = addresses.Count;
+        AddressRows = Compress(addresses);
+        FirstFree = Ip.FirstFree(subnet.Network, addresses.Select(a => Ip.ToNumber(a.Value)).ToHashSet());
+        ScanEnabled = (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
         return Page();
     }
 
     public bool IsFavorite { get; private set; }
 
     public bool CanWrite { get; private set; }
+
+    public List<AddressRow> AddressRows { get; private set; } = [];
+    public int AddressCount { get; private set; }
+    public System.Net.IPAddress? FirstFree { get; private set; }
+    public bool ScanEnabled { get; private set; }
+
+    [TempData]
+    public string? Message { get; set; }
+
+    /// <summary>« Scanner maintenant » : scan immédiat de ce sous-réseau par l'agent intégré.</summary>
+    public async Task<IActionResult> OnPostScanAsync(int id, CancellationToken cancellationToken)
+    {
+        Subnet? subnet = await db.Subnets.FindAsync(id);
+        if (subnet is null)
+        {
+            return NotFound();
+        }
+        if (!(await SectionAccess.ForAsync(db, User)).CanWrite(subnet.SectionId))
+        {
+            return Forbid();
+        }
+        ScanSettings settings = await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix);
+        if (!settings.Enabled)
+        {
+            Message = "L'agent de scan est désactivé (Administration › Agents de scan).";
+            return RedirectToPage(new { id });
+        }
+        ScanReport report = await SubnetScanner.ScanAsync(db, id, settings, cancellationToken);
+        Message = $"Scan terminé : {report}.";
+        return RedirectToPage(new { id });
+    }
+
+    /// <summary>Regroupe les adresses consécutives portant une même étiquette « regrouper les plages » (ex. DHCP).</summary>
+    private static List<AddressRow> Compress(List<IpAddress> addresses)
+    {
+        List<AddressRow> rows = [];
+        foreach (IpAddress address in addresses)
+        {
+            AddressRow? previous = rows.Count > 0 ? rows[^1] : null;
+            if (previous is not null && address.Tag?.Compress == true && previous.First.TagId == address.TagId
+                && Ip.ToNumber(address.Value) == Ip.ToNumber(previous.Last.Value) + 1)
+            {
+                rows[^1] = previous with { Last = address, Count = previous.Count + 1 };
+            }
+            else
+            {
+                rows.Add(new AddressRow(address, address, 1));
+            }
+        }
+        return rows;
+    }
 
     public async Task<IActionResult> OnPostToggleFavoriteAsync(int id)
     {
