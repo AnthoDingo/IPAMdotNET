@@ -61,12 +61,12 @@ Trois moteurs doivent être supportés : **SQL Server, PostgreSQL, MySQL**. Le m
   dotnet ef migrations add <Nom> --project src/IPAMdotNET --context MySqlDbContext --output-dir Migrations/MySql
   ```
 - **Politique de migrations :**
-  - **En dev :** aucune limite, autant de migrations intermédiaires que nécessaire.
-  - **En prod :** une seule migration par moteur entre deux versions publiées. Avant une release, toutes les migrations créées depuis la version précédente sont fusionnées en une seule, nommée d'après la version (ex. `V1_2_0`) :
+  - **En dev (branche `dev/main`) :** les migrations **se suivent**. Une modification du modèle = une **nouvelle** migration ajoutée par-dessus les existantes (nom descriptif, ex. `AddCustomFields`), jamais la regénération ni la modification d'une migration déjà commitée : les bases de dev doivent se mettre à jour via la page `/update`, sans être recréées.
+  - **En prod :** une seule migration par moteur entre deux versions publiées. La fusion se fait **uniquement au moment d'une release** (passage sur `main`), jamais pendant le développement : toutes les migrations créées depuis la version précédente sont fusionnées en une seule, nommée d'après la version (ex. `V1_2_0`) :
     1. supprimer les migrations intermédiaires (`dotnet ef migrations remove` en boucle, ou suppression des fichiers et restauration du `*ModelSnapshot.cs` de la version précédente) ;
     2. regénérer une seule migration par moteur avec les trois commandes ci-dessus ;
     3. recréer les bases de dev qui avaient appliqué les migrations intermédiaires.
-  - Les migrations d'une version déjà publiée ne sont jamais modifiées ni supprimées. Avant la première release, tout est fusionné dans `Initial`.
+  - Les migrations d'une version déjà publiée ne sont jamais modifiées ni supprimées. À la première release, tout sera fusionné dans `Initial`.
 - **Mise à niveau** via le package `AnthoDingo.Update` : tant que des migrations sont en attente, toute requête est redirigée vers `/update` (composant Blazor, seul composant de l'app : `Components/App.razor` + `Routes.razor`), où un admin confirme leur application. Aucune migration n'est appliquée silencieusement au démarrage. `/Account` est exempté de la garde : la connexion s'exécute donc sur l'**ancien** schéma. Elle ne lit que les colonnes dont elle a besoin (projection dans `Login.cshtml.cs`) ; une migration ne doit jamais renommer ni supprimer `Users.Id`, `UserName`, `PasswordHash`, `DisplayName`, `IsAdmin`.
 - Pas de SQL brut spécifique à un moteur. Si c'est inévitable, fournir les trois variantes.
 - Éviter les types non portables (`jsonb`, `inet`/`cidr`, `hierarchyid`, tableaux Postgres, etc.).
