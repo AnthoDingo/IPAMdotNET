@@ -208,6 +208,85 @@ body {
     margin-left: .5rem;
 }
 
+/* Affichage visuel d'un sous-réseau : une case par adresse (couleurs des étiquettes en style en ligne) */
+.ipam-ipgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.ipam-ipgrid > * {
+    width: 2.25rem;
+    padding: .1rem 0;
+    border: 1px solid var(--ipam-border);
+    border-radius: .2rem;
+    font-family: var(--bs-font-monospace);
+    font-size: .75rem;
+    text-align: center;
+    text-decoration: none;
+}
+
+.ipam-ipgrid > a:hover {
+    outline: 2px solid var(--ipam-accent);
+}
+
+.ipam-ip-free {
+    background: var(--ipam-panel-bg);
+    color: var(--bs-body-color);
+}
+
+.ipam-ip-used {
+    background: color-mix(in srgb, var(--ipam-accent) 25%, var(--ipam-panel-bg));
+    color: var(--bs-body-color);
+}
+
+.ipam-ip-reserved {
+    background: var(--ipam-panel-head-bg);
+    color: var(--bs-secondary-color);
+}
+
+/* Pastille de la légende */
+.ipam-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: .3rem;
+    border: 1px solid var(--ipam-border);
+    border-radius: .2rem;
+    vertical-align: text-bottom;
+}
+
+/* Panneaux repliables (site.js) */
+.ipam-collapsible > .ipam-panel-title {
+    cursor: pointer;
+}
+
+.ipam-collapse-toggle {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--bs-secondary-color);
+}
+
+.ipam-collapse-toggle .bi {
+    display: inline-block;
+    transition: transform .15s;
+}
+
+.ipam-collapsed .ipam-collapse-toggle .bi {
+    transform: rotate(-90deg);
+}
+
+.ipam-collapsed > :not(.ipam-panel-title) {
+    display: none !important;
+}
+
+.ipam-collapsed > .ipam-panel-title {
+    margin-bottom: -1rem;
+    border-bottom: 0;
+    border-radius: .375rem;
+}
+
 /* Recherche du bandeau */
 .ipam-search {
     gap: .25rem;

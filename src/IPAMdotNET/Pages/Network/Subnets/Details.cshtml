@@ -2,6 +2,7 @@
 @using System.Net
 @using IPAMdotNet.Data
 @using IPAMdotNet.Networking
+@using IPAMdotNet.Pages.Network.Subnets
 @model IPAMdotNet.Pages.Network.Subnets.DetailsModel
 @{
     Layout = "_Layout";
@@ -118,6 +119,52 @@
     </dl>
 </div>
 
+@if (Model.Grid.Count > 0)
+{
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-grid-3x3"></i> Affichage visuel</div>
+        <div class="ipam-ipgrid">
+            @foreach (GridCell cell in Model.Grid)
+            {
+                byte octet = cell.Address.GetAddressBytes()[3];
+                if (cell.Entry is IpAddress entry)
+                {
+                    string title = string.Join(" — ", new[] { cell.Address.ToString(), entry.Tag?.Name, entry.Hostname, entry.Description }.Where(s => !string.IsNullOrEmpty(s)));
+                    <a href="@(Model.CanWrite ? Url.Page("/Network/Addresses/Edit", new { id = entry.Id }) : $"#address-{entry.Id}")" data-ipam-modal="@(Model.CanWrite ? "" : null)" class="ipam-ip-used" title="@title"
+                       style="@(entry.Tag is null ? null : $"background-color: {entry.Tag.BackgroundColor}; color: {entry.Tag.TextColor}")">@octet</a>
+                }
+                else if (!cell.Usable)
+                {
+                    <span class="ipam-ip-reserved" title="@cell.Address — non attribuable">@octet</span>
+                }
+                else if (Model.CanWrite)
+                {
+                    <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" asp-route-ip="@cell.Address" data-ipam-modal class="ipam-ip-free" title="@cell.Address — libre">@octet</a>
+                }
+                else
+                {
+                    <span class="ipam-ip-free" title="@cell.Address — libre">@octet</span>
+                }
+            }
+        </div>
+        <div class="d-flex flex-wrap gap-3 small text-body-secondary mt-2">
+            <span><span class="ipam-swatch ipam-ip-free"></span>Libre</span>
+            <span><span class="ipam-swatch ipam-ip-reserved"></span>Non attribuable</span>
+            @foreach (Tag? tag in Model.GridTags)
+            {
+                if (tag is null)
+                {
+                    <span><span class="ipam-swatch ipam-ip-used"></span>Sans étiquette</span>
+                }
+                else
+                {
+                    <span title="@tag.Description"><span class="ipam-swatch" style="background-color: @tag.BackgroundColor"></span>@tag.Name</span>
+                }
+            }
+        </div>
+    </div>
+}
+
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center gap-2">
         <span><i class="bi bi-list-ul"></i> Adresses (@Model.AddressCount)</span>
@@ -129,14 +176,14 @@
         }
         @if (Model.CanWrite)
         {
-            <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> Ajouter une adresse</a>
+            <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> Ajouter une adresse</a>
         }
     </div>
     @if (Model.FirstFree is not null)
     {
         <p class="small text-body-secondary mb-2">Première adresse libre : <span class="font-monospace">@Model.FirstFree</span></p>
     }
-    @if (Model.AddressRows.Count == 0)
+    @if (Model.Rows.Count == 0)
     {
         <p class="ipam-empty">Aucune adresse.</p>
     }
@@ -145,8 +192,29 @@
         <table class="table table-sm table-hover align-middle mb-0">
             <thead><tr><th>Adresse</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th><th>Propriétaire</th><th>Équipement</th><th>Vue le</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
             <tbody>
-                @foreach (IPAMdotNet.Pages.Network.Subnets.AddressRow row in Model.AddressRows)
+                @foreach (object item in Model.Rows)
                 {
+                    if (item is FreeRange free)
+                    {
+                        <tr>
+                            <td class="font-monospace text-nowrap text-body-secondary">
+                                @free.First
+                                @if (free.Count > 1)
+                                {
+                                    <text>– </text>@free.Last
+                                }
+                            </td>
+                            <td colspan="7" class="text-body-secondary fst-italic">@free.Count.ToString("N0") @(free.Count > 1 ? "adresses libres" : "adresse libre")</td>
+                            @if (Model.CanWrite)
+                            {
+                                <td class="text-end">
+                                    <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" asp-route-ip="@free.First" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Ajouter @free.First"><i class="bi bi-plus-lg"></i></a>
+                                </td>
+                            }
+                        </tr>
+                        continue;
+                    }
+                    AddressRow row = (AddressRow)item;
                     IpAddress address = row.First;
                     <tr id="address-@address.Id">
                         <td class="font-monospace text-nowrap">
@@ -178,7 +246,7 @@
                             <td class="text-end">
                                 @if (row.Count == 1)
                                 {
-                                    <a asp-page="/Network/Addresses/Edit" asp-route-id="@address.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a asp-page="/Network/Addresses/Edit" asp-route-id="@address.Id" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
                                 }
                             </td>
                         }

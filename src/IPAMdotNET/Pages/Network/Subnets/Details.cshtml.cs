@@ -1,3 +1,4 @@
+using System.Numerics;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
@@ -10,6 +11,12 @@ namespace IPAMdotNet.Pages.Network.Subnets;
 
 /// <summary>Ligne de la liste des adresses : une adresse, ou une plage regroupée (<see cref="Count"/> &gt; 1).</summary>
 public sealed record AddressRow(IpAddress First, IpAddress Last, int Count);
+
+/// <summary>Plage d'adresses attribuables libres, intercalée dans la liste comme dans phpIPAM.</summary>
+public sealed record FreeRange(System.Net.IPAddress First, System.Net.IPAddress Last, BigInteger Count);
+
+/// <summary>Case de l'affichage visuel : une adresse du sous-réseau, son entrée éventuelle, attribuable ou non (réseau, diffusion).</summary>
+public sealed record GridCell(System.Net.IPAddress Address, IpAddress? Entry, bool Usable);
 
 public class DetailsModel(AppDbContext db) : PageModel
 {
@@ -62,7 +69,12 @@ public class DetailsModel(AppDbContext db) : PageModel
         List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Tag).Include(a => a.Device)
             .Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync();
         AddressCount = addresses.Count;
-        AddressRows = Compress(addresses);
+        List<AddressRow> rows = Compress(addresses);
+        Rows = SettingsStore.Server.HideFreeRanges ? [.. rows] : WithFreeRanges(subnet.Network, rows);
+        if (subnet.IsIPv4 && Ip.AddressCount(subnet.Network) <= GridMaxAddresses)
+        {
+            Grid = BuildGrid(subnet.Network, addresses);
+        }
         FirstFree = Ip.FirstFree(subnet.Network, addresses.Select(a => Ip.ToNumber(a.Value)).ToHashSet());
         ScanEnabled = (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
         return Page();
@@ -72,7 +84,15 @@ public class DetailsModel(AppDbContext db) : PageModel
 
     public bool CanWrite { get; private set; }
 
-    public List<AddressRow> AddressRows { get; private set; } = [];
+    /// <summary>Lignes de la liste, dans l'ordre des adresses : <see cref="AddressRow"/> ou <see cref="FreeRange"/>.</summary>
+    public List<object> Rows { get; private set; } = [];
+
+    /// <summary>Affichage visuel, limité aux sous-réseaux IPv4 de <see cref="GridMaxAddresses"/> adresses au plus (/22).</summary>
+    public List<GridCell> Grid { get; private set; } = [];
+    public const int GridMaxAddresses = 1024;
+
+    /// <summary>Légende de l'affichage visuel : étiquettes présentes (null = adresse sans étiquette).</summary>
+    public IEnumerable<Tag?> GridTags => Grid.Select(c => c.Entry).OfType<IpAddress>().Select(a => a.Tag).DistinctBy(t => t?.Id).OrderBy(t => t?.Name);
     public int AddressCount { get; private set; }
     public System.Net.IPAddress? FirstFree { get; private set; }
     public bool ScanEnabled { get; private set; }
@@ -121,6 +141,42 @@ public class DetailsModel(AppDbContext db) : PageModel
             }
         }
         return rows;
+    }
+
+    /// <summary>Intercale les plages libres de la plage attribuable entre les lignes d'adresses.</summary>
+    private static List<object> WithFreeRanges(System.Net.IPNetwork network, List<AddressRow> rows)
+    {
+        (BigInteger next, BigInteger last) = Ip.UsableRange(network);
+        bool ipv4 = network.BaseAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork;
+        List<object> result = [];
+        foreach (AddressRow row in rows)
+        {
+            BigInteger start = Ip.ToNumber(row.First.Value);
+            if (start > next)
+            {
+                result.Add(new FreeRange(Ip.FromNumber(next, ipv4), Ip.FromNumber(start - 1, ipv4), start - next));
+            }
+            result.Add(row);
+            next = BigInteger.Max(next, Ip.ToNumber(row.Last.Value) + 1);
+        }
+        if (next <= last)
+        {
+            result.Add(new FreeRange(Ip.FromNumber(next, ipv4), Ip.FromNumber(last, ipv4), last - next + 1));
+        }
+        return result;
+    }
+
+    private static List<GridCell> BuildGrid(System.Net.IPNetwork network, List<IpAddress> addresses)
+    {
+        Dictionary<BigInteger, IpAddress> byNumber = addresses.ToDictionary(a => Ip.ToNumber(a.Value));
+        (BigInteger first, BigInteger last) = Ip.UsableRange(network);
+        BigInteger end = Ip.ToNumber(Ip.LastAddress(network));
+        List<GridCell> cells = [];
+        for (BigInteger n = Ip.ToNumber(network.BaseAddress); n <= end; n++)
+        {
+            cells.Add(new GridCell(Ip.FromNumber(n, ipv4: true), byNumber.GetValueOrDefault(n), n >= first && n <= last));
+        }
+        return cells;
     }
 
     public async Task<IActionResult> OnPostToggleFavoriteAsync(int id)

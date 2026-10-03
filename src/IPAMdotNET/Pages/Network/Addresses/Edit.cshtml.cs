@@ -23,7 +23,7 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Tags { get; private set; } = [];
     public List<SelectListItem> Devices { get; private set; } = [];
 
-    public async Task<IActionResult> OnGetAsync(int? id, int? subnetId)
+    public async Task<IActionResult> OnGetAsync(int? id, int? subnetId, string? ip)
     {
         if (id is not null)
         {
@@ -46,10 +46,10 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (id is null)
         {
-            // Nouvelle adresse : première adresse libre, étiquette « Utilisée ».
+            // Nouvelle adresse : celle choisie (liste, affichage visuel) ou la première libre, étiquette « Utilisée ».
             HashSet<BigInteger> used = (await db.IpAddresses.Where(a => a.SubnetId == Subnet.Id).Select(a => a.Address).ToListAsync())
                 .Select(bytes => Networking.Ip.ToNumber(Networking.Ip.FromBytes(bytes))).ToHashSet();
-            Ip = Networking.Ip.FirstFree(Subnet.Network, used)?.ToString() ?? "";
+            Ip = ip ?? Networking.Ip.FirstFree(Subnet.Network, used)?.ToString() ?? "";
             Entry.TagId = await db.Tags.Where(t => t.SystemKey == Tag.UsedKey).Select(t => (int?)t.Id).SingleOrDefaultAsync();
         }
         return Page();

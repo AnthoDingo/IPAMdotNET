@@ -23,6 +23,9 @@ public sealed class ServerSettings
     [Display(Name = "Journal des modifications")]
     public bool EnableChangelog { get; set; } = true;
 
+    [Display(Name = "Masquer les plages libres dans la liste des adresses")]
+    public bool HideFreeRanges { get; set; }
+
     [Range(0, 100, ErrorMessage = "Entre 0 et 100."), Display(Name = "Échecs de connexion avant verrouillage", Description = "0 = pas de verrouillage.")]
     public int MaxFailedLogins { get; set; } = 5;
 

@@ -44,10 +44,15 @@
             <input asp-for="Settings.EnableIpRequests" class="form-check-input" role="switch" />
             <label asp-for="Settings.EnableIpRequests" class="form-check-label"></label>
         </div>
-        <div class="form-check form-switch">
+        <div class="form-check form-switch mb-2">
             <input asp-for="Settings.EnableChangelog" class="form-check-input" role="switch" />
             <label asp-for="Settings.EnableChangelog" class="form-check-label"></label>
             <div class="form-text">Désactivé, les modifications ne sont plus enregistrées dans le journal.</div>
+        </div>
+        <div class="form-check form-switch">
+            <input asp-for="Settings.HideFreeRanges" class="form-check-input" role="switch" />
+            <label asp-for="Settings.HideFreeRanges" class="form-check-label"></label>
+            <div class="form-text">La page d'un sous-réseau n'intercale plus les plages d'adresses libres entre les adresses utilisées.</div>
         </div>
     </div>
 
