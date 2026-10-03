@@ -4,7 +4,50 @@
     ViewData["Title"] = "Tableau de bord";
 }
 
-<div class="ipam-panel">
-    <div class="ipam-panel-title">Tableau de bord</div>
-    <p class="mb-0">Bienvenue dans IPAMdotNet.</p>
+@* Widgets du tableau de bord de phpIPAM. Seules les statistiques utilisateurs sont réelles pour l'instant. *@
+<div class="row g-3">
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-bar-chart"></i> Statistiques</div>
+            <table class="table table-sm mb-0">
+                <tbody>
+                    <tr><th scope="row">Sections</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row">Sous-réseaux</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row">Adresses IP</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row">VLAN</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row">Utilisateurs</th><td class="text-end">@Model.UserCount</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-star"></i> Sous-réseaux favoris</div>
+            <p class="ipam-empty">Aucun sous-réseau favori.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-inbox"></i> Demandes d'adresses</div>
+            <p class="ipam-empty">Aucune demande en attente.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv4</div>
+            <p class="ipam-empty">Aucun sous-réseau IPv4.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv6</div>
+            <p class="ipam-empty">Aucun sous-réseau IPv6.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xxl-4">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> Dernières modifications</div>
+            <p class="ipam-empty">Aucune modification enregistrée.</p>
+        </div>
+    </div>
 </div>

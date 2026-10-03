@@ -1,0 +1,84 @@
+namespace IPAMdotNet.Navigation;
+
+/// <summary>Entrée de menu. <paramref name="Page"/> null = fonctionnalité pas encore implémentée (affichée désactivée).</summary>
+public sealed record MenuItem(string Label, string Icon, string? Page = null);
+
+public sealed record MenuGroup(string Label, IReadOnlyList<MenuItem> Items);
+
+/// <summary>Menus Outils et Administration, calqués sur ceux de phpIPAM.</summary>
+public static class Menus
+{
+    public static readonly IReadOnlyList<MenuGroup> Tools =
+    [
+        new("Outils",
+        [
+            new("Recherche", "search"),
+            new("Calculateur IP", "calculator"),
+            new("Journal des modifications", "clock-history"),
+            new("Sous-réseaux favoris", "star"),
+            new("Demandes d'adresses", "inbox"),
+            new("Instructions", "info-circle"),
+        ]),
+        new("Réseau",
+        [
+            new("Sous-réseaux", "diagram-3"),
+            new("VLAN", "hdd-network"),
+            new("VRF", "shuffle"),
+            new("NAT", "arrow-left-right"),
+            new("Multicast", "broadcast"),
+            new("Routage", "signpost-split"),
+            new("DNS", "globe"),
+        ]),
+        new("Infrastructure",
+        [
+            new("Équipements", "hdd"),
+            new("Racks", "hdd-stack"),
+            new("Emplacements", "geo-alt"),
+            new("Circuits", "plug"),
+            new("Clients", "people"),
+            new("Préfixes RTC", "telephone"),
+        ]),
+    ];
+
+    public static readonly IReadOnlyList<MenuGroup> Administration =
+    [
+        new("Serveur",
+        [
+            new("Paramètres", "gear"),
+            new("Utilisateurs", "person"),
+            new("Groupes", "people"),
+            new("Méthodes d'authentification", "shield-lock"),
+            new("Messagerie", "envelope"),
+            new("API", "code-slash"),
+            new("Agents de scan", "broadcast-pin"),
+            new("Langues", "translate"),
+            new("Widgets", "grid"),
+            new("Étiquettes", "tags"),
+        ]),
+        new("Gestion IP",
+        [
+            new("Sections", "collection"),
+            new("Sous-réseaux", "diagram-3"),
+            new("Équipements", "hdd"),
+            new("Types d'équipements", "cpu"),
+            new("Racks", "hdd-stack"),
+            new("VLAN", "hdd-network"),
+            new("VRF", "shuffle"),
+            new("Serveurs de noms", "globe2"),
+            new("Emplacements", "geo-alt"),
+            new("NAT", "arrow-left-right"),
+            new("Clients", "people"),
+            new("Circuits", "plug"),
+            new("Préfixes RTC", "telephone"),
+            new("Routage", "signpost-split"),
+        ]),
+        new("Maintenance",
+        [
+            new("Champs personnalisés", "input-cursor-text"),
+            new("Vérifier la base", "database-check"),
+            new("Remplacer des valeurs", "arrow-repeat"),
+            new("Import / export", "arrow-down-up"),
+            new("Journaux", "journal-text"),
+        ]),
+    ];
+}

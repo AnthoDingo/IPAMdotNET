@@ -1,0 +1,15 @@
+@page
+@{
+    ViewData["Title"] = "Administration";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Administration</li>
+}
+
+@section Sidebar {
+    <partial name="_MenuSidebar" model="Menus.Administration" />
+}
+
+<partial name="_MenuTiles" model="Menus.Administration" />

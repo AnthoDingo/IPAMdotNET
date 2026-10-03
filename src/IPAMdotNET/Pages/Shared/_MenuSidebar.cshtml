@@ -1,0 +1,23 @@
+@model IReadOnlyList<MenuGroup>
+
+@foreach (MenuGroup group in Model)
+{
+    <div class="ipam-side-group">
+        <div class="ipam-side-title">@group.Label</div>
+        <ul class="nav flex-column">
+            @foreach (MenuItem item in group.Items)
+            {
+                <li class="nav-item">
+                    @if (item.Page is null)
+                    {
+                        <span class="nav-link disabled" title="Bientôt disponible"><i class="bi bi-@item.Icon"></i> @item.Label</span>
+                    }
+                    else
+                    {
+                        <a class="nav-link" asp-page="@item.Page"><i class="bi bi-@item.Icon"></i> @item.Label</a>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}

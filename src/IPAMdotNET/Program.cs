@@ -27,8 +27,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/AccessDenied";
         options.Cookie.Name = "IPAMdotNet.Auth";
     });
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"));
 
 // Anti brute-force : 10 tentatives de connexion par minute et par IP.
 builder.Services.AddRateLimiter(options =>
@@ -42,6 +46,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
+    options.Conventions.AuthorizeFolder("/Administration", "Admin");
     options.Conventions.AllowAnonymousToPage("/Account/Login");
     options.Conventions.AllowAnonymousToPage("/Error");
 });
