@@ -1,0 +1,154 @@
+/* Structure inspirée de phpIPAM : bandeau, barre de menu, fil d'Ariane, colonne gauche + contenu, pied de page.
+   Bootstrap gère light/dark via data-bs-theme ; seules les zones propres à IPAMdotNet sont redéfinies ici. */
+
+:root,
+[data-bs-theme="light"] {
+    --ipam-header-bg: #1f3349;
+    --ipam-header-fg: #ffffff;
+    --ipam-header-muted: #a9bccf;
+    --ipam-menubar-bg: #e7ecf1;
+    --ipam-menubar-fg: #24384d;
+    --ipam-menubar-hover: #d3dce5;
+    --ipam-accent: #2a6db0;
+    --ipam-body-bg: #f3f5f7;
+    --ipam-panel-bg: #ffffff;
+    --ipam-panel-head-bg: #f7f9fb;
+    --ipam-border: #d8dee4;
+    --bs-link-color: #2a6db0;
+    --bs-link-color-rgb: 42, 109, 176;
+    --bs-link-hover-color: #1f527f;
+    --bs-link-hover-color-rgb: 31, 82, 127;
+}
+
+[data-bs-theme="dark"] {
+    --ipam-header-bg: #0b1118;
+    --ipam-header-fg: #e6edf3;
+    --ipam-header-muted: #7d8b99;
+    --ipam-menubar-bg: #151d26;
+    --ipam-menubar-fg: #c9d4df;
+    --ipam-menubar-hover: #213040;
+    --ipam-accent: #3d8bd6;
+    --ipam-body-bg: #0f151c;
+    --ipam-panel-bg: #161e27;
+    --ipam-panel-head-bg: #1b2530;
+    --ipam-border: #2a3644;
+    --bs-body-bg: #0f151c;
+    --bs-border-color: #2a3644;
+    --bs-link-color: #6aaef0;
+    --bs-link-color-rgb: 106, 174, 240;
+    --bs-link-hover-color: #9cc9f5;
+    --bs-link-hover-color-rgb: 156, 201, 245;
+}
+
+html {
+    font-size: 14px;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ipam-body-bg);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--ipam-accent);
+    --bs-btn-border-color: var(--ipam-accent);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--ipam-accent) 85%, black);
+    --bs-btn-hover-border-color: color-mix(in srgb, var(--ipam-accent) 85%, black);
+    --bs-btn-active-bg: color-mix(in srgb, var(--ipam-accent) 75%, black);
+    --bs-btn-active-border-color: color-mix(in srgb, var(--ipam-accent) 75%, black);
+}
+
+/* Bandeau */
+.ipam-header {
+    background: var(--ipam-header-bg);
+    color: var(--ipam-header-fg);
+    padding: .6rem 0;
+}
+
+.ipam-brand,
+.ipam-brand:hover {
+    color: var(--ipam-header-fg);
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+}
+
+.ipam-brand-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.ipam-brand-sub,
+.ipam-user {
+    color: var(--ipam-header-muted);
+}
+
+.ipam-header-btn {
+    color: var(--ipam-header-fg);
+    border: 1px solid var(--ipam-header-muted);
+}
+
+.ipam-header-btn:hover {
+    color: var(--ipam-header-bg);
+    background: var(--ipam-header-fg);
+}
+
+[data-bs-theme="light"] .theme-icon-light,
+[data-bs-theme="dark"] .theme-icon-dark {
+    display: none;
+}
+
+/* Barre de menu */
+.ipam-menubar {
+    background: var(--ipam-menubar-bg);
+    border-bottom: 1px solid var(--ipam-border);
+}
+
+.ipam-menubar .nav-link {
+    color: var(--ipam-menubar-fg);
+    padding: .65rem 1rem;
+}
+
+.ipam-menubar .nav-link:hover,
+.ipam-menubar .nav-link.active {
+    background: var(--ipam-menubar-hover);
+    color: var(--ipam-menubar-fg);
+}
+
+/* Corps */
+.ipam-body {
+    flex: 1;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.ipam-breadcrumb {
+    margin-bottom: 1rem;
+}
+
+.ipam-panel {
+    background: var(--ipam-panel-bg);
+    border: 1px solid var(--ipam-border);
+    border-radius: .375rem;
+    padding: 1rem;
+}
+
+.ipam-panel-title {
+    background: var(--ipam-panel-head-bg);
+    border-bottom: 1px solid var(--ipam-border);
+    border-radius: .375rem .375rem 0 0;
+    margin: -1rem -1rem 1rem;
+    padding: .6rem 1rem;
+    font-weight: 600;
+}
+
+/* Pied de page */
+.ipam-footer {
+    border-top: 1px solid var(--ipam-border);
+    color: var(--bs-secondary-color);
+    padding: .75rem 0;
+    font-size: .85rem;
+}

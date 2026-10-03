@@ -1,0 +1,97 @@
+@{
+    bool authenticated = User.Identity?.IsAuthenticated == true;
+    bool hasSidebar = IsSectionDefined("Sidebar");
+}
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - IPAMdotNet</title>
+    @* Appliqué avant le rendu pour éviter un flash du mauvais thème. *@
+    <script>
+        (() => {
+            let theme = null;
+            try { theme = localStorage.getItem("theme"); } catch { }
+            if (theme !== "light" && theme !== "dark") {
+                theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            }
+            document.documentElement.setAttribute("data-bs-theme", theme);
+        })();
+    </script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="ipam-header">
+        <div class="container-fluid d-flex align-items-center gap-3">
+            <a class="ipam-brand" asp-page="/Index">
+                <span class="ipam-brand-name">IPAMdotNet</span>
+                <span class="ipam-brand-sub d-none d-sm-inline">Gestion d'adresses IP</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm ipam-header-btn" id="theme-toggle" title="Changer de thème" aria-label="Changer de thème">
+                    <span class="theme-icon-dark" aria-hidden="true">&#9790;</span>
+                    <span class="theme-icon-light" aria-hidden="true">&#9728;</span>
+                </button>
+                @if (authenticated)
+                {
+                    <span class="ipam-user d-none d-sm-inline">@User.Identity!.Name</span>
+                    <form method="post" asp-page="/Account/Logout" class="m-0">
+                        <button type="submit" class="btn btn-sm ipam-header-btn">Déconnexion</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </header>
+
+    @if (authenticated)
+    {
+        <nav class="ipam-menubar navbar navbar-expand-md py-0">
+            <div class="container-fluid">
+                <button class="navbar-toggler my-1" type="button" data-bs-toggle="collapse" data-bs-target="#ipam-menu" aria-controls="ipam-menu" aria-expanded="false" aria-label="Menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="ipam-menu">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Index">Tableau de bord</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    }
+
+    <div class="container-fluid ipam-body">
+        @if (IsSectionDefined("Breadcrumb"))
+        {
+            <nav aria-label="Fil d'Ariane" class="ipam-breadcrumb">
+                <ol class="breadcrumb mb-0">@await RenderSectionAsync("Breadcrumb")</ol>
+            </nav>
+        }
+        <div class="row g-3">
+            @if (hasSidebar)
+            {
+                <aside class="col-lg-3 col-xl-2">
+                    <div class="ipam-panel">@await RenderSectionAsync("Sidebar")</div>
+                </aside>
+            }
+            <main role="main" class="@(hasSidebar ? "col-lg-9 col-xl-10" : "col-12")">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <footer class="ipam-footer">
+        <div class="container-fluid">
+            IPAMdotNet &middot; <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0-or-later</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
