@@ -1,17 +1,20 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Tools.Requests;
 
+[IpRequestsEnabled]
 [Authorize(Policy = "Admin")]
-public class ProcessModel(AppDbContext db) : PageModel
+public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) : PageModel
 {
     public IpRequest IpRequest { get; private set; } = new();
 
@@ -82,7 +85,16 @@ public class ProcessModel(AppDbContext db) : PageModel
         IpRequest.ProcessedById = User.UserId();
         IpRequest.ProcessedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return RedirectToPage("Index");
+        if (IpRequest.RequestedBy?.Email is { } email)
+        {
+            string outcome = state == IpRequestState.Approved
+                ? $"a été acceptée : l'adresse {IpRequest.AssignedAddress} vous est attribuée"
+                : "a été refusée";
+            await Mailer.SendAsync(db, protection, [email], $"Demande d'adresse {(state == IpRequestState.Approved ? "acceptée" : "refusée")}",
+                $"Votre demande d'adresse dans {IpRequest.Subnet?.Network} ({IpRequest.Description}) {outcome}." +
+                (IpRequest.AdminComment is null ? "" : $"\n\nCommentaire : {IpRequest.AdminComment}") +
+                $"\n\nVos demandes : {Mailer.Link("/Tools/Requests")}");
+        }        return RedirectToPage("Index");
     }
 
     /// <summary>Charge la demande (suivie) ; false si elle n'existe pas ou est déjà traitée.</summary>

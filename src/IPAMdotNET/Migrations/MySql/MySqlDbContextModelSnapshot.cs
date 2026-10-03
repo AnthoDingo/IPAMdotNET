@@ -19,6 +19,48 @@ namespace IPAMdotNet.Migrations.MySql
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("ApiKeys");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.AppSetting", b =>
                 {
                     b.Property<string>("Key")
@@ -31,6 +73,48 @@ namespace IPAMdotNet.Migrations.MySql
                     b.HasKey("Key");
 
                     b.ToTable("AppSettings");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.AuthMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("BindTemplate")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("Port")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("UseSsl")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AuthMethods");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
@@ -408,6 +492,29 @@ namespace IPAMdotNet.Migrations.MySql
                     b.ToTable("FavoriteSubnets");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Group", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Groups");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.IpRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -721,6 +828,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int>("DefaultAccess")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
@@ -736,6 +846,24 @@ namespace IPAMdotNet.Migrations.MySql
                         .IsUnique();
 
                     b.ToTable("Sections");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.SectionPermission", b =>
+                {
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.HasKey("SectionId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("SectionPermissions");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
@@ -801,9 +929,19 @@ namespace IPAMdotNet.Migrations.MySql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int?>("AuthMethodId")
+                        .HasColumnType("int");
+
                     b.Property<string>("DisplayName")
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("tinyint(1)");
@@ -819,6 +957,8 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthMethodId");
 
                     b.HasIndex("UserName")
                         .IsUnique();
@@ -877,6 +1017,21 @@ namespace IPAMdotNet.Migrations.MySql
                         .IsUnique();
 
                     b.ToTable("Vrfs");
+                });
+
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("GroupsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
@@ -1042,6 +1197,25 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Navigation("Location");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.SectionPermission", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Section", "Section")
+                        .WithMany()
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Section");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
                 {
                     b.HasOne("IPAMdotNet.Data.Customer", "Customer")
@@ -1084,6 +1258,31 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Navigation("Vlan");
 
                     b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.User", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.AuthMethod", "AuthMethod")
+                        .WithMany()
+                        .HasForeignKey("AuthMethodId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AuthMethod");
+                });
+
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>

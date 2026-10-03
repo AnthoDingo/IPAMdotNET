@@ -30,6 +30,10 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<CustomField> CustomFields => Set<CustomField>();
     public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
     public DbSet<LogEntry> LogEntries => Set<LogEntry>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<SectionPermission> SectionPermissions => Set<SectionPermission>();
+    public DbSet<AuthMethod> AuthMethods => Set<AuthMethod>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     /// <summary>Ajoute une entrée au journal système.</summary>
     public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
@@ -213,6 +217,22 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
 
         modelBuilder.Entity<LogEntry>().HasIndex(l => l.Date);
+
+        // Serveur : utilisateurs, groupes, permissions, authentification, API
+        modelBuilder.Entity<User>().HasOne(u => u.AuthMethod).WithMany().OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Group>(entity =>
+        {
+            entity.HasIndex(g => g.Name).IsUnique();
+            entity.HasMany(g => g.Users).WithMany(u => u.Groups).UsingEntity("UserGroups");
+        });
+        modelBuilder.Entity<SectionPermission>(entity =>
+        {
+            entity.HasKey(p => new { p.SectionId, p.GroupId });
+            entity.HasOne(p => p.Section).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(p => p.Group).WithMany().OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
+        modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
 
         modelBuilder.Entity<PstnNumber>(entity =>
         {

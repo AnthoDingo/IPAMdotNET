@@ -14,7 +14,8 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
-        Sections = await SubnetTree.LoadAllAsync(db, s =>
-            Ip.Contains(Ipv4Multicast, s.Network) || Ip.Contains(Ipv6Multicast, s.Network));
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        Sections = await SubnetTree.LoadAllAsync(db, s => access.CanRead(s.SectionId)
+            && (Ip.Contains(Ipv4Multicast, s.Network) || Ip.Contains(Ipv6Multicast, s.Network)));
     }
 }

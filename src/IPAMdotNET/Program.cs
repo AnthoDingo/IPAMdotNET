@@ -1,10 +1,14 @@
+using System.Data.Common;
 using AnthoDingo.Setup;
 using AnthoDingo.Update;
+using IPAMdotNet.Api;
 using IPAMdotNet.Components;
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using System.Threading.RateLimiting;
 using IPAMdotNet.Setup;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -39,12 +43,21 @@ if (Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provid
     });
 }
 
+// Clés de protection des données (cookies, mot de passe SMTP chiffré) persistées : sans elles, un redémarrage
+// déconnecterait tout le monde et rendrait le mot de passe SMTP illisible. Le dossier est exclu de git.
+builder.Services.AddDataProtection()
+    .SetApplicationName("IPAMdotNet")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "keys")));
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/AccessDenied";
         options.Cookie.Name = "IPAMdotNet.Auth";
+        // Durée fixée à la connexion selon les paramètres serveur (ExpiresUtc) : pas de prolongation glissante.
+        options.SlidingExpiration = false;
+        options.Events.OnValidatePrincipal = SessionValidator.ValidateAsync;
     });
 
 builder.Services.AddAuthorizationBuilder()
@@ -54,9 +67,16 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
+    // Seuls les envois du formulaire comptent : afficher la page de connexion n'est pas une tentative.
+    options.AddPolicy("login", context => HttpMethods.IsPost(context.Request.Method)
+        ? RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) })
+        : RateLimitPartition.GetNoLimiter("affichage"));
+    // API : 300 requêtes par minute et par adresse IP.
+    options.AddPolicy(ApiEndpoints.RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1) }));
 });
 
 // Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
@@ -80,6 +100,23 @@ app.UseRequestLocalization("fr-FR");
 // Après la garde d'installation, avant UseRouting : aucune page ne s'exécute sur un schéma obsolète.
 app.UseMigrationsGate();
 
+// Paramètres serveur chargés une fois en cache (titre, fonctionnalités, sécurité), relus après chaque enregistrement.
+app.Use(async (context, next) =>
+{
+    if (context.RequestServices.GetService<AppDbContext>() is { } db)
+    {
+        try
+        {
+            await SettingsStore.GetServerAsync(db);
+        }
+        catch (DbException)
+        {
+            // Base injoignable : valeurs par défaut, la garde /update affiche l'erreur.
+        }
+    }
+    await next();
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -96,6 +133,7 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapIpamApi();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode()
    .AddAdditionalAssemblies(ServiceCollectionExtensions.UpdateAssembly);

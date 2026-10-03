@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +19,11 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<IpRequest> PendingRequests { get; private set; } = [];
     public int PendingRequestCount { get; private set; }
     public List<ChangeLog> LastChanges { get; private set; } = [];
+    public WidgetSettings Widgets { get; private set; } = new();
 
     public async Task OnGetAsync()
     {
+        Widgets = await SettingsStore.LoadAsync<WidgetSettings>(db, SettingsStore.WidgetsPrefix);
         SectionCount = await db.Sections.CountAsync();
         SubnetCount = await db.Subnets.CountAsync();
         VlanCount = await db.Vlans.CountAsync();
@@ -29,7 +32,9 @@ public class IndexModel(AppDbContext db) : PageModel
         UserCount = await db.Users.CountAsync();
 
         int userId = User.UserId();
-        Favorites = await db.FavoriteSubnets.Where(f => f.UserId == userId).Select(f => f.Subnet!)
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        Favorites = await access.Readable(db.Subnets)
+            .Where(s => db.FavoriteSubnets.Any(f => f.UserId == userId && f.SubnetId == s.Id))
             .OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).Take(10).ToListAsync();
 
         // Un admin voit toutes les demandes en attente, un utilisateur les siennes.

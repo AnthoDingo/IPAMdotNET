@@ -22,6 +22,50 @@ namespace IPAMdotNet.Migrations.SqlServer
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("ApiKeys");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.AppSetting", b =>
                 {
                     b.Property<string>("Key")
@@ -34,6 +78,50 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.HasKey("Key");
 
                     b.ToTable("AppSettings");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.AuthMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BindTemplate")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Port")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("UseSsl")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AuthMethods");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
@@ -431,6 +519,31 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.ToTable("FavoriteSubnets");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Group", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Groups");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.IpRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -762,6 +875,9 @@ namespace IPAMdotNet.Migrations.SqlServer
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DefaultAccess")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -777,6 +893,24 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .IsUnique();
 
                     b.ToTable("Sections");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.SectionPermission", b =>
+                {
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.HasKey("SectionId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("SectionPermissions");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
@@ -846,9 +980,19 @@ namespace IPAMdotNet.Migrations.SqlServer
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AuthMethodId")
+                        .HasColumnType("int");
+
                     b.Property<string>("DisplayName")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("bit");
@@ -864,6 +1008,8 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthMethodId");
 
                     b.HasIndex("UserName")
                         .IsUnique();
@@ -926,6 +1072,21 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .IsUnique();
 
                     b.ToTable("Vrfs");
+                });
+
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("GroupsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
@@ -1091,6 +1252,25 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Location");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.SectionPermission", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Section", "Section")
+                        .WithMany()
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Section");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
                 {
                     b.HasOne("IPAMdotNet.Data.Customer", "Customer")
@@ -1133,6 +1313,31 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Vlan");
 
                     b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.User", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.AuthMethod", "AuthMethod")
+                        .WithMany()
+                        .HasForeignKey("AuthMethodId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AuthMethod");
+                });
+
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>

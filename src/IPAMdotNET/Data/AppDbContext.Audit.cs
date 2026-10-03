@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Networking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -52,6 +53,11 @@ public abstract partial class AppDbContext
                 int id = (int)(deleted.Entry.Property("Id").OriginalValue ?? 0);
                 await CustomFieldValues.Where(v => v.Field!.EntityType == type && v.EntityId == id).ExecuteDeleteAsync(cancellationToken);
             }
+        }
+
+        if (!(await SettingsStore.GetServerAsync(this)).EnableChangelog)
+        {
+            return result;
         }
 
         // Après l'enregistrement : les identifiants des objets créés sont connus.
@@ -138,7 +144,14 @@ public abstract partial class AppDbContext
 
     private static string? Format(EntityEntry entry, PropertyEntry property, object? value)
     {
-        if (entry.Entity is User && property.Metadata.Name == nameof(User.PasswordHash))
+        bool secret = entry.Entity switch
+        {
+            User => property.Metadata.Name == nameof(User.PasswordHash),
+            AppSetting setting => property.Metadata.Name == nameof(AppSetting.Value) && setting.Key.EndsWith("Password", StringComparison.Ordinal),
+            ApiKey => property.Metadata.Name == nameof(ApiKey.KeyHash),
+            _ => false,
+        };
+        if (secret)
         {
             return value is null ? null : "***";
         }

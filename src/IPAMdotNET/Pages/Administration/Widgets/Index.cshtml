@@ -1,0 +1,26 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.Widgets.IndexModel
+@{
+    ViewData["Title"] = "Widgets";
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title"><i class="bi bi-grid"></i> Widgets du tableau de bord</div>
+    <p class="text-body-secondary">Widgets affichés sur le tableau de bord de tous les utilisateurs.</p>
+    <form method="post">
+        @foreach ((string Key, string Label) widget in WidgetSettings.All)
+        {
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" role="switch" id="widget-@widget.Key" name="Visible" value="@widget.Key" checked="@Model.Visible.Contains(widget.Key)" />
+                <label class="form-check-label" for="widget-@widget.Key">@widget.Label</label>
+            </div>
+        }
+        <button type="submit" class="btn btn-primary mt-2">Enregistrer</button>
+    </form>
+</div>

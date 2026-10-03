@@ -1,0 +1,78 @@
+@page
+@model IPAMdotNet.Pages.Administration.Settings.IndexModel
+@{
+    ViewData["Title"] = "Paramètres";
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="ipam-form">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-gear"></i> Site</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Settings.SiteTitle" class="form-label"></label>
+                <input asp-for="Settings.SiteTitle" class="form-control" />
+                <span asp-validation-for="Settings.SiteTitle" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.SiteUrl" class="form-label"></label>
+                <input asp-for="Settings.SiteUrl" class="form-control" placeholder="https://ipam.example.com" />
+                <div class="form-text">Utilisée dans les liens des e-mails.</div>
+                <span asp-validation-for="Settings.SiteUrl" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.AdminName" class="form-label"></label>
+                <input asp-for="Settings.AdminName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.AdminEmail" class="form-label"></label>
+                <input asp-for="Settings.AdminEmail" class="form-control" />
+                <div class="form-text">Affiché en pied de page comme contact.</div>
+                <span asp-validation-for="Settings.AdminEmail" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-toggles"></i> Fonctionnalités</div>
+        <div class="form-check form-switch mb-2">
+            <input asp-for="Settings.EnableIpRequests" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableIpRequests" class="form-check-label"></label>
+        </div>
+        <div class="form-check form-switch">
+            <input asp-for="Settings.EnableChangelog" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableChangelog" class="form-check-label"></label>
+            <div class="form-text">Désactivé, les modifications ne sont plus enregistrées dans le journal.</div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-shield-lock"></i> Sécurité</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Settings.MaxFailedLogins" class="form-label"></label>
+                <input asp-for="Settings.MaxFailedLogins" class="form-control" min="0" max="100" />
+                <div class="form-text">0 = pas de verrouillage.</div>
+                <span asp-validation-for="Settings.MaxFailedLogins" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Settings.LockoutMinutes" class="form-label"></label>
+                <input asp-for="Settings.LockoutMinutes" class="form-control" min="1" max="1440" />
+                <span asp-validation-for="Settings.LockoutMinutes" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Settings.SessionMinutes" class="form-label"></label>
+                <input asp-for="Settings.SessionMinutes" class="form-control" min="5" max="43200" />
+                <div class="form-text">Hors « Se souvenir de moi » (30 jours). S'applique aux connexions suivantes.</div>
+                <span asp-validation-for="Settings.SessionMinutes" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>

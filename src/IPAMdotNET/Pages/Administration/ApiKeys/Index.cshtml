@@ -1,0 +1,84 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.ApiKeys.IndexModel
+@{
+    ViewData["Title"] = "API";
+    string baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api";
+}
+
+@if (Model.CreatedKey is not null)
+{
+    <div class="alert alert-warning">
+        <div class="fw-semibold mb-1">Clé créée : copiez-la maintenant, elle ne sera plus jamais affichée.</div>
+        <code class="user-select-all fs-6">@Model.CreatedKey</code>
+    </div>
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-code-slash"></i> Clés d'API</div>
+    @if (Model.Keys.Count == 0)
+    {
+        <p class="ipam-empty">Aucune clé.</p>
+    }
+    else
+    {
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Nom</th><th>Début de la clé</th><th>Créée le</th><th>Dernière utilisation</th><th>État</th><th></th></tr></thead>
+            <tbody>
+                @foreach (ApiKey key in Model.Keys)
+                {
+                    <tr>
+                        <td>@key.Name <div class="small text-body-secondary">@key.Description</div></td>
+                        <td class="font-monospace">@key.KeyPrefix…</td>
+                        <td>@key.CreatedAt.ToLocalTime().ToString("g")</td>
+                        <td>@(key.LastUsedAt?.ToLocalTime().ToString("g") ?? "Jamais")</td>
+                        <td>@if (key.Enabled) { <span class="badge text-bg-success">Active</span> } else { <span class="badge text-bg-secondary">Désactivée</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <form method="post" asp-page-handler="Toggle" asp-route-id="@key.Id" class="d-inline">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">@(key.Enabled ? "Désactiver" : "Activer")</button>
+                            </form>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@key.Id" class="d-inline" onsubmit="return confirm('Supprimer cette clé ?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-5">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-plus-lg"></i> Nouvelle clé</div>
+            <form method="post" asp-page-handler="Create">
+                <div class="mb-2">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="Supervision, inventaire…" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <input asp-for="Description" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Créer la clé</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-7">
+        <div class="ipam-panel h-100 small">
+            <div class="ipam-panel-title"><i class="bi bi-book"></i> Utilisation</div>
+            <p>API REST en lecture seule, réponses JSON. Authentification par en-tête :</p>
+            <pre class="bg-body-tertiary p-2 rounded mb-2"><code>curl -H "X-Api-Key: &lt;clé&gt;" @baseUrl/subnets</code></pre>
+            <p class="mb-1">(<code>Authorization: Bearer &lt;clé&gt;</code> est aussi accepté.) Points d'accès :</p>
+            <ul class="mb-0 font-monospace">
+                <li>GET /api/sections</li>
+                <li>GET /api/subnets ?section=id &amp; ip=adresse</li>
+                <li>GET /api/subnets/{id}</li>
+                <li>GET /api/vlans · /api/vrfs</li>
+                <li>GET /api/devices · /api/locations · /api/customers</li>
+            </ul>
+        </div>
+    </div>
+</div>

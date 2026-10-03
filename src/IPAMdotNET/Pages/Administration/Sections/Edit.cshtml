@@ -18,6 +18,11 @@
             <textarea asp-for="Section.Description" class="form-control" rows="2"></textarea>
             <span asp-validation-for="Section.Description" class="text-danger"></span>
         </div>
+        <div class="mb-3">
+            <label asp-for="Section.DefaultAccess" class="form-label"></label>
+            <select asp-for="Section.DefaultAccess" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.SectionAccessLevel>()" class="form-select"></select>
+            <div class="form-text">Accès de tous les utilisateurs connectés. Les groupes peuvent accorder davantage ; les administrateurs ont toujours accès.</div>
+        </div>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
         <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
     </form>

@@ -9,6 +9,7 @@ public class IndexModel(AppDbContext db) : PageModel
 {
     public Section Section { get; private set; } = new();
     public List<SubnetNode> Tree { get; private set; } = [];
+    public bool CanWrite { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -17,7 +18,13 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             return NotFound();
         }
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        if (!access.CanRead(id))
+        {
+            return Forbid();
+        }
         Section = section;
+        CanWrite = access.CanWrite(id);
         Tree = await SubnetTree.LoadAsync(db, id);
         return Page();
     }

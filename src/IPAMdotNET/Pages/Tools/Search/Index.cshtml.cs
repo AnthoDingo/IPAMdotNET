@@ -41,7 +41,8 @@ public class IndexModel(AppDbContext db) : PageModel
         string text = query.ToLowerInvariant();
         long? number = long.TryParse(query, out long parsed) ? parsed : null;
 
-        Subnets = await SearchSubnetsAsync(query, text);
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        Subnets = await SearchSubnetsAsync(access.Readable(db.Subnets), query, text);
         Vlans = await db.Vlans
             .Where(v => v.Name.ToLower().Contains(text) || (v.Description != null && v.Description.ToLower().Contains(text))
                 || v.Number == number)
@@ -84,13 +85,19 @@ public class IndexModel(AppDbContext db) : PageModel
         CustomValues = await db.CustomFieldValues.Include(v => v.Field)
             .Where(v => v.Value.ToLower().Contains(text))
             .OrderBy(v => v.Field!.EntityType).ThenBy(v => v.EntityId).Take(Limit).ToListAsync();
+        if (access.ReadableIds is not null)
+        {
+            // Valeurs portées par des sous-réseaux de sections non lisibles : retirées.
+            HashSet<int> readableSubnets = (await access.Readable(db.Subnets).Select(s => s.Id).ToListAsync()).ToHashSet();
+            CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(Subnet) && !readableSubnets.Contains(v.EntityId));
+        }
     }
 
     /// <summary>
     /// Adresse → sous-réseaux qui la contiennent ; réseau CIDR → sous-réseaux qui le contiennent ou qu'il contient ;
     /// texte → description.
     /// </summary>
-    private async Task<List<Subnet>> SearchSubnetsAsync(string query, string text)
+    private static async Task<List<Subnet>> SearchSubnetsAsync(IQueryable<Subnet> readable, string query, string text)
     {
         IPNetwork? target = null;
         if (IPAddress.TryParse(query, out IPAddress? address))
@@ -102,7 +109,7 @@ public class IndexModel(AppDbContext db) : PageModel
             target = network;
         }
 
-        IQueryable<Subnet> subnets = db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf);
+        IQueryable<Subnet> subnets = readable.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf);
         if (target is null)
         {
             return await subnets.Where(s => s.Description != null && s.Description.ToLower().Contains(text))

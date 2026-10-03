@@ -11,9 +11,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Network.Subnets;
 
-[Authorize(Policy = "Admin")]
+/// <summary>Ouvert à tout utilisateur ayant le droit d'écriture sur la section (admin, ou permission de groupe).</summary>
 public class EditModel(AppDbContext db) : PageModel
 {
+    private SectionAccess access = null!;
+
     [BindProperty]
     public Subnet Subnet { get; set; } = new();
 
@@ -35,6 +37,7 @@ public class EditModel(AppDbContext db) : PageModel
 
     public async Task<IActionResult> OnGetAsync(int? id, int? sectionId)
     {
+        access = await SectionAccess.ForAsync(db, User);
         if (id is not null)
         {
             Subnet? subnet = await db.Subnets.FindAsync(id);
@@ -42,12 +45,24 @@ public class EditModel(AppDbContext db) : PageModel
             {
                 return NotFound();
             }
+            if (!access.CanWrite(subnet.SectionId))
+            {
+                return Forbid();
+            }
             Subnet = subnet;
             Cidr = subnet.Network.ToString();
         }
         else if (sectionId is not null)
         {
+            if (!access.CanWrite(sectionId.Value))
+            {
+                return Forbid();
+            }
             Subnet.SectionId = sectionId.Value;
+        }
+        else if (!access.CanWriteAny)
+        {
+            return Forbid();
         }
         await LoadListsAsync();
         CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Subnet), id ?? 0);
@@ -57,6 +72,23 @@ public class EditModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnPostAsync(int? id)
     {
         Subnet.Id = id ?? 0;
+        access = await SectionAccess.ForAsync(db, User);
+        if (id is not null)
+        {
+            int? currentSection = await db.Subnets.Where(s => s.Id == id).Select(s => (int?)s.SectionId).SingleOrDefaultAsync();
+            if (currentSection is null)
+            {
+                return NotFound();
+            }
+            if (!access.CanWrite(currentSection.Value))
+            {
+                return Forbid();
+            }
+        }
+        if (!access.CanWrite(Subnet.SectionId))
+        {
+            ModelState.AddModelError("Subnet.SectionId", "Vous n'avez pas le droit d'écriture sur cette section.");
+        }
         if (!string.IsNullOrWhiteSpace(Cidr))
         {
             if (Ip.TryParseNetwork(Cidr, out IPNetwork network))
@@ -102,6 +134,10 @@ public class EditModel(AppDbContext db) : PageModel
         {
             return NotFound();
         }
+        if (!(await SectionAccess.ForAsync(db, User)).CanWrite(subnet.SectionId))
+        {
+            return Forbid();
+        }
         db.Subnets.Remove(subnet);
         await db.SaveChangesAsync();
         return RedirectToPage("/Sections/Index", new { id = subnet.SectionId });
@@ -109,8 +145,9 @@ public class EditModel(AppDbContext db) : PageModel
 
     private async Task LoadListsAsync()
     {
-        Sections = await db.Sections.OrderBy(s => s.Name)
-            .Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToListAsync();
+        Sections = (await db.Sections.OrderBy(s => s.Name).ToListAsync())
+            .Where(s => access.CanWrite(s.Id))
+            .Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList();
         Vlans = await db.Vlans.OrderBy(v => v.Number)
             .Select(v => new SelectListItem(v.Number + " – " + v.Name, v.Id.ToString())).ToListAsync();
         Vrfs = await db.Vrfs.OrderBy(v => v.Name)

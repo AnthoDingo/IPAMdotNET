@@ -1,0 +1,35 @@
+@page
+@model IPAMdotNet.Pages.Administration.Groups.IndexModel
+@{
+    ViewData["Title"] = "Groupes";
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-people"></i> Groupes</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+    </div>
+    <p class="text-body-secondary">Les groupes donnent aux utilisateurs non administrateurs l'accès en lecture ou en écriture à des sections, en plus de l'accès par défaut de chaque section.</p>
+    @if (Model.Groups.Count == 0)
+    {
+        <p class="ipam-empty">Aucun groupe.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Nom</th><th>Description</th><th class="text-end">Membres</th><th class="text-end">Sections</th><th></th></tr></thead>
+            <tbody>
+                @foreach (GroupRow row in Model.Groups)
+                {
+                    <tr>
+                        <td>@row.Group.Name</td>
+                        <td>@row.Group.Description</td>
+                        <td class="text-end">@row.MemberCount</td>
+                        <td class="text-end">@row.PermissionCount</td>
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Group.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

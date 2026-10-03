@@ -58,6 +58,9 @@ public class ChangeLog
             [nameof(IpRequest)] = ("Demande d'adresse", "/Tools/Requests/Index", false),
             [nameof(AppSetting)] = ("Paramètre", "/Tools/Instructions/Index", false),
             [nameof(CustomField)] = ("Champ personnalisé", "/Administration/CustomFields/Index", false),
-            [nameof(User)] = ("Utilisateur", "/Index", false),
+            [nameof(User)] = ("Utilisateur", "/Administration/Users/Edit", true),
+            [nameof(Group)] = ("Groupe", "/Administration/Groups/Edit", true),
+            [nameof(AuthMethod)] = ("Méthode d'authentification", "/Administration/AuthMethods/Edit", true),
+            [nameof(ApiKey)] = ("Clé d'API", "/Administration/ApiKeys/Index", false),
         };
 }

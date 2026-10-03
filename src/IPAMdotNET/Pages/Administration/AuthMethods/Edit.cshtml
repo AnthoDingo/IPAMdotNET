@@ -1,0 +1,75 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Administration.AuthMethods.EditModel
+@{
+    ViewData["Title"] = Model.Method.Id == 0 ? "Nouvel annuaire LDAP / AD" : $"Annuaire {Model.Method.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Method.Name" class="form-label"></label>
+                <input asp-for="Method.Name" class="form-control" />
+                <span asp-validation-for="Method.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Method.Host" class="form-label"></label>
+                <input asp-for="Method.Host" class="form-control font-monospace" placeholder="dc01.corp.local" />
+                <span asp-validation-for="Method.Host" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Method.Port" class="form-label"></label>
+                <input asp-for="Method.Port" class="form-control" min="1" max="65535" />
+                <span asp-validation-for="Method.Port" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Method.TimeoutSeconds" class="form-label"></label>
+                <input asp-for="Method.TimeoutSeconds" class="form-control" min="1" max="60" />
+                <span asp-validation-for="Method.TimeoutSeconds" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch mb-2">
+                    <input asp-for="Method.UseSsl" class="form-check-input" role="switch" />
+                    <label asp-for="Method.UseSsl" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label asp-for="Method.BindTemplate" class="form-label"></label>
+                <input asp-for="Method.BindTemplate" class="form-control font-monospace" />
+                <div class="form-text">« {0} » est remplacé par le nom d'utilisateur. Active Directory : <code>{0}@@corp.local</code> ; OpenLDAP : <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
+                <span asp-validation-for="Method.BindTemplate" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Method.Description" class="form-label"></label>
+                <input asp-for="Method.Description" class="form-control" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+
+        <fieldset class="mt-4 pt-3 border-top">
+            <legend class="fs-6 fw-semibold">Tester la configuration</legend>
+            @if (Model.TestResult is not null)
+            {
+                <div class="alert @(Model.TestSucceeded ? "alert-success" : "alert-warning")">@Model.TestResult</div>
+            }
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="TestUserName" class="form-label"></label>
+                    <input asp-for="TestUserName" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="TestPassword" class="form-label"></label>
+                    <input asp-for="TestPassword" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" asp-page-handler="Test" asp-route-id="@(Model.Method.Id == 0 ? null : Model.Method.Id)" class="btn btn-outline-primary">Tester</button>
+                </div>
+            </div>
+            <div class="form-text">Le test utilise les valeurs saisies ci-dessus, même non enregistrées. Rien n'est conservé.</div>
+        </fieldset>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, "cet annuaire"))" />
+</div>

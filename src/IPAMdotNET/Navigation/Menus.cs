@@ -1,7 +1,14 @@
+using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+
 namespace IPAMdotNet.Navigation;
 
 /// <summary>Entrée de menu. <paramref name="Page"/> null = fonctionnalité pas encore implémentée (affichée désactivée).</summary>
-public sealed record MenuItem(string Label, string Icon, string? Page = null);
+public sealed record MenuItem(string Label, string Icon, string? Page = null, Func<ServerSettings, bool>? Visible = null)
+{
+    /// <summary>Entrée affichée selon les paramètres serveur (fonctionnalité désactivable).</summary>
+    public bool IsVisible => Visible?.Invoke(SettingsStore.Server) != false;
+}
 
 public sealed record MenuGroup(string Label, IReadOnlyList<MenuItem> Items);
 
@@ -16,7 +23,7 @@ public static class Menus
             new("Calculateur IP", "calculator", "/Tools/Calculator/Index"),
             new("Journal des modifications", "clock-history", "/Tools/Changelog/Index"),
             new("Sous-réseaux favoris", "star", "/Tools/Favorites/Index"),
-            new("Demandes d'adresses", "inbox", "/Tools/Requests/Index"),
+            new("Demandes d'adresses", "inbox", "/Tools/Requests/Index", s => s.EnableIpRequests),
             new("Instructions", "info-circle", "/Tools/Instructions/Index"),
         ]),
         new("Réseau",
@@ -44,15 +51,15 @@ public static class Menus
     [
         new("Serveur",
         [
-            new("Paramètres", "gear"),
-            new("Utilisateurs", "person"),
-            new("Groupes", "people"),
-            new("Méthodes d'authentification", "shield-lock"),
-            new("Messagerie", "envelope"),
-            new("API", "code-slash"),
+            new("Paramètres", "gear", "/Administration/Settings/Index"),
+            new("Utilisateurs", "person", "/Administration/Users/Index"),
+            new("Groupes", "people", "/Administration/Groups/Index"),
+            new("Méthodes d'authentification", "shield-lock", "/Administration/AuthMethods/Index"),
+            new("Messagerie", "envelope", "/Administration/Mail/Index"),
+            new("API", "code-slash", "/Administration/ApiKeys/Index"),
             new("Agents de scan", "broadcast-pin"),
             new("Langues", "translate"),
-            new("Widgets", "grid"),
+            new("Widgets", "grid", "/Administration/Widgets/Index"),
             new("Étiquettes", "tags"),
         ]),
         new("Gestion IP",

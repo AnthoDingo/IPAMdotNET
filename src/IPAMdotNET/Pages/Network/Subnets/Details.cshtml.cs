@@ -32,6 +32,12 @@ public class DetailsModel(AppDbContext db) : PageModel
         {
             return NotFound();
         }
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        if (!access.CanRead(subnet.SectionId))
+        {
+            return Forbid();
+        }
+        CanWrite = access.CanWrite(subnet.SectionId);
         Subnet = subnet;
         Tree = await SubnetTree.LoadAsync(db, subnet.SectionId);
 
@@ -53,6 +59,8 @@ public class DetailsModel(AppDbContext db) : PageModel
     }
 
     public bool IsFavorite { get; private set; }
+
+    public bool CanWrite { get; private set; }
 
     public async Task<IActionResult> OnPostToggleFavoriteAsync(int id)
     {

@@ -1,0 +1,78 @@
+@page "{id:int?}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.Users.EditModel
+@{
+    ViewData["Title"] = Model.UserId == 0 ? "Nouvel utilisateur" : $"Utilisateur {Model.Input.UserName}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Input.UserName" class="form-label"></label>
+                <input asp-for="Input.UserName" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.DisplayName" class="form-label"></label>
+                <input asp-for="Input.DisplayName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <div class="form-text">Utilisée pour les notifications.</div>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.AuthMethodId" class="form-label"></label>
+                <select asp-for="Input.AuthMethodId" asp-items="Model.AuthMethods" class="form-select">
+                    <option value="">Locale (mot de passe IPAMdotNet)</option>
+                </select>
+                <span asp-validation-for="Input.AuthMethodId" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
+                <div class="form-text">Comptes locaux uniquement@(Model.UserId == 0 ? "" : " ; laisser vide pour ne pas le changer"). @EditModel.MinPasswordLength caractères minimum.</div>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.PasswordConfirm" class="form-label"></label>
+                <input asp-for="Input.PasswordConfirm" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Input.PasswordConfirm" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input asp-for="Input.IsAdmin" class="form-check-input" role="switch" />
+                    <label asp-for="Input.IsAdmin" class="form-check-label"></label>
+                </div>
+                <div class="form-check form-switch">
+                    <input asp-for="Input.Enabled" class="form-check-input" role="switch" />
+                    <label asp-for="Input.Enabled" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-label">Groupes</div>
+                @if (Model.Groups.Count == 0)
+                {
+                    <p class="ipam-empty small">Aucun groupe. <a asp-page="/Administration/Groups/Edit">Créer un groupe</a></p>
+                }
+                @foreach (Group group in Model.Groups)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="group-@group.Id" name="Input.GroupIds" value="@group.Id" checked="@Model.Input.GroupIds.Contains(group.Id)" />
+                        <label class="form-check-label" for="group-@group.Id">@group.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    @if (!Model.IsSelf)
+    {
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.UserId, "cet utilisateur"))" />
+    }
+</div>

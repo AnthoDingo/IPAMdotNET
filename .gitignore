@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Configuration écrite par l'assistant d'installation (contient la chaîne de connexion)
 appsettings.local.json
+
+# Clés de protection des données ASP.NET Core (cookies, secrets chiffrés)
+keys/

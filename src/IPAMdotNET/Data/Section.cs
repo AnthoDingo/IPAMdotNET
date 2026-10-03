@@ -13,6 +13,10 @@ public class Section
     [MaxLength(500), Display(Name = "Description")]
     public string? Description { get; set; }
 
+    /// <summary>Accès de tous les utilisateurs connectés, en plus des permissions de groupe (les admins voient tout).</summary>
+    [Display(Name = "Accès par défaut")]
+    public SectionAccessLevel DefaultAccess { get; set; } = SectionAccessLevel.Read;
+
     [ValidateNever]
     public List<Subnet> Subnets { get; set; } = [];
 }

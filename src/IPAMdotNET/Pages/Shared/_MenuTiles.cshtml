@@ -5,7 +5,7 @@
     <div class="ipam-panel mb-3">
         <div class="ipam-panel-title">@group.Label</div>
         <div class="ipam-tiles">
-            @foreach (MenuItem item in group.Items)
+            @foreach (MenuItem item in group.Items.Where(i => i.IsVisible))
             {
                 if (item.Page is null)
                 {

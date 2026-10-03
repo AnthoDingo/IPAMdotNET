@@ -31,7 +31,7 @@
                 <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>Favori
             </button>
         </form>
-        @if (User.IsInRole("Admin"))
+        @if (Model.CanWrite)
         {
             <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
         }
@@ -77,7 +77,7 @@
         </dd>
         <dt class="col-sm-4 col-xl-3">Demandes d'adresses</dt>
         <dd class="col-sm-8 col-xl-9">
-            @if (Model.Subnet.AllowRequests)
+            @if (Model.Subnet.AllowRequests && IPAMdotNet.Maintenance.SettingsStore.Server.EnableIpRequests)
             {
                 <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>Demander une adresse</a>
             }

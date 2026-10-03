@@ -17,7 +17,7 @@
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
         <span><i class="bi bi-collection"></i> @Model.Section.Name</span>
-        @if (User.IsInRole("Admin"))
+        @if (Model.CanWrite)
         {
             <a asp-page="/Network/Subnets/Edit" asp-route-sectionId="@Model.Section.Id" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter un sous-réseau</a>
         }

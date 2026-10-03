@@ -1,9 +1,16 @@
 @using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
 @using Microsoft.EntityFrameworkCore
 @inject AppDbContext Db
 @{
     bool authenticated = User.Identity?.IsAuthenticated == true;
-    List<Section> sections = authenticated ? await Db.Sections.OrderBy(s => s.Name).ToListAsync() : [];
+    List<Section> sections = [];
+    if (authenticated)
+    {
+        SectionAccess access = await SectionAccess.ForAsync(Db, User);
+        sections = (await Db.Sections.OrderBy(s => s.Name).ToListAsync()).Where(s => access.CanRead(s.Id)).ToList();
+    }
+    ServerSettings settings = SettingsStore.Server;
     bool isAdmin = User.IsInRole("Admin");
     bool hasSidebar = IsSectionDefined("Sidebar");
     PathString path = Context.Request.Path;
@@ -14,7 +21,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - IPAMdotNet</title>
+    <title>@ViewData["Title"] - @settings.SiteTitle</title>
     @* Appliqué avant le rendu pour éviter un flash du mauvais thème. *@
     <script>
         (() => {
@@ -34,7 +41,7 @@
     <header class="ipam-header">
         <div class="container-fluid d-flex align-items-center gap-3">
             <a class="ipam-brand" asp-page="/Index">
-                <span class="ipam-brand-name">IPAMdotNet</span>
+                <span class="ipam-brand-name">@settings.SiteTitle</span>
                 <span class="ipam-brand-sub d-none d-sm-inline">Gestion d'adresses IP</span>
             </a>
             <div class="ms-auto d-flex align-items-center gap-2">
@@ -56,7 +63,7 @@
                             <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline">@User.Identity!.Name</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><span class="dropdown-item disabled" title="Bientôt disponible"><i class="bi bi-person"></i> Mon compte</span></li>
+                            <li><a class="dropdown-item" asp-page="/Profile/Index"><i class="bi bi-person"></i> Mon compte</a></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li>
                                 <form method="post" asp-page="/Account/Logout" class="m-0">
@@ -150,6 +157,10 @@
     <footer class="ipam-footer">
         <div class="container-fluid">
             IPAMdotNet @(version is null ? "" : $"v{version}") &middot; <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0-or-later</a>
+            @if (settings.AdminEmail is not null)
+            {
+                <text>&middot; En cas de problème, contactez <a href="mailto:@settings.AdminEmail">@(settings.AdminName ?? settings.AdminEmail)</a></text>
+            }
         </div>
     </footer>
 

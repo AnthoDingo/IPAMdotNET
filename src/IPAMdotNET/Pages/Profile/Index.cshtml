@@ -1,0 +1,66 @@
+@page
+@model IPAMdotNet.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Mon compte";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Mon compte</li>
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="ipam-form">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-person-circle"></i> @Model.Account.UserName</div>
+        <dl class="row ipam-details">
+            <dt class="col-sm-4">Rôle</dt>
+            <dd class="col-sm-8">@(Model.Account.IsAdmin ? "Administrateur" : "Utilisateur")</dd>
+            <dt class="col-sm-4">Authentification</dt>
+            <dd class="col-sm-8">@(Model.Account.AuthMethod?.Name ?? "Locale")</dd>
+        </dl>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsLocal)
+    {
+        <div class="ipam-panel mb-3">
+            <div class="ipam-panel-title"><i class="bi bi-key"></i> Changer de mot de passe</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="CurrentPassword" class="form-label"></label>
+                    <input asp-for="CurrentPassword" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NewPassword" class="form-label"></label>
+                    <input asp-for="NewPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NewPasswordConfirm" class="form-label"></label>
+                    <input asp-for="NewPasswordConfirm" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="NewPasswordConfirm" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-text">Laisser vide pour conserver le mot de passe actuel.</div>
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>

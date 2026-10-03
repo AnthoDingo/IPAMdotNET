@@ -7,9 +7,12 @@ namespace IPAMdotNet.Pages.Network.Subnets;
 public class IndexModel(AppDbContext db) : PageModel
 {
     public List<SectionSubnets> Sections { get; private set; } = [];
+    public bool CanWriteAny { get; private set; }
 
     public async Task OnGetAsync()
     {
-        Sections = await SubnetTree.LoadAllAsync(db);
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        CanWriteAny = access.CanWriteAny;
+        Sections = await SubnetTree.LoadAllAsync(db, s => access.CanRead(s.SectionId));
     }
 }

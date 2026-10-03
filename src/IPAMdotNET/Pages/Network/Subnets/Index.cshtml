@@ -6,7 +6,7 @@
 
 <div class="d-flex align-items-center mb-3">
     <h1 class="h5 mb-0"><i class="bi bi-diagram-3"></i> Tous les sous-réseaux</h1>
-    @if (User.IsInRole("Admin"))
+    @if (Model.CanWriteAny)
     {
         <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
     }
