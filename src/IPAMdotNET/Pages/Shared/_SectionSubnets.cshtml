@@ -1,0 +1,13 @@
+@using IPAMdotNet.Networking
+@model IReadOnlyList<SectionSubnets>
+
+@foreach (SectionSubnets group in Model)
+{
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title">
+            <i class="bi bi-collection"></i>
+            <a asp-page="/Sections/Index" asp-route-id="@group.Section.Id">@group.Section.Name</a>
+        </div>
+        <partial name="_SubnetTable" model="group.Nodes" />
+    </div>
+}

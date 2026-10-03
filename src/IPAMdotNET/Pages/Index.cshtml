@@ -4,17 +4,18 @@
     ViewData["Title"] = "Tableau de bord";
 }
 
-@* Widgets du tableau de bord de phpIPAM. Seules les statistiques utilisateurs sont réelles pour l'instant. *@
+@* Widgets du tableau de bord de phpIPAM. Seules les statistiques sont alimentées pour l'instant. *@
 <div class="row g-3">
     <div class="col-lg-6 col-xxl-4">
         <div class="ipam-panel h-100">
             <div class="ipam-panel-title"><i class="bi bi-bar-chart"></i> Statistiques</div>
             <table class="table table-sm mb-0">
                 <tbody>
-                    <tr><th scope="row">Sections</th><td class="text-end text-body-secondary">—</td></tr>
-                    <tr><th scope="row">Sous-réseaux</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row"><a asp-page="/Administration/Sections/Index">Sections</a></th><td class="text-end">@Model.SectionCount</td></tr>
+                    <tr><th scope="row"><a asp-page="/Network/Subnets/Index">Sous-réseaux</a></th><td class="text-end">@Model.SubnetCount</td></tr>
                     <tr><th scope="row">Adresses IP</th><td class="text-end text-body-secondary">—</td></tr>
-                    <tr><th scope="row">VLAN</th><td class="text-end text-body-secondary">—</td></tr>
+                    <tr><th scope="row"><a asp-page="/Network/Vlans/Index">VLAN</a></th><td class="text-end">@Model.VlanCount</td></tr>
+                    <tr><th scope="row"><a asp-page="/Network/Vrfs/Index">VRF</a></th><td class="text-end">@Model.VrfCount</td></tr>
                     <tr><th scope="row">Utilisateurs</th><td class="text-end">@Model.UserCount</td></tr>
                 </tbody>
             </table>

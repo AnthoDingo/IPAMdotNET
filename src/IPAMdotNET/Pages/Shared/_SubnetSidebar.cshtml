@@ -1,0 +1,27 @@
+@using System.Globalization
+@using IPAMdotNet.Networking
+@model SubnetSidebar
+
+<div class="ipam-side-group">
+    <div class="ipam-side-title">
+        <a asp-page="/Sections/Index" asp-route-id="@Model.Section.Id" class="text-reset text-decoration-none">@Model.Section.Name</a>
+    </div>
+    @if (Model.Nodes.Count == 0)
+    {
+        <p class="ipam-empty px-3 small">Aucun sous-réseau.</p>
+    }
+    else
+    {
+        <ul class="nav flex-column ipam-subnet-tree">
+            @foreach (SubnetNode node in Model.Nodes)
+            {
+                <li class="nav-item">
+                    <a class="nav-link font-monospace @(node.Subnet.Id == Model.SelectedId ? "active" : "")"
+                       style="padding-left: @((node.Depth * 0.9 + 1).ToString(CultureInfo.InvariantCulture))rem"
+                       asp-page="/Network/Subnets/Details" asp-route-id="@node.Subnet.Id"
+                       title="@node.Subnet.Description">@node.Subnet.Network</a>
+                </li>
+            }
+        </ul>
+    }
+</div>

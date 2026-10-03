@@ -1,5 +1,9 @@
+@using IPAMdotNet.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
 @{
     bool authenticated = User.Identity?.IsAuthenticated == true;
+    List<Section> sections = authenticated ? await Db.Sections.OrderBy(s => s.Name).ToListAsync() : [];
     bool isAdmin = User.IsInRole("Admin");
     bool hasSidebar = IsSectionDefined("Sidebar");
     PathString path = Context.Request.Path;
@@ -79,15 +83,27 @@
                             <a class="nav-link @(path == "/" || path.StartsWithSegments("/Index") ? "active" : "")" asp-page="/Index"><i class="bi bi-house"></i> Tableau de bord</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-collection"></i> Sections</a>
+                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Sections") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-collection"></i> Sections</a>
                             <ul class="dropdown-menu">
-                                <li><span class="dropdown-item-text text-body-secondary">Aucune section</span></li>
+                                @foreach (Section menuSection in sections)
+                                {
+                                    <li><a class="dropdown-item" asp-page="/Sections/Index" asp-route-id="@menuSection.Id">@menuSection.Name</a></li>
+                                }
+                                @if (sections.Count == 0)
+                                {
+                                    <li><span class="dropdown-item-text text-body-secondary">Aucune section</span></li>
+                                }
+                                @if (isAdmin)
+                                {
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-page="/Administration/Sections/Index"><i class="bi bi-gear"></i> Gérer les sections</a></li>
+                                }
                             </ul>
                         </li>
                     </ul>
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> Outils</a>
+                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") || path.StartsWithSegments("/Network") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> Outils</a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item fw-semibold" asp-page="/Tools/Index"><i class="bi bi-grid-1x2"></i> Tous les outils</a>
                                 <hr class="dropdown-divider" />

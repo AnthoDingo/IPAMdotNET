@@ -1,0 +1,27 @@
+@using IPAMdotNet.Networking
+@model IReadOnlyList<SubnetNode>
+@{
+    // L'indentation est relative au premier nœud, pour afficher une sous-arborescence.
+    int baseDepth = Model.Count > 0 ? Model.Min(n => n.Depth) : 0;
+}
+
+<table class="table table-sm table-hover align-middle mb-0">
+    <thead><tr><th>Sous-réseau</th><th>Description</th><th>VLAN</th><th>VRF</th></tr></thead>
+    <tbody>
+        @foreach (SubnetNode node in Model)
+        {
+            <tr>
+                <td class="font-monospace" style="padding-left: @(((node.Depth - baseDepth) * 1.25 + 0.25).ToString(System.Globalization.CultureInfo.InvariantCulture))rem">
+                    @if (node.Depth > baseDepth)
+                    {
+                        <i class="bi bi-arrow-return-right text-body-secondary"></i>
+                    }
+                    <a asp-page="/Network/Subnets/Details" asp-route-id="@node.Subnet.Id">@node.Subnet.Network</a>
+                </td>
+                <td>@node.Subnet.Description</td>
+                <td>@(node.Subnet.Vlan is null ? "" : $"{node.Subnet.Vlan.Number} – {node.Subnet.Vlan.Name}")</td>
+                <td>@node.Subnet.Vrf?.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>

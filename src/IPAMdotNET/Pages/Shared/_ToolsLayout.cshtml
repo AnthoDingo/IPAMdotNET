@@ -1,0 +1,28 @@
+@* Pages des menus Outils / Administration : fil d'Ariane + menu correspondant en colonne gauche. *@
+@{
+    Layout = "_Layout";
+    bool admin = Context.Request.Path.StartsWithSegments("/Administration");
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    @if (admin)
+    {
+        <li class="breadcrumb-item"><a asp-page="/Administration/Index">Administration</a></li>
+    }
+    else
+    {
+        <li class="breadcrumb-item"><a asp-page="/Tools/Index">Outils</a></li>
+    }
+    <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+}
+
+@section Sidebar {
+    <partial name="_MenuSidebar" model="admin ? Menus.Administration : Menus.Tools" />
+}
+
+@RenderBody()
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

@@ -1,0 +1,81 @@
+@page "{id:int}"
+@using System.Net
+@using IPAMdotNet.Data
+@using IPAMdotNet.Networking
+@model IPAMdotNet.Pages.Network.Subnets.DetailsModel
+@{
+    Layout = "_Layout";
+    IPNetwork network = Model.Subnet.Network;
+    ViewData["Title"] = network.ToString();
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section!.Name</a></li>
+    @foreach (Subnet ancestor in Model.Ancestors)
+    {
+        <li class="breadcrumb-item"><a asp-page="Details" asp-route-id="@ancestor.Id">@ancestor.Network</a></li>
+    }
+    <li class="breadcrumb-item active" aria-current="page">@network</li>
+}
+
+@section Sidebar {
+    <partial name="_SubnetSidebar" model="@(new SubnetSidebar(Model.Subnet.Section!, Model.Tree, Model.Subnet.Id))" />
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+        }
+    </div>
+    <dl class="row mb-0 ipam-details">
+        <dt class="col-sm-4 col-xl-3">Description</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Description ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">Adresse réseau</dt>
+        <dd class="col-sm-8 col-xl-9 font-monospace">@network.BaseAddress</dd>
+        @if (Model.Subnet.IsIPv4)
+        {
+            <dt class="col-sm-4 col-xl-3">Masque</dt>
+            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.Ipv4Mask(network.PrefixLength) (/@network.PrefixLength)</dd>
+            <dt class="col-sm-4 col-xl-3">Diffusion</dt>
+            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
+        }
+        else
+        {
+            <dt class="col-sm-4 col-xl-3">Dernière adresse</dt>
+            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
+        }
+        <dt class="col-sm-4 col-xl-3">Nombre d'adresses</dt>
+        <dd class="col-sm-8 col-xl-9">@Ip.AddressCount(network).ToString("N0")</dd>
+        <dt class="col-sm-4 col-xl-3">VLAN</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vlan is null ? "—" : $"{Model.Subnet.Vlan.Number} – {Model.Subnet.Vlan.Name}")</dd>
+        <dt class="col-sm-4 col-xl-3">VRF</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vrf?.Name ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">Serveurs de noms</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (Model.Subnet.Nameserver is null)
+            {
+                <text>—</text>
+            }
+            else
+            {
+                @Model.Subnet.Nameserver.Name <span class="font-monospace text-body-secondary">(@Model.Subnet.Nameserver.Servers.Replace(";", ", "))</span>
+            }
+        </dd>
+    </dl>
+</div>
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title"><i class="bi bi-diagram-2"></i> Sous-réseaux contenus</div>
+    @if (Model.Descendants.Count == 0)
+    {
+        <p class="ipam-empty">Aucun sous-réseau contenu.</p>
+    }
+    else
+    {
+        <partial name="_SubnetTable" model="Model.Descendants" />
+    }
+</div>

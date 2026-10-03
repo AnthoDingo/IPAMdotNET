@@ -1,0 +1,46 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Network.Routing.IndexModel
+@{
+    ViewData["Title"] = "Routage BGP";
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-signpost-split"></i> Pairs BGP</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Peers.Count == 0)
+    {
+        <p class="ipam-empty">Aucun pair BGP.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Pair</th><th>Type</th><th>AS local</th><th>Adresse locale</th><th>AS du pair</th><th>Adresse du pair</th><th>VRF</th><th>Description</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (BgpPeer peer in Model.Peers)
+                {
+                    <tr>
+                        <td>@peer.Name</td>
+                        <td><span class="badge text-bg-secondary">@peer.Type</span></td>
+                        <td>@peer.LocalAs</td>
+                        <td class="font-monospace">@peer.LocalAddress</td>
+                        <td>@peer.PeerAs</td>
+                        <td class="font-monospace">@peer.PeerAddress</td>
+                        <td>@peer.Vrf?.Name</td>
+                        <td>@peer.Description</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@peer.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

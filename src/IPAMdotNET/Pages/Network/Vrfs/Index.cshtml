@@ -1,0 +1,41 @@
+@page
+@model IPAMdotNet.Pages.Network.Vrfs.IndexModel
+@{
+    ViewData["Title"] = "VRF";
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-shuffle"></i> VRF</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Vrfs.Count == 0)
+    {
+        <p class="ipam-empty">Aucune VRF.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Nom</th><th>RD</th><th>Description</th><th class="text-end">Sous-réseaux</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (VrfRow row in Model.Vrfs)
+                {
+                    <tr>
+                        <td>@row.Vrf.Name</td>
+                        <td>@row.Vrf.RouteDistinguisher</td>
+                        <td>@row.Vrf.Description</td>
+                        <td class="text-end">@row.SubnetCount</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Vrf.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

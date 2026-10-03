@@ -1,0 +1,30 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Network.Vrfs.EditModel
+@{
+    ViewData["Title"] = Model.Vrf.Id == 0 ? "Nouvelle VRF" : $"VRF {Model.Vrf.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Vrf.Name" class="form-label"></label>
+            <input asp-for="Vrf.Name" class="form-control" />
+            <span asp-validation-for="Vrf.Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Vrf.RouteDistinguisher" class="form-label"></label>
+            <input asp-for="Vrf.RouteDistinguisher" class="form-control" placeholder="65000:100" />
+            <span asp-validation-for="Vrf.RouteDistinguisher" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Vrf.Description" class="form-label"></label>
+            <textarea asp-for="Vrf.Description" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Vrf.Description" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Vrf.Id, "cette VRF"))" />
+</div>

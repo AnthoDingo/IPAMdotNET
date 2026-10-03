@@ -155,6 +155,22 @@ body {
     margin-right: .25rem;
 }
 
+.ipam-form {
+    max-width: 56rem;
+}
+
+.ipam-panel-title .btn {
+    margin: -.25rem 0;
+}
+
+.ipam-details dt {
+    font-weight: 600;
+}
+
+.ipam-details dd {
+    margin-bottom: .4rem;
+}
+
 /* Recherche du bandeau */
 .ipam-search {
     gap: .25rem;
@@ -214,6 +230,18 @@ body {
 
 .ipam-sidebar .nav-link:hover {
     background: var(--ipam-menubar-hover);
+}
+
+.ipam-sidebar .nav-link.active {
+    background: var(--ipam-menubar-hover);
+    color: var(--ipam-accent);
+    font-weight: 600;
+}
+
+.ipam-subnet-tree .nav-link {
+    font-size: .85rem;
+    padding-top: .15rem;
+    padding-bottom: .15rem;
 }
 
 .ipam-sidebar .nav-link.disabled {

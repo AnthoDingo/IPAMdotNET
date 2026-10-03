@@ -18,6 +18,178 @@ namespace IPAMdotNet.Migrations.MySql
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("LocalAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<long>("LocalAs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("PeerAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<long>("PeerAs")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("VrfId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VrfId");
+
+                    b.ToTable("BgpPeers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Nameserver", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Servers")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Nameservers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Destination")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int?>("DestinationPort")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int?>("SourcePort")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NatRules");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Sections");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Address")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varbinary(16)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int?>("NameserverId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrefixLength")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VlanId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VrfId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameserverId");
+
+                    b.HasIndex("VlanId");
+
+                    b.HasIndex("VrfId");
+
+                    b.HasIndex("SectionId", "Address", "PrefixLength")
+                        .IsUnique();
+
+                    b.ToTable("Subnets");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.User", b =>
                 {
                     b.Property<int>("Id")
@@ -47,6 +219,106 @@ namespace IPAMdotNet.Migrations.MySql
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Vlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.ToTable("Vlans");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Vrf", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("RouteDistinguisher")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Vrfs");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Vrf", "Vrf")
+                        .WithMany()
+                        .HasForeignKey("VrfId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Nameserver", "Nameserver")
+                        .WithMany()
+                        .HasForeignKey("NameserverId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("IPAMdotNet.Data.Section", "Section")
+                        .WithMany("Subnets")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Vlan", "Vlan")
+                        .WithMany()
+                        .HasForeignKey("VlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("IPAMdotNet.Data.Vrf", "Vrf")
+                        .WithMany()
+                        .HasForeignKey("VrfId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Nameserver");
+
+                    b.Navigation("Section");
+
+                    b.Navigation("Vlan");
+
+                    b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
+                {
+                    b.Navigation("Subnets");
                 });
 #pragma warning restore 612, 618
         }

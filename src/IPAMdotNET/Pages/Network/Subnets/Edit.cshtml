@@ -1,0 +1,52 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Network.Subnets.EditModel
+@{
+    ViewData["Title"] = Model.Subnet.Id == 0 ? "Nouveau sous-réseau" : $"Sous-réseau {Model.Cidr}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    @if (Model.Sections.Count == 0)
+    {
+        <p class="ipam-empty">Aucune section. <a asp-page="/Administration/Sections/Edit">Créez une section</a> avant d'ajouter des sous-réseaux.</p>
+    }
+    else
+    {
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Cidr" class="form-label"></label>
+                    <input asp-for="Cidr" class="form-control font-monospace" placeholder="10.0.0.0/24" />
+                    <div class="form-text">La hiérarchie est calculée automatiquement : un sous-réseau est rangé sous le plus petit sous-réseau qui le contient.</div>
+                    <span asp-validation-for="Cidr" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Subnet.SectionId" class="form-label"></label>
+                    <select asp-for="Subnet.SectionId" asp-items="Model.Sections" class="form-select"></select>
+                    <span asp-validation-for="Subnet.SectionId" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Subnet.Description" class="form-label"></label>
+                    <input asp-for="Subnet.Description" class="form-control" />
+                    <span asp-validation-for="Subnet.Description" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Subnet.VlanId" class="form-label"></label>
+                    <select asp-for="Subnet.VlanId" asp-items="Model.Vlans" class="form-select"><option value="">Aucun</option></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Subnet.VrfId" class="form-label"></label>
+                    <select asp-for="Subnet.VrfId" asp-items="Model.Vrfs" class="form-select"><option value="">Aucune</option></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Subnet.NameserverId" class="form-label"></label>
+                    <select asp-for="Subnet.NameserverId" asp-items="Model.Nameservers" class="form-select"><option value="">Aucun</option></select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        </form>
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau"))" />
+    }
+</div>
