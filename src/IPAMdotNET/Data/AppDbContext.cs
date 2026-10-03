@@ -34,6 +34,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<SectionPermission> SectionPermissions => Set<SectionPermission>();
     public DbSet<AuthMethod> AuthMethods => Set<AuthMethod>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<Tag> Tags => Set<Tag>();
 
     /// <summary>Ajoute une entrée au journal système.</summary>
     public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
@@ -233,6 +234,12 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
         modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<Tag>(entity =>
+        {
+            entity.HasIndex(t => t.Name).IsUnique();
+            entity.Property(t => t.BackgroundColor).HasMaxLength(7);
+            entity.Property(t => t.TextColor).HasMaxLength(7);
+        });
 
         modelBuilder.Entity<PstnNumber>(entity =>
         {

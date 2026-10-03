@@ -6,7 +6,8 @@
 
 ## Serveur — écarts restants avec phpIPAM
 
-- [ ] Agents de scan et Étiquettes : dépendent des adresses IP (découverte, états d'adresse).
+- [ ] Agents de scan : dépend des adresses IP (découverte).
+- [ ] Étiquettes : gestion faite (4 étiquettes système + personnalisées) ; reste à les appliquer aux adresses IP (affichage, regroupement des plages, mise à jour par le scan).
 - [ ] Langues : l'interface est en français uniquement ; une traduction suppose d'extraire tous les textes (ressources .resx).
 - [ ] API : écriture (création / modification), droits par clé, recherche.
 - [ ] LDAP : synchronisation des groupes de l'annuaire, création automatique des comptes à la première connexion ; tester sur un vrai annuaire (seul le cas « annuaire injoignable » a pu l'être).

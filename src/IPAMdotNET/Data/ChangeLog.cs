@@ -62,5 +62,6 @@ public class ChangeLog
             [nameof(Group)] = ("Groupe", "/Administration/Groups/Edit", true),
             [nameof(AuthMethod)] = ("Méthode d'authentification", "/Administration/AuthMethods/Edit", true),
             [nameof(ApiKey)] = ("Clé d'API", "/Administration/ApiKeys/Index", false),
+            [nameof(Tag)] = ("Étiquette", "/Administration/Tags/Edit", true),
         };
 }

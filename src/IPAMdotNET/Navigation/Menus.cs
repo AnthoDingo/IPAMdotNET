@@ -60,7 +60,7 @@ public static class Menus
             new("Agents de scan", "broadcast-pin"),
             new("Langues", "translate"),
             new("Widgets", "grid", "/Administration/Widgets/Index"),
-            new("Étiquettes", "tags"),
+            new("Étiquettes", "tags", "/Administration/Tags/Index"),
         ]),
         new("Gestion IP",
         [
