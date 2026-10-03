@@ -1,0 +1,21 @@
+name: Feature request
+description: A missing feature or an improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Need
+      description: The problem to solve or the use case.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The desired behavior.
+  - type: input
+    id: phpipam
+    attributes:
+      label: phpIPAM equivalent
+      description: If phpIPAM has this feature, where it is (menu, page) and how it behaves there.
