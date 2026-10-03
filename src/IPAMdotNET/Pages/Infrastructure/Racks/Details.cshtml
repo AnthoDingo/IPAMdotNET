@@ -31,6 +31,7 @@
                 </dd>
                 <dt class="col-sm-5">Description</dt>
                 <dd class="col-sm-7">@(Model.Rack.Description ?? "—")</dd>
+                <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
             </dl>
             @if (Model.Unplaced.Count > 0)
             {

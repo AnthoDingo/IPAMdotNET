@@ -1,4 +1,6 @@
 @page
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Network.Vrfs.IndexModel
 @{
     ViewData["Title"] = "VRF";
@@ -20,7 +22,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom</th><th>RD</th><th>Description</th><th class="text-end">Sous-réseaux</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>Nom</th><th>RD</th><th>Description</th><th class="text-end">Sous-réseaux</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (VrfRow row in Model.Vrfs)
                 {
@@ -29,6 +31,10 @@
                         <td>@row.Vrf.RouteDistinguisher</td>
                         <td>@row.Vrf.Description</td>
                         <td class="text-end">@row.SubnetCount</td>
+                        @foreach (CustomField field in Model.CustomFields)
+                        {
+                            <td>@CustomFieldForm.Display(field, Model.CustomValues.GetValueOrDefault(row.Vrf.Id)?.GetValueOrDefault(field.Id))</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Vrf.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>

@@ -1,5 +1,6 @@
 @page
 @using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Infrastructure.Devices.IndexModel
 @{
     ViewData["Title"] = "Équipements";
@@ -21,7 +22,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom d'hôte</th><th>Adresse IP</th><th>Type</th><th>Emplacement</th><th>Rack</th><th>Client</th><th>Description</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>Nom d'hôte</th><th>Adresse IP</th><th>Type</th><th>Emplacement</th><th>Rack</th><th>Client</th><th>Description</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (Device device in Model.Devices)
                 {
@@ -52,6 +53,10 @@
                             }
                         </td>
                         <td>@device.Description</td>
+                        @foreach (CustomField field in Model.CustomFields)
+                        {
+                            <td>@CustomFieldForm.Display(field, Model.CustomValues.GetValueOrDefault(device.Id)?.GetValueOrDefault(field.Id))</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@device.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>

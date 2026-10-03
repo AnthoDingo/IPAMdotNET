@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,8 @@ namespace IPAMdotNet.Pages.Network.Subnets;
 
 public class DetailsModel(AppDbContext db) : PageModel
 {
+    public List<CustomFieldInput> CustomFieldValues { get; private set; } = [];
+
     public Subnet Subnet { get; private set; } = new();
 
     /// <summary>Arbre complet de la section (colonne gauche).</summary>
@@ -45,6 +48,7 @@ public class DetailsModel(AppDbContext db) : PageModel
 
         int userId = User.UserId();
         IsFavorite = await db.FavoriteSubnets.AnyAsync(f => f.UserId == userId && f.SubnetId == id);
+        CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Subnet), id);
         return Page();
     }
 

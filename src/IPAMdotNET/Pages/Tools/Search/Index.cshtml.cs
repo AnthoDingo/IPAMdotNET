@@ -25,9 +25,10 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<BgpPeer> BgpPeers { get; private set; } = [];
     public List<Nameserver> Nameservers { get; private set; } = [];
     public List<PstnPrefix> PstnPrefixes { get; private set; } = [];
+    public List<CustomFieldValue> CustomValues { get; private set; } = [];
 
     public int Total => Subnets.Count + Vlans.Count + Vrfs.Count + Devices.Count + Locations.Count + Customers.Count
-        + Circuits.Count + NatRules.Count + BgpPeers.Count + Nameservers.Count + PstnPrefixes.Count;
+        + Circuits.Count + NatRules.Count + BgpPeers.Count + Nameservers.Count + PstnPrefixes.Count + CustomValues.Count;
 
     public async Task OnGetAsync()
     {
@@ -80,6 +81,9 @@ public class IndexModel(AppDbContext db) : PageModel
             .Where(p => p.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
                 || (digits != null && (p.Prefix.Contains(digits, StringComparison.Ordinal) || digits.StartsWith(p.Prefix, StringComparison.Ordinal))))
             .OrderBy(p => p.Prefix, StringComparer.Ordinal).Take(Limit).ToList();
+        CustomValues = await db.CustomFieldValues.Include(v => v.Field)
+            .Where(v => v.Value.ToLower().Contains(text))
+            .OrderBy(v => v.Field!.EntityType).ThenBy(v => v.EntityId).Take(Limit).ToListAsync();
     }
 
     /// <summary>

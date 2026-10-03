@@ -43,6 +43,17 @@ public abstract partial class AppDbContext
             return result;
         }
 
+        // Les valeurs de champs personnalisés n'ont pas de clé étrangère vers leur objet : on les supprime avec lui.
+        foreach (PendingChange deleted in pending.Where(p => p.Action == ChangeAction.Deleted))
+        {
+            string type = deleted.Entry.Metadata.ClrType.Name;
+            if (CustomField.SupportedTypes.Contains(type))
+            {
+                int id = (int)(deleted.Entry.Property("Id").OriginalValue ?? 0);
+                await CustomFieldValues.Where(v => v.Field!.EntityType == type && v.EntityId == id).ExecuteDeleteAsync(cancellationToken);
+            }
+        }
+
         // Après l'enregistrement : les identifiants des objets créés sont connus.
         // ponytail: deux SaveChanges sans transaction, une panne entre les deux perd l'entrée du journal (pas la donnée).
         DateTime now = DateTime.UtcNow;

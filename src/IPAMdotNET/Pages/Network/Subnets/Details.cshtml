@@ -91,6 +91,7 @@
             @if (Model.Subnet.Customer is null) { <text>—</text> }
             else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@Model.Subnet.Customer.Id">@Model.Subnet.Customer.Name</a> }
         </dd>
+        <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
     </dl>
 </div>
 

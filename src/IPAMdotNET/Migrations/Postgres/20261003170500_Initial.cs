@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace IPAMdotNet.Migrations.SqlServer
+namespace IPAMdotNet.Migrations.Postgres
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -15,8 +16,8 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "AppSettings",
                 columns: table => new
                 {
-                    Key = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -27,16 +28,16 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "ChangeLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    EntityType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    EntityId = table.Column<int>(type: "int", nullable: false),
-                    EntityLabel = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Action = table.Column<int>(type: "int", nullable: false),
-                    Changes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: true),
+                    UserName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    EntityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EntityId = table.Column<int>(type: "integer", nullable: false),
+                    EntityLabel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Action = table.Column<int>(type: "integer", nullable: false),
+                    Changes = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -47,11 +48,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "CircuitProviders",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Contact = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Contact = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -62,17 +63,17 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Customers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    PostCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    ContactPerson = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    ContactPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    ContactMail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Note = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Address = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    PostCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    State = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ContactPerson = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ContactPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ContactMail = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -80,13 +81,32 @@ namespace IPAMdotNet.Migrations.SqlServer
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomFields",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EntityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Options = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Required = table.Column<bool>(type: "boolean", nullable: false),
+                    Order = table.Column<int>(type: "integer", nullable: false),
+                    Description = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomFields", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DeviceTypes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -97,13 +117,13 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Locations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    Latitude = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Longitude = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Address = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    Latitude = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Longitude = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -111,14 +131,32 @@ namespace IPAMdotNet.Migrations.SqlServer
                 });
 
             migrationBuilder.CreateTable(
+                name: "LogEntries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Severity = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    UserName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LogEntries", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Nameservers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Servers = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Servers = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -129,15 +167,15 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "NatRules",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Type = table.Column<int>(type: "int", nullable: false),
-                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SourcePort = table.Column<int>(type: "int", nullable: true),
-                    Destination = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    DestinationPort = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Source = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    SourcePort = table.Column<int>(type: "integer", nullable: true),
+                    Destination = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DestinationPort = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -148,10 +186,10 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Sections",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -162,12 +200,12 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    IsAdmin = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    IsAdmin = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,11 +216,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Vlans",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Number = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Number = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -193,11 +231,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Vrfs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    RouteDistinguisher = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RouteDistinguisher = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -205,20 +243,41 @@ namespace IPAMdotNet.Migrations.SqlServer
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomFieldValues",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FieldId = table.Column<int>(type: "integer", nullable: false),
+                    EntityId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomFieldValues", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CustomFieldValues_CustomFields_FieldId",
+                        column: x => x.FieldId,
+                        principalTable: "CustomFields",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Circuits",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Cid = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ProviderId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Capacity = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    LocationAId = table.Column<int>(type: "int", nullable: true),
-                    LocationBId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Cid = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ProviderId = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Capacity = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    LocationAId = table.Column<int>(type: "integer", nullable: true),
+                    LocationBId = table.Column<int>(type: "integer", nullable: true),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    Comment = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -250,13 +309,13 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Racks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Size = table.Column<int>(type: "int", nullable: false),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Size = table.Column<int>(type: "integer", nullable: false),
+                    LocationId = table.Column<int>(type: "integer", nullable: true),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -277,15 +336,15 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "BgpPeers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     LocalAs = table.Column<long>(type: "bigint", nullable: false),
-                    LocalAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
+                    LocalAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
                     PeerAs = table.Column<long>(type: "bigint", nullable: false),
-                    PeerAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
-                    VrfId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    PeerAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
+                    VrfId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -302,18 +361,18 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Subnets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SectionId = table.Column<int>(type: "int", nullable: false),
-                    Address = table.Column<byte[]>(type: "varbinary(16)", maxLength: 16, nullable: false),
-                    PrefixLength = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    VlanId = table.Column<int>(type: "int", nullable: true),
-                    VrfId = table.Column<int>(type: "int", nullable: true),
-                    NameserverId = table.Column<int>(type: "int", nullable: true),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    AllowRequests = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SectionId = table.Column<int>(type: "integer", nullable: false),
+                    Address = table.Column<byte[]>(type: "bytea", maxLength: 16, nullable: false),
+                    PrefixLength = table.Column<int>(type: "integer", nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    VlanId = table.Column<int>(type: "integer", nullable: true),
+                    VrfId = table.Column<int>(type: "integer", nullable: true),
+                    NameserverId = table.Column<int>(type: "integer", nullable: true),
+                    LocationId = table.Column<int>(type: "integer", nullable: true),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    AllowRequests = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -358,17 +417,17 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Devices",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Hostname = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    IpAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    DeviceTypeId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    LocationId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    RackId = table.Column<int>(type: "int", nullable: true),
-                    RackStart = table.Column<int>(type: "int", nullable: true),
-                    RackSize = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Hostname = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    DeviceTypeId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    LocationId = table.Column<int>(type: "integer", nullable: true),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    RackId = table.Column<int>(type: "integer", nullable: true),
+                    RackStart = table.Column<int>(type: "integer", nullable: true),
+                    RackSize = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -399,10 +458,10 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "FavoriteSubnets",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    SubnetId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    SubnetId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -425,20 +484,20 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "IpRequests",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SubnetId = table.Column<int>(type: "int", nullable: false),
-                    RequestedAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    Hostname = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Owner = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    State = table.Column<int>(type: "int", nullable: false),
-                    RequestedById = table.Column<int>(type: "int", nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AssignedAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    AdminComment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ProcessedById = table.Column<int>(type: "int", nullable: true),
-                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SubnetId = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    Hostname = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Owner = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false),
+                    RequestedById = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AssignedAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    AdminComment = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ProcessedById = table.Column<int>(type: "integer", nullable: true),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -467,14 +526,14 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "PstnPrefixes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Prefix = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Prefix = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Start = table.Column<long>(type: "bigint", nullable: false),
                     Stop = table.Column<long>(type: "bigint", nullable: false),
-                    DeviceId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    DeviceId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -490,15 +549,15 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "PstnNumbers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PrefixId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PrefixId = table.Column<int>(type: "integer", nullable: false),
                     Number = table.Column<long>(type: "bigint", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Owner = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    State = table.Column<int>(type: "int", nullable: false),
-                    DeviceId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Owner = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    State = table.Column<int>(type: "integer", nullable: false),
+                    DeviceId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -559,6 +618,23 @@ namespace IPAMdotNet.Migrations.SqlServer
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomFields_EntityType_Name",
+                table: "CustomFields",
+                columns: new[] { "EntityType", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomFieldValues_EntityId",
+                table: "CustomFieldValues",
+                column: "EntityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CustomFieldValues_FieldId_EntityId",
+                table: "CustomFieldValues",
+                columns: new[] { "FieldId", "EntityId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Devices_CustomerId",
                 table: "Devices",
                 column: "CustomerId");
@@ -614,6 +690,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "IX_IpRequests_SubnetId",
                 table: "IpRequests",
                 column: "SubnetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LogEntries_Date",
+                table: "LogEntries",
+                column: "Date");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PstnNumbers_DeviceId",
@@ -719,10 +800,16 @@ namespace IPAMdotNet.Migrations.SqlServer
                 name: "Circuits");
 
             migrationBuilder.DropTable(
+                name: "CustomFieldValues");
+
+            migrationBuilder.DropTable(
                 name: "FavoriteSubnets");
 
             migrationBuilder.DropTable(
                 name: "IpRequests");
+
+            migrationBuilder.DropTable(
+                name: "LogEntries");
 
             migrationBuilder.DropTable(
                 name: "NatRules");
@@ -732,6 +819,9 @@ namespace IPAMdotNet.Migrations.SqlServer
 
             migrationBuilder.DropTable(
                 name: "CircuitProviders");
+
+            migrationBuilder.DropTable(
+                name: "CustomFields");
 
             migrationBuilder.DropTable(
                 name: "Subnets");

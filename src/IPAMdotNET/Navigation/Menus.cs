@@ -74,11 +74,11 @@ public static class Menus
         ]),
         new("Maintenance",
         [
-            new("Champs personnalisés", "input-cursor-text"),
-            new("Vérifier la base", "database-check"),
-            new("Remplacer des valeurs", "arrow-repeat"),
-            new("Import / export", "arrow-down-up"),
-            new("Journaux", "journal-text"),
+            new("Champs personnalisés", "input-cursor-text", "/Administration/CustomFields/Index"),
+            new("Vérifier la base", "database-check", "/Administration/Verify/Index"),
+            new("Remplacer des valeurs", "arrow-repeat", "/Administration/Replace/Index"),
+            new("Import / export", "arrow-down-up", "/Administration/ImportExport/Index"),
+            new("Journaux", "journal-text", "/Administration/Logs/Index"),
         ]),
     ];
 }

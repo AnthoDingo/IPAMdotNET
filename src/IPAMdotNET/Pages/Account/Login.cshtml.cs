@@ -49,9 +49,11 @@ public class LoginModel(AppDbContext db) : PageModel
 
         if (user is null || result == PasswordVerificationResult.Failed)
         {
+            await TryLogAsync(LogSeverity.Warning, "Échec de connexion.", userName);
             ModelState.AddModelError(string.Empty, "Nom d'utilisateur ou mot de passe incorrect.");
             return Page();
         }
+        await TryLogAsync(LogSeverity.Info, "Connexion réussie.", user.UserName);
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
@@ -74,5 +76,8 @@ public class LoginModel(AppDbContext db) : PageModel
 
         return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");
     }
+
+    private Task TryLogAsync(LogSeverity severity, string message, string userName) =>
+        db.TryLogAsync(severity, LogEntry.Authentication, message, userName, HttpContext.Connection.RemoteIpAddress?.ToString());
 }
 

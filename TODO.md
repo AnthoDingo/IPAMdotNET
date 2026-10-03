@@ -21,6 +21,12 @@
 - [ ] Instructions : mise en forme (Markdown) — aujourd'hui texte brut.
 - [ ] Recherche : adresses IP individuelles (dépend des adresses IP).
 
+## Maintenance — écarts restants avec phpIPAM
+
+- [ ] Champs personnalisés : sur les autres objets (NAT, BGP, RTC, sections…), filtres dans les listes, journalisation des valeurs.
+- [ ] Import / export : champs personnalisés dans les CSV, mise à jour d'objets existants (aujourd'hui création seule), export Excel.
+- [ ] Journaux : erreurs applicatives (exceptions), purge automatique des anciennes entrées.
+
 ## Partie Infrastructure — écarts restants avec phpIPAM
 
 - [ ] Tester sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).

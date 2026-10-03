@@ -57,6 +57,7 @@ public class ChangeLog
             [nameof(PstnNumber)] = ("Numéro RTC", "/Infrastructure/Pstn/Index", false),
             [nameof(IpRequest)] = ("Demande d'adresse", "/Tools/Requests/Index", false),
             [nameof(AppSetting)] = ("Paramètre", "/Tools/Instructions/Index", false),
+            [nameof(CustomField)] = ("Champ personnalisé", "/Administration/CustomFields/Index", false),
             [nameof(User)] = ("Utilisateur", "/Index", false),
         };
 }

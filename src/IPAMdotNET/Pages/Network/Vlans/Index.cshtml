@@ -1,4 +1,6 @@
 @page
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Network.Vlans.IndexModel
 @{
     ViewData["Title"] = "VLAN";
@@ -20,7 +22,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Numéro</th><th>Nom</th><th>Description</th><th class="text-end">Sous-réseaux</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>Numéro</th><th>Nom</th><th>Description</th><th class="text-end">Sous-réseaux</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (VlanRow row in Model.Vlans)
                 {
@@ -29,6 +31,10 @@
                         <td>@row.Vlan.Name</td>
                         <td>@row.Vlan.Description</td>
                         <td class="text-end">@row.SubnetCount</td>
+                        @foreach (CustomField field in Model.CustomFields)
+                        {
+                            <td>@CustomFieldForm.Display(field, Model.CustomValues.GetValueOrDefault(row.Vlan.Id)?.GetValueOrDefault(field.Id))</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Vlan.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>

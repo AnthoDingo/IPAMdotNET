@@ -1,3 +1,4 @@
+using System.Data.Common;
 using AnthoDingo.Setup;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,40 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<FavoriteSubnet> FavoriteSubnets => Set<FavoriteSubnet>();
     public DbSet<IpRequest> IpRequests => Set<IpRequest>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+    public DbSet<CustomField> CustomFields => Set<CustomField>();
+    public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
+    public DbSet<LogEntry> LogEntries => Set<LogEntry>();
+
+    /// <summary>Ajoute une entrée au journal système.</summary>
+    public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
+    {
+        LogEntries.Add(new LogEntry
+        {
+            Date = DateTime.UtcNow,
+            Severity = severity,
+            Category = category,
+            Message = message.Length > 1000 ? message[..1000] : message,
+            UserName = userName,
+            IpAddress = ipAddress,
+        });
+        await SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Comme <see cref="LogAsync"/>, sans jamais lever d'exception : utilisé par la connexion/déconnexion, qui s'exécutent
+    /// avant l'application des migrations (/update) — la table des journaux peut alors ne pas encore exister.
+    /// </summary>
+    public async Task TryLogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
+    {
+        try
+        {
+            await LogAsync(severity, category, message, userName, ipAddress);
+        }
+        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        {
+            ChangeTracker.Clear();
+        }
+    }
 
     /// <summary>
     /// Vide les références vers un emplacement, un client, un rack, un type ou un équipement avant sa suppression.
@@ -162,6 +197,22 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(r => r.RequestedBy).WithMany().HasForeignKey(r => r.RequestedById).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(r => r.ProcessedBy).WithMany().HasForeignKey(r => r.ProcessedById).OnDelete(DeleteBehavior.Restrict);
         });
+
+        // Maintenance
+        modelBuilder.Entity<CustomField>(entity =>
+        {
+            entity.Property(f => f.EntityType).HasMaxLength(50);
+            entity.HasIndex(f => new { f.EntityType, f.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<CustomFieldValue>(entity =>
+        {
+            entity.HasIndex(v => new { v.FieldId, v.EntityId }).IsUnique();
+            entity.HasIndex(v => v.EntityId);
+            entity.HasOne(v => v.Field).WithMany().OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LogEntry>().HasIndex(l => l.Date);
 
         modelBuilder.Entity<PstnNumber>(entity =>
         {

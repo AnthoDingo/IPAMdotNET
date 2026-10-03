@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,18 +13,24 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public Vrf Vrf { get; set; } = new();
 
+    // Nom explicite : sans lui, si aucun champ « Custom[…] » n'est posté, ASP.NET retombe sur le préfixe vide et lit les autres champs comme clés.
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync(int? id)
     {
-        if (id is null)
+        if (id is not null)
         {
-            return Page();
+            Vrf? vrf = await db.Vrfs.FindAsync(id);
+            if (vrf is null)
+            {
+                return NotFound();
+            }
+            Vrf = vrf;
         }
-        Vrf? vrf = await db.Vrfs.FindAsync(id);
-        if (vrf is null)
-        {
-            return NotFound();
-        }
-        Vrf = vrf;
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Vrf), id ?? 0);
         return Page();
     }
 
@@ -34,12 +41,16 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Vrf.Name", "Une VRF porte déjà ce nom.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vrf));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         db.Update(Vrf);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Vrf.Id, customValues);
         return RedirectToPage("Index");
     }
 

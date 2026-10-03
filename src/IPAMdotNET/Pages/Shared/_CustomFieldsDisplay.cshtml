@@ -1,0 +1,10 @@
+@using IPAMdotNet.Maintenance
+@model List<CustomFieldInput>
+@* À placer dans un <dl class="row ipam-details"> existant. *@
+
+@foreach (CustomFieldInput input in Model)
+{
+    string value = CustomFieldForm.Display(input.Field, input.Value);
+    <dt class="col-sm-4 col-xl-3">@input.Field.Name</dt>
+    <dd class="col-sm-8 col-xl-9" style="white-space: pre-line">@(value.Length == 0 ? "—" : value)</dd>
+}

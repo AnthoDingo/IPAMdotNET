@@ -177,6 +177,31 @@
                 </div>
             </div>
         }
+        @if (Model.CustomValues.Count > 0)
+        {
+            <div class="col-xl-6">
+                <div class="ipam-panel h-100">
+                    <div class="ipam-panel-title"><i class="bi bi-input-cursor-text"></i> Champs personnalisés (@Model.CustomValues.Count)</div>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (CustomFieldValue value in Model.CustomValues)
+                        {
+                            (string Label, string Page, bool HasDetails) type = ChangeLog.Types[value.Field!.EntityType];
+                            <li>
+                                @if (type.HasDetails)
+                                {
+                                    <a asp-page="@type.Page" asp-route-id="@value.EntityId">@type.Label n°@value.EntityId</a>
+                                }
+                                else
+                                {
+                                    <a asp-page="@type.Page">@type.Label n°@value.EntityId</a>
+                                }
+                                <span class="text-body-secondary">@value.Field.Name : @value.Value</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
         @if (Model.PstnPrefixes.Count > 0)
         {
             <div class="col-xl-6">

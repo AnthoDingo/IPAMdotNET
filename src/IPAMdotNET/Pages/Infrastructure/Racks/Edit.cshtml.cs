@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -17,6 +18,12 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Locations { get; private set; } = [];
     public List<SelectListItem> Customers { get; private set; } = [];
 
+    // Nom explicite : sans lui, si aucun champ « Custom[…] » n'est posté, ASP.NET retombe sur le préfixe vide et lit les autres champs comme clés.
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync(int? id)
     {
         if (id is not null)
@@ -29,6 +36,7 @@ public class EditModel(AppDbContext db) : PageModel
             Rack = rack;
         }
         await LoadListsAsync();
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Rack), id ?? 0);
         return Page();
     }
 
@@ -41,13 +49,17 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Rack.Size", $"Un équipement occupe l'unité {highestUnit} : la hauteur ne peut pas être inférieure.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Rack));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
             await LoadListsAsync();
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         db.Update(Rack);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Rack.Id, customValues);
         return RedirectToPage("Details", new { id = Rack.Id });
     }
 

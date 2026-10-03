@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,8 @@ namespace IPAMdotNet.Pages.Infrastructure.Racks;
 
 public class DetailsModel(AppDbContext db) : PageModel
 {
+    public List<CustomFieldInput> CustomFieldValues { get; private set; } = [];
+
     public Rack Rack { get; private set; } = new();
 
     /// <summary>Occupant de chaque unité, index = numéro d'unité (l'index 0 est inutilisé).</summary>
@@ -38,6 +41,7 @@ public class DetailsModel(AppDbContext db) : PageModel
                 Units[unit] = device;
             }
         }
+        CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Rack), id);
         return Page();
     }
 }

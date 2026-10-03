@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,6 +9,8 @@ namespace IPAMdotNet.Pages.Infrastructure.Locations;
 
 public class DetailsModel(AppDbContext db) : PageModel
 {
+    public List<CustomFieldInput> CustomFieldValues { get; private set; } = [];
+
     public Location Location { get; private set; } = new();
     public LinkedObjects Linked { get; private set; } = new([], [], [], []);
 
@@ -24,6 +27,7 @@ public class DetailsModel(AppDbContext db) : PageModel
             await db.Devices.Where(d => d.LocationId == id).OrderBy(d => d.Hostname).ToListAsync(),
             await db.Racks.Where(r => r.LocationId == id).OrderBy(r => r.Name).ToListAsync(),
             await db.Circuits.Include(c => c.Provider).Where(c => c.LocationAId == id || c.LocationBId == id).OrderBy(c => c.Cid).ToListAsync());
+        CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Location), id);
         return Page();
     }
 }

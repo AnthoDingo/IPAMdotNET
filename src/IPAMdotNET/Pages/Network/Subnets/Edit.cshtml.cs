@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,12 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Locations { get; private set; } = [];
     public List<SelectListItem> Customers { get; private set; } = [];
 
+    // Nom explicite : sans lui, si aucun champ « Custom[…] » n'est posté, ASP.NET retombe sur le préfixe vide et lit les autres champs comme clés.
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync(int? id, int? sectionId)
     {
         if (id is not null)
@@ -43,6 +50,7 @@ public class EditModel(AppDbContext db) : PageModel
             Subnet.SectionId = sectionId.Value;
         }
         await LoadListsAsync();
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Subnet), id ?? 0);
         return Page();
     }
 
@@ -73,13 +81,17 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Subnet.SectionId", "Section inconnue.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Subnet));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
             await LoadListsAsync();
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         db.Update(Subnet);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Subnet.Id, customValues);
         return RedirectToPage("Details", new { id = Subnet.Id });
     }
 
