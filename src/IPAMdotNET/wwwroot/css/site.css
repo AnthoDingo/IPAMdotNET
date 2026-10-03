@@ -171,6 +171,43 @@ body {
     margin-bottom: .4rem;
 }
 
+/* Vue de face d'un rack */
+.ipam-rack {
+    width: 100%;
+    max-width: 30rem;
+    border-collapse: collapse;
+    font-size: .8rem;
+}
+
+.ipam-rack th {
+    width: 2.5rem;
+    text-align: right;
+    padding-right: .5rem;
+    color: var(--bs-secondary-color);
+    font-weight: normal;
+}
+
+.ipam-rack td {
+    border: 1px solid var(--ipam-border);
+    height: 1.4rem;
+}
+
+.ipam-rack-empty {
+    background: var(--ipam-panel-head-bg);
+}
+
+.ipam-rack-device {
+    background: color-mix(in srgb, var(--ipam-accent) 18%, var(--ipam-panel-bg));
+    border-left: 3px solid var(--ipam-accent) !important;
+    padding: 0 .5rem;
+    vertical-align: middle;
+}
+
+.ipam-rack-device span {
+    color: var(--bs-secondary-color);
+    margin-left: .5rem;
+}
+
 /* Recherche du bandeau */
 .ipam-search {
     gap: .25rem;

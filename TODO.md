@@ -13,3 +13,12 @@
 - [ ] NAT : lier source/destination aux objets sous-réseaux/adresses et à un équipement (aujourd'hui saisie d'une adresse ou d'un réseau).
 - [ ] BGP : association des sous-réseaux annoncés à un pair.
 - [ ] DNS : intégration PowerDNS (aujourd'hui seuls les jeux de serveurs de noms existent).
+
+## Partie Infrastructure — écarts restants avec phpIPAM
+
+- [ ] Tester sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).
+- [ ] Emplacements : carte intégrée (aujourd'hui lien vers OpenStreetMap).
+- [ ] Racks : face arrière et numérotation descendante (aujourd'hui face avant, U1 en bas).
+- [ ] Équipements : page de détail avec les adresses IP rattachées (dépend des adresses IP), visibilité par section.
+- [ ] Circuits : extrémités sur un équipement (aujourd'hui sur un emplacement), types de circuits paramétrables, circuits logiques.
+- [ ] Clients : coordonnées GPS et objets VLAN / adresses rattachés.

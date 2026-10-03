@@ -1,0 +1,55 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Customers.EditModel
+@{
+    ViewData["Title"] = Model.Customer.Id == 0 ? "Nouveau client" : $"Client {Model.Customer.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <label asp-for="Customer.Name" class="form-label"></label>
+                <input asp-for="Customer.Name" class="form-control" />
+                <span asp-validation-for="Customer.Name" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Customer.Address" class="form-label"></label>
+                <input asp-for="Customer.Address" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Customer.PostCode" class="form-label"></label>
+                <input asp-for="Customer.PostCode" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Customer.City" class="form-label"></label>
+                <input asp-for="Customer.City" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Customer.State" class="form-label"></label>
+                <input asp-for="Customer.State" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Customer.ContactPerson" class="form-label"></label>
+                <input asp-for="Customer.ContactPerson" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Customer.ContactPhone" class="form-label"></label>
+                <input asp-for="Customer.ContactPhone" class="form-control" type="tel" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Customer.ContactMail" class="form-label"></label>
+                <input asp-for="Customer.ContactMail" class="form-control" />
+                <span asp-validation-for="Customer.ContactMail" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Customer.Note" class="form-label"></label>
+                <textarea asp-for="Customer.Note" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Customer.Id, "ce client"))" />
+</div>

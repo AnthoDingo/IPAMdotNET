@@ -55,6 +55,9 @@ WebApplication app = builder.Build();
 
 app.UseSetupMiddleware("IPAMdotNet");
 
+// Interface en français quelle que soit la culture du serveur (formats de nombres et de dates).
+app.UseRequestLocalization("fr-FR");
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");

@@ -1,0 +1,40 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Racks.EditModel
+@{
+    ViewData["Title"] = Model.Rack.Id == 0 ? "Nouveau rack" : $"Rack {Model.Rack.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label asp-for="Rack.Name" class="form-label"></label>
+                <input asp-for="Rack.Name" class="form-control" />
+                <span asp-validation-for="Rack.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Rack.Size" class="form-label"></label>
+                <input asp-for="Rack.Size" class="form-control" min="1" max="60" />
+                <span asp-validation-for="Rack.Size" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Rack.LocationId" class="form-label"></label>
+                <select asp-for="Rack.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Rack.CustomerId" class="form-label"></label>
+                <select asp-for="Rack.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-12">
+                <label asp-for="Rack.Description" class="form-label"></label>
+                <textarea asp-for="Rack.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Rack.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Rack.Id, "ce rack"))" />
+</div>

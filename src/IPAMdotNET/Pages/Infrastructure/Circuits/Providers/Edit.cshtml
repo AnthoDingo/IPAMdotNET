@@ -1,0 +1,30 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Providers.EditModel
+@{
+    ViewData["Title"] = Model.Provider.Id == 0 ? "Nouveau fournisseur" : $"Fournisseur {Model.Provider.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Provider.Name" class="form-label"></label>
+            <input asp-for="Provider.Name" class="form-control" />
+            <span asp-validation-for="Provider.Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Provider.Contact" class="form-label"></label>
+            <input asp-for="Provider.Contact" class="form-control" placeholder="Support : +33 1 23 45 67 89, noc@example.net" />
+            <span asp-validation-for="Provider.Contact" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Provider.Description" class="form-label"></label>
+            <textarea asp-for="Provider.Description" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Provider.Description" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Provider.Id, "ce fournisseur"))" />
+</div>

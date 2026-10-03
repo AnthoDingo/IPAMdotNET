@@ -1,0 +1,37 @@
+@page "{id:int}"
+@model IPAMdotNet.Pages.Infrastructure.Locations.DetailsModel
+@{
+    ViewData["Title"] = Model.Location.Name;
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-geo-alt"></i> @Model.Location.Name</span>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="Edit" asp-route-id="@Model.Location.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+        }
+    </div>
+    <dl class="row mb-0 ipam-details">
+        <dt class="col-sm-4 col-xl-3">Adresse postale</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Location.Address ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">Coordonnées</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (Model.Location.HasCoordinates)
+            {
+                <span class="font-monospace">@Model.Location.Latitude, @Model.Location.Longitude</span>
+                <a href="https://www.openstreetmap.org/?mlat=@Model.Location.Latitude&mlon=@Model.Location.Longitude#map=16/@Model.Location.Latitude/@Model.Location.Longitude" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-map"></i>Voir sur la carte
+                </a>
+            }
+            else
+            {
+                <text>—</text>
+            }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">Description</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Location.Description ?? "—")</dd>
+    </dl>
+</div>
+
+<partial name="_LinkedObjects" model="Model.Linked" />

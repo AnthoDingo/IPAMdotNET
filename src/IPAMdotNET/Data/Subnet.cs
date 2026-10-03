@@ -44,6 +44,18 @@ public class Subnet
     [ValidateNever]
     public Nameserver? Nameserver { get; set; }
 
+    [Display(Name = "Emplacement")]
+    public int? LocationId { get; set; }
+
+    [ValidateNever]
+    public Location? Location { get; set; }
+
+    [Display(Name = "Client")]
+    public int? CustomerId { get; set; }
+
+    [ValidateNever]
+    public Customer? Customer { get; set; }
+
     [NotMapped, ValidateNever]
     public IPNetwork Network => new(Ip.FromBytes(Address), PrefixLength);
 

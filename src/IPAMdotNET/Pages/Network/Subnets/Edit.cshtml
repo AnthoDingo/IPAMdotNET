@@ -43,6 +43,14 @@
                     <label asp-for="Subnet.NameserverId" class="form-label"></label>
                     <select asp-for="Subnet.NameserverId" asp-items="Model.Nameservers" class="form-select"><option value="">Aucun</option></select>
                 </div>
+                <div class="col-md-6">
+                    <label asp-for="Subnet.LocationId" class="form-label"></label>
+                    <select asp-for="Subnet.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Subnet.CustomerId" class="form-label"></label>
+                    <select asp-for="Subnet.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Enregistrer</button>
             <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>

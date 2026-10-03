@@ -64,6 +64,250 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.ToTable("BgpPeers");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Circuit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Capacity")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Cid")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LocationAId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LocationBId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationAId");
+
+                    b.HasIndex("LocationBId");
+
+                    b.HasIndex("ProviderId", "Cid")
+                        .IsUnique();
+
+                    b.ToTable("Circuits");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.CircuitProvider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Contact")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CircuitProviders");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Customer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactMail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("PostCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("State")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Device", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DeviceTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Hostname")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RackId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RackSize")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RackStart")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("DeviceTypeId");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("RackId");
+
+                    b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.DeviceType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("DeviceTypes");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Locations");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Nameserver", b =>
                 {
                     b.Property<int>("Id")
@@ -132,6 +376,124 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.ToTable("NatRules");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Owner")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PrefixId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("PrefixId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("PstnNumbers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("Start")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Stop")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("Prefix")
+                        .IsUnique();
+
+                    b.ToTable("PstnPrefixes");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Size")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("Racks");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
                 {
                     b.Property<int>("Id")
@@ -170,9 +532,15 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(16)
                         .HasColumnType("bytea");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("NameserverId")
                         .HasColumnType("integer");
@@ -190,6 +558,10 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("NameserverId");
 
@@ -303,8 +675,113 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Navigation("Vrf");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Circuit", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "LocationA")
+                        .WithMany()
+                        .HasForeignKey("LocationAId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "LocationB")
+                        .WithMany()
+                        .HasForeignKey("LocationBId");
+
+                    b.HasOne("IPAMdotNet.Data.CircuitProvider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("LocationA");
+
+                    b.Navigation("LocationB");
+
+                    b.Navigation("Provider");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Device", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.DeviceType", "DeviceType")
+                        .WithMany()
+                        .HasForeignKey("DeviceTypeId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
+                    b.HasOne("IPAMdotNet.Data.Rack", "Rack")
+                        .WithMany("Devices")
+                        .HasForeignKey("RackId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("DeviceType");
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Rack");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.HasOne("IPAMdotNet.Data.PstnPrefix", "Prefix")
+                        .WithMany("Numbers")
+                        .HasForeignKey("PrefixId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Prefix");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
                     b.HasOne("IPAMdotNet.Data.Nameserver", "Nameserver")
                         .WithMany()
                         .HasForeignKey("NameserverId")
@@ -326,6 +803,10 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasForeignKey("VrfId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.Navigation("Customer");
+
+                    b.Navigation("Location");
+
                     b.Navigation("Nameserver");
 
                     b.Navigation("Section");
@@ -333,6 +814,16 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Navigation("Vlan");
 
                     b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.Navigation("Numbers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.Navigation("Devices");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>

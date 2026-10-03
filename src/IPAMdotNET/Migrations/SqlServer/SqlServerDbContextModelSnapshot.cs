@@ -64,6 +64,250 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.ToTable("BgpPeers");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Circuit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Capacity")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Cid")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LocationAId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LocationBId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationAId");
+
+                    b.HasIndex("LocationBId");
+
+                    b.HasIndex("ProviderId", "Cid")
+                        .IsUnique();
+
+                    b.ToTable("Circuits");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.CircuitProvider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Contact")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CircuitProviders");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Customer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContactMail")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PostCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("State")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Device", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("DeviceTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hostname")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RackId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RackSize")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RackStart")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("DeviceTypeId");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("RackId");
+
+                    b.ToTable("Devices");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.DeviceType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("DeviceTypes");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Locations");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Nameserver", b =>
                 {
                     b.Property<int>("Id")
@@ -132,6 +376,124 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.ToTable("NatRules");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Owner")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("PrefixId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("PrefixId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("PstnNumbers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<long>("Start")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Stop")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("Prefix")
+                        .IsUnique();
+
+                    b.ToTable("PstnPrefixes");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Size")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("Racks");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
                 {
                     b.Property<int>("Id")
@@ -170,9 +532,15 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(16)
                         .HasColumnType("varbinary(16)");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("NameserverId")
                         .HasColumnType("int");
@@ -190,6 +558,10 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("NameserverId");
 
@@ -303,8 +675,113 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Vrf");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.Circuit", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "LocationA")
+                        .WithMany()
+                        .HasForeignKey("LocationAId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "LocationB")
+                        .WithMany()
+                        .HasForeignKey("LocationBId");
+
+                    b.HasOne("IPAMdotNet.Data.CircuitProvider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("LocationA");
+
+                    b.Navigation("LocationB");
+
+                    b.Navigation("Provider");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Device", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.DeviceType", "DeviceType")
+                        .WithMany()
+                        .HasForeignKey("DeviceTypeId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
+                    b.HasOne("IPAMdotNet.Data.Rack", "Rack")
+                        .WithMany("Devices")
+                        .HasForeignKey("RackId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("DeviceType");
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Rack");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.HasOne("IPAMdotNet.Data.PstnPrefix", "Prefix")
+                        .WithMany("Numbers")
+                        .HasForeignKey("PrefixId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Prefix");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Subnet", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("IPAMdotNet.Data.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
                     b.HasOne("IPAMdotNet.Data.Nameserver", "Nameserver")
                         .WithMany()
                         .HasForeignKey("NameserverId")
@@ -326,6 +803,10 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasForeignKey("VrfId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.Navigation("Customer");
+
+                    b.Navigation("Location");
+
                     b.Navigation("Nameserver");
 
                     b.Navigation("Section");
@@ -333,6 +814,16 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Vlan");
 
                     b.Navigation("Vrf");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>
+                {
+                    b.Navigation("Numbers");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Rack", b =>
+                {
+                    b.Navigation("Devices");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>

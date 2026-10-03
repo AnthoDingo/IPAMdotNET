@@ -1,0 +1,43 @@
+@page
+@model IPAMdotNet.Pages.Infrastructure.Locations.IndexModel
+@{
+    ViewData["Title"] = "Emplacements";
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-geo-alt"></i> Emplacements</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Locations.Count == 0)
+    {
+        <p class="ipam-empty">Aucun emplacement.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Nom</th><th>Adresse</th><th>Description</th><th class="text-end">Sous-réseaux</th><th class="text-end">Équipements</th><th class="text-end">Racks</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (LocationRow row in Model.Locations)
+                {
+                    <tr>
+                        <td><a asp-page="Details" asp-route-id="@row.Location.Id">@row.Location.Name</a></td>
+                        <td>@row.Location.Address</td>
+                        <td>@row.Location.Description</td>
+                        <td class="text-end">@row.SubnetCount</td>
+                        <td class="text-end">@row.DeviceCount</td>
+                        <td class="text-end">@row.RackCount</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Location.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,46 @@
+@page "{id:int?}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Infrastructure.Pstn.Numbers.EditModel
+@{
+    ViewData["Title"] = Model.Number.Id == 0 ? $"Nouveau numéro ({Model.Prefix.Prefix})" : $"Numéro {Model.Prefix.Prefix} {Model.Number.Number}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <input type="hidden" asp-for="Number.PrefixId" />
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Number.Number" class="form-label"></label>
+                <input asp-for="Number.Number" class="form-control font-monospace" min="@Model.Prefix.Start" max="@Model.Prefix.Stop" />
+                <div class="form-text">Plage : @Model.Prefix.Start – @Model.Prefix.Stop</div>
+                <span asp-validation-for="Number.Number" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Number.State" class="form-label"></label>
+                <select asp-for="Number.State" asp-items="Html.GetEnumSelectList<PstnNumberState>()" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Number.DeviceId" class="form-label"></label>
+                <select asp-for="Number.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">Aucun</option></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Number.Name" class="form-label"></label>
+                <input asp-for="Number.Name" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Number.Owner" class="form-label"></label>
+                <input asp-for="Number.Owner" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="Number.Description" class="form-label"></label>
+                <textarea asp-for="Number.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Number.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-page="../Details" asp-route-id="@Model.Number.PrefixId" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Number.Id, "ce numéro"))" />
+</div>

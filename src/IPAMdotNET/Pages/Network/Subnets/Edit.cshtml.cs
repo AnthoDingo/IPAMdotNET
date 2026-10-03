@@ -23,6 +23,8 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Vlans { get; private set; } = [];
     public List<SelectListItem> Vrfs { get; private set; } = [];
     public List<SelectListItem> Nameservers { get; private set; } = [];
+    public List<SelectListItem> Locations { get; private set; } = [];
+    public List<SelectListItem> Customers { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int? id, int? sectionId)
     {
@@ -103,5 +105,9 @@ public class EditModel(AppDbContext db) : PageModel
             .Select(v => new SelectListItem(v.Name, v.Id.ToString())).ToListAsync();
         Nameservers = await db.Nameservers.OrderBy(n => n.Name)
             .Select(n => new SelectListItem(n.Name, n.Id.ToString())).ToListAsync();
+        Locations = await db.Locations.OrderBy(l => l.Name)
+            .Select(l => new SelectListItem(l.Name, l.Id.ToString())).ToListAsync();
+        Customers = await db.Customers.OrderBy(c => c.Name)
+            .Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
     }
 }

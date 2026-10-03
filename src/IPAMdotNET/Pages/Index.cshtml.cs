@@ -10,6 +10,7 @@ public class IndexModel(AppDbContext db) : PageModel
     public int SubnetCount { get; private set; }
     public int VlanCount { get; private set; }
     public int VrfCount { get; private set; }
+    public int DeviceCount { get; private set; }
     public int UserCount { get; private set; }
 
     public async Task OnGetAsync()
@@ -18,6 +19,7 @@ public class IndexModel(AppDbContext db) : PageModel
         SubnetCount = await db.Subnets.CountAsync();
         VlanCount = await db.Vlans.CountAsync();
         VrfCount = await db.Vrfs.CountAsync();
+        DeviceCount = await db.Devices.CountAsync();
         UserCount = await db.Users.CountAsync();
     }
 }

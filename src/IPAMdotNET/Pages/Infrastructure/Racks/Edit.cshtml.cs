@@ -1,0 +1,74 @@
+using IPAMdotNet.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace IPAMdotNet.Pages.Infrastructure.Racks;
+
+[Authorize(Policy = "Admin")]
+public class EditModel(AppDbContext db) : PageModel
+{
+    [BindProperty]
+    public Rack Rack { get; set; } = new();
+
+    public List<SelectListItem> Locations { get; private set; } = [];
+    public List<SelectListItem> Customers { get; private set; } = [];
+
+    public async Task<IActionResult> OnGetAsync(int? id)
+    {
+        if (id is not null)
+        {
+            Rack? rack = await db.Racks.FindAsync(id);
+            if (rack is null)
+            {
+                return NotFound();
+            }
+            Rack = rack;
+        }
+        await LoadListsAsync();
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync(int? id)
+    {
+        Rack.Id = id ?? 0;
+        int highestUnit = await db.Devices.Where(d => d.RackId == Rack.Id && d.RackStart != null)
+            .Select(d => (int?)(d.RackStart + d.RackSize - 1)).MaxAsync() ?? 0;
+        if (Rack.Size < highestUnit)
+        {
+            ModelState.AddModelError("Rack.Size", $"Un équipement occupe l'unité {highestUnit} : la hauteur ne peut pas être inférieure.");
+        }
+        if (!ModelState.IsValid)
+        {
+            await LoadListsAsync();
+            return Page();
+        }
+        db.Update(Rack);
+        await db.SaveChangesAsync();
+        return RedirectToPage("Details", new { id = Rack.Id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        Rack? rack = await db.Racks.FindAsync(id);
+        if (rack is null)
+        {
+            return NotFound();
+        }
+        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
+        await db.DetachRackAsync(id);
+        db.Racks.Remove(rack);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return RedirectToPage("Index");
+    }
+
+    private async Task LoadListsAsync()
+    {
+        Locations = await db.Locations.OrderBy(l => l.Name).Select(l => new SelectListItem(l.Name, l.Id.ToString())).ToListAsync();
+        Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
+    }
+}

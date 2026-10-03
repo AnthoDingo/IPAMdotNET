@@ -103,7 +103,7 @@
                     </ul>
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") || path.StartsWithSegments("/Network") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> Outils</a>
+                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") || path.StartsWithSegments("/Network") || path.StartsWithSegments("/Infrastructure") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> Outils</a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item fw-semibold" asp-page="/Tools/Index"><i class="bi bi-grid-1x2"></i> Tous les outils</a>
                                 <hr class="dropdown-divider" />

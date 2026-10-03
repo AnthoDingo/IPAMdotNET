@@ -22,6 +22,7 @@ public class DetailsModel(AppDbContext db) : PageModel
     {
         Subnet? subnet = await db.Subnets
             .Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf).Include(s => s.Nameserver)
+            .Include(s => s.Location).Include(s => s.Customer)
             .SingleOrDefaultAsync(s => s.Id == id);
         if (subnet is null)
         {

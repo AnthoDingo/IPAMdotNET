@@ -1,0 +1,67 @@
+@page "{id:int}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Infrastructure.Pstn.DetailsModel
+@{
+    ViewData["Title"] = $"Préfixe {Model.Prefix.Prefix}";
+    bool admin = User.IsInRole("Admin");
+    long capacity = Model.Prefix.Stop - Model.Prefix.Start + 1;
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span class="font-monospace"><i class="bi bi-telephone"></i> @Model.Prefix.Prefix</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" asp-route-id="@Model.Prefix.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+        }
+    </div>
+    <dl class="row mb-0 ipam-details">
+        <dt class="col-sm-4 col-xl-3">Nom</dt>
+        <dd class="col-sm-8 col-xl-9">@Model.Prefix.Name</dd>
+        <dt class="col-sm-4 col-xl-3">Plage</dt>
+        <dd class="col-sm-8 col-xl-9 font-monospace">@Model.Prefix.Start – @Model.Prefix.Stop</dd>
+        <dt class="col-sm-4 col-xl-3">Utilisation</dt>
+        <dd class="col-sm-8 col-xl-9">@Model.Numbers.Count / @capacity.ToString("N0") numéros</dd>
+        <dt class="col-sm-4 col-xl-3">Équipement</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Prefix.Device?.Hostname ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">Description</dt>
+        <dd class="col-sm-8 col-xl-9">@(Model.Prefix.Description ?? "—")</dd>
+    </dl>
+</div>
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-list-ol"></i> Numéros</span>
+        @if (admin)
+        {
+            <a asp-page="Numbers/Edit" asp-route-prefixId="@Model.Prefix.Id" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        }
+    </div>
+    @if (Model.Numbers.Count == 0)
+    {
+        <p class="ipam-empty">Aucun numéro.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>Numéro</th><th>Nom</th><th>Titulaire</th><th>État</th><th>Équipement</th><th>Description</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (PstnNumber number in Model.Numbers)
+                {
+                    <tr>
+                        <td class="font-monospace">@Model.Prefix.Prefix @number.Number</td>
+                        <td>@number.Name</td>
+                        <td>@number.Owner</td>
+                        <td>@Html.DisplayFor(_ => number.State)</td>
+                        <td>@number.Device?.Hostname</td>
+                        <td>@number.Description</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Numbers/Edit" asp-route-id="@number.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

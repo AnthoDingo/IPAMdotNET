@@ -1,0 +1,77 @@
+@using IPAMdotNet.Data
+@model LinkedObjects
+
+<div class="row g-3">
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Sous-réseaux (@Model.Subnets.Count)</div>
+            @if (Model.Subnets.Count == 0)
+            {
+                <p class="ipam-empty">Aucun sous-réseau.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (Subnet subnet in Model.Subnets)
+                    {
+                        <li><a class="font-monospace" asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a> <span class="text-body-secondary">@subnet.Description</span></li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> Équipements (@Model.Devices.Count)</div>
+            @if (Model.Devices.Count == 0)
+            {
+                <p class="ipam-empty">Aucun équipement.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (Device device in Model.Devices)
+                    {
+                        <li><a asp-page="/Infrastructure/Devices/Index" asp-fragment="device-@device.Id">@device.Hostname</a> <span class="font-monospace text-body-secondary">@device.IpAddress</span></li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-hdd-stack"></i> Racks (@Model.Racks.Count)</div>
+            @if (Model.Racks.Count == 0)
+            {
+                <p class="ipam-empty">Aucun rack.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (Rack rack in Model.Racks)
+                    {
+                        <li><a asp-page="/Infrastructure/Racks/Details" asp-route-id="@rack.Id">@rack.Name</a> <span class="text-body-secondary">@rack.Size U</span></li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-plug"></i> Circuits (@Model.Circuits.Count)</div>
+            @if (Model.Circuits.Count == 0)
+            {
+                <p class="ipam-empty">Aucun circuit.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (Circuit circuit in Model.Circuits)
+                    {
+                        <li><a asp-page="/Infrastructure/Circuits/Index" asp-fragment="circuit-@circuit.Id">@circuit.Cid</a> <span class="text-body-secondary">@circuit.Provider?.Name</span></li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
