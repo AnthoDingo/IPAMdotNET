@@ -18,9 +18,10 @@ public class Subnet
     public Section? Section { get; set; }
 
     /// <summary>Adresse réseau sur 16 octets (voir <see cref="Ip.ToBytes"/>).</summary>
-    [ValidateNever]
+    [ValidateNever, Display(Name = "Adresse réseau")]
     public byte[] Address { get; set; } = [];
 
+    [Display(Name = "Préfixe")]
     public int PrefixLength { get; set; }
 
     [MaxLength(500), Display(Name = "Description")]
@@ -55,6 +56,9 @@ public class Subnet
 
     [ValidateNever]
     public Customer? Customer { get; set; }
+
+    [Display(Name = "Ouvert aux demandes d'adresses")]
+    public bool AllowRequests { get; set; }
 
     [NotMapped, ValidateNever]
     public IPNetwork Network => new(Ip.FromBytes(Address), PrefixLength);

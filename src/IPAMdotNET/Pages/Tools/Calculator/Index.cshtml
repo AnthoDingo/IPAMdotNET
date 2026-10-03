@@ -1,0 +1,35 @@
+@page
+@model IPAMdotNet.Pages.Tools.Calculator.IndexModel
+@{
+    ViewData["Title"] = "Calculateur IP";
+}
+
+<div class="ipam-panel mb-3 ipam-form">
+    <div class="ipam-panel-title"><i class="bi bi-calculator"></i> Calculateur IP</div>
+    <form method="get" class="d-flex gap-2">
+        <input asp-for="Q" class="form-control font-monospace" placeholder="192.168.1.10/24 ou 2001:db8::1/64" autofocus aria-label="Adresse ou réseau" />
+        <button type="submit" class="btn btn-primary">Calculer</button>
+    </form>
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger mt-3 mb-0">@Model.Error</div>
+    }
+</div>
+
+@if (Model.Result is not null)
+{
+    <div class="ipam-panel ipam-form">
+        <div class="ipam-panel-title font-monospace">@Model.Result.Network</div>
+        <table class="table table-sm mb-3">
+            <tbody>
+                @foreach ((string Label, string Value) row in Model.Result.Rows)
+                {
+                    <tr><th scope="row" style="width: 40%">@row.Label</th><td class="font-monospace">@row.Value</td></tr>
+                }
+            </tbody>
+        </table>
+        <a asp-page="/Tools/Search/Index" asp-route-q="@Model.Result.Address" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-search"></i>Rechercher @Model.Result.Address dans l'IPAM
+        </a>
+    </div>
+}

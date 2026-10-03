@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -11,6 +12,38 @@ namespace IPAMdotNet.Migrations.Postgres
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AppSettings",
+                columns: table => new
+                {
+                    Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppSettings", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChangeLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: true),
+                    UserName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    EntityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EntityId = table.Column<int>(type: "integer", nullable: false),
+                    EntityLabel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Action = table.Column<int>(type: "integer", nullable: false),
+                    Changes = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChangeLogs", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "CircuitProviders",
                 columns: table => new
@@ -280,7 +313,8 @@ namespace IPAMdotNet.Migrations.Postgres
                     VrfId = table.Column<int>(type: "integer", nullable: true),
                     NameserverId = table.Column<int>(type: "integer", nullable: true),
                     LocationId = table.Column<int>(type: "integer", nullable: true),
-                    CustomerId = table.Column<int>(type: "integer", nullable: true)
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    AllowRequests = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -363,6 +397,74 @@ namespace IPAMdotNet.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
+                name: "FavoriteSubnets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    SubnetId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FavoriteSubnets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FavoriteSubnets_Subnets_SubnetId",
+                        column: x => x.SubnetId,
+                        principalTable: "Subnets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FavoriteSubnets_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IpRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SubnetId = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    Hostname = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Owner = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false),
+                    RequestedById = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AssignedAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    AdminComment = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ProcessedById = table.Column<int>(type: "integer", nullable: true),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IpRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Subnets_SubnetId",
+                        column: x => x.SubnetId,
+                        principalTable: "Subnets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Users_ProcessedById",
+                        column: x => x.ProcessedById,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Users_RequestedById",
+                        column: x => x.RequestedById,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PstnPrefixes",
                 columns: table => new
                 {
@@ -421,6 +523,16 @@ namespace IPAMdotNet.Migrations.Postgres
                 column: "VrfId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_Date",
+                table: "ChangeLogs",
+                column: "Date");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_EntityType_EntityId",
+                table: "ChangeLogs",
+                columns: new[] { "EntityType", "EntityId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CircuitProviders_Name",
                 table: "CircuitProviders",
                 column: "Name",
@@ -472,6 +584,37 @@ namespace IPAMdotNet.Migrations.Postgres
                 table: "DeviceTypes",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FavoriteSubnets_SubnetId",
+                table: "FavoriteSubnets",
+                column: "SubnetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FavoriteSubnets_UserId_SubnetId",
+                table: "FavoriteSubnets",
+                columns: new[] { "UserId", "SubnetId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_ProcessedById",
+                table: "IpRequests",
+                column: "ProcessedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_RequestedById",
+                table: "IpRequests",
+                column: "RequestedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_State",
+                table: "IpRequests",
+                column: "State");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_SubnetId",
+                table: "IpRequests",
+                column: "SubnetId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PstnNumbers_DeviceId",
@@ -565,10 +708,22 @@ namespace IPAMdotNet.Migrations.Postgres
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AppSettings");
+
+            migrationBuilder.DropTable(
                 name: "BgpPeers");
 
             migrationBuilder.DropTable(
+                name: "ChangeLogs");
+
+            migrationBuilder.DropTable(
                 name: "Circuits");
+
+            migrationBuilder.DropTable(
+                name: "FavoriteSubnets");
+
+            migrationBuilder.DropTable(
+                name: "IpRequests");
 
             migrationBuilder.DropTable(
                 name: "NatRules");
@@ -577,13 +732,13 @@ namespace IPAMdotNet.Migrations.Postgres
                 name: "PstnNumbers");
 
             migrationBuilder.DropTable(
+                name: "CircuitProviders");
+
+            migrationBuilder.DropTable(
                 name: "Subnets");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "CircuitProviders");
 
             migrationBuilder.DropTable(
                 name: "PstnPrefixes");

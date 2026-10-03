@@ -22,7 +22,10 @@ builder.Services.AddSetupStep<LicenseSetupStep>();
 string? connectionString = builder.Configuration.GetConnectionString("Default");
 if (Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provider) && connectionString is not null)
 {
-    builder.Services.AddScoped<AppDbContext>(_ => AppDbContext.Create(provider, connectionString));
+    // L'utilisateur courant signe les entrées du journal des modifications.
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<AppDbContext>(services => AppDbContext.Create(provider, connectionString)
+        .WithAuditUser(services.GetRequiredService<IHttpContextAccessor>().HttpContext?.User));
 
     // Migrations en attente après une mise à jour : tout est redirigé vers /update, un admin confirme leur application.
     builder.Services.AddDatabaseUpdate<AppDbContext>(options =>

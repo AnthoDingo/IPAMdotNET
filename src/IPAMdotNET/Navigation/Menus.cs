@@ -12,12 +12,12 @@ public static class Menus
     [
         new("Outils",
         [
-            new("Recherche", "search"),
-            new("Calculateur IP", "calculator"),
-            new("Journal des modifications", "clock-history"),
-            new("Sous-réseaux favoris", "star"),
-            new("Demandes d'adresses", "inbox"),
-            new("Instructions", "info-circle"),
+            new("Recherche", "search", "/Tools/Search/Index"),
+            new("Calculateur IP", "calculator", "/Tools/Calculator/Index"),
+            new("Journal des modifications", "clock-history", "/Tools/Changelog/Index"),
+            new("Sous-réseaux favoris", "star", "/Tools/Favorites/Index"),
+            new("Demandes d'adresses", "inbox", "/Tools/Requests/Index"),
+            new("Instructions", "info-circle", "/Tools/Instructions/Index"),
         ]),
         new("Réseau",
         [

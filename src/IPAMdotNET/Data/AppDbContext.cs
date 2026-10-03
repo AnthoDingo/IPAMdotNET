@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Data;
 
-public abstract class AppDbContext(DbContextOptions options) : DbContext(options)
+public abstract partial class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<Section> Sections => Set<Section>();
@@ -22,6 +22,10 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(options
     public DbSet<Circuit> Circuits => Set<Circuit>();
     public DbSet<PstnPrefix> PstnPrefixes => Set<PstnPrefix>();
     public DbSet<PstnNumber> PstnNumbers => Set<PstnNumber>();
+    public DbSet<ChangeLog> ChangeLogs => Set<ChangeLog>();
+    public DbSet<FavoriteSubnet> FavoriteSubnets => Set<FavoriteSubnet>();
+    public DbSet<IpRequest> IpRequests => Set<IpRequest>();
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     /// <summary>
     /// Vide les références vers un emplacement, un client, un rack, un type ou un équipement avant sa suppression.
@@ -135,6 +139,28 @@ public abstract class AppDbContext(DbContextOptions options) : DbContext(options
         {
             entity.HasIndex(p => p.Prefix).IsUnique();
             entity.HasOne(p => p.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // Outils
+        modelBuilder.Entity<ChangeLog>(entity =>
+        {
+            entity.HasIndex(c => c.Date);
+            entity.HasIndex(c => new { c.EntityType, c.EntityId });
+        });
+
+        modelBuilder.Entity<FavoriteSubnet>(entity =>
+        {
+            entity.HasIndex(f => new { f.UserId, f.SubnetId }).IsUnique();
+            entity.HasOne(f => f.User).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(f => f.Subnet).WithMany().OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<IpRequest>(entity =>
+        {
+            entity.HasIndex(r => r.State);
+            entity.HasOne(r => r.Subnet).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(r => r.RequestedBy).WithMany().HasForeignKey(r => r.RequestedById).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(r => r.ProcessedBy).WithMany().HasForeignKey(r => r.ProcessedById).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PstnNumber>(entity =>

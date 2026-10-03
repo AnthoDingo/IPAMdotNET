@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Numerics;
 
@@ -30,6 +31,50 @@ public static class Ip
     {
         uint mask = prefixLength == 0 ? 0 : uint.MaxValue << (32 - prefixLength);
         return new IPAddress([(byte)(mask >> 24), (byte)(mask >> 16), (byte)(mask >> 8), (byte)mask]);
+    }
+
+    private static readonly (IPNetwork Network, string Label)[] SpecialRanges =
+    [
+        (IPNetwork.Parse("0.0.0.0/8"), "Ce réseau (RFC 1122)"),
+        (IPNetwork.Parse("10.0.0.0/8"), "Privée (RFC 1918)"),
+        (IPNetwork.Parse("100.64.0.0/10"), "Partagée / CGNAT (RFC 6598)"),
+        (IPNetwork.Parse("127.0.0.0/8"), "Boucle locale"),
+        (IPNetwork.Parse("169.254.0.0/16"), "Lien local"),
+        (IPNetwork.Parse("172.16.0.0/12"), "Privée (RFC 1918)"),
+        (IPNetwork.Parse("192.0.2.0/24"), "Documentation (RFC 5737)"),
+        (IPNetwork.Parse("192.168.0.0/16"), "Privée (RFC 1918)"),
+        (IPNetwork.Parse("198.18.0.0/15"), "Tests de performance (RFC 2544)"),
+        (IPNetwork.Parse("198.51.100.0/24"), "Documentation (RFC 5737)"),
+        (IPNetwork.Parse("203.0.113.0/24"), "Documentation (RFC 5737)"),
+        (IPNetwork.Parse("224.0.0.0/4"), "Multicast"),
+        (IPNetwork.Parse("255.255.255.255/32"), "Diffusion limitée"),
+        (IPNetwork.Parse("240.0.0.0/4"), "Réservée"),
+        (IPNetwork.Parse("::/128"), "Non spécifiée"),
+        (IPNetwork.Parse("::1/128"), "Boucle locale"),
+        (IPNetwork.Parse("::ffff:0:0/96"), "IPv4 mappée"),
+        (IPNetwork.Parse("2001:db8::/32"), "Documentation (RFC 3849)"),
+        (IPNetwork.Parse("fc00::/7"), "Locale unique (ULA)"),
+        (IPNetwork.Parse("fe80::/10"), "Lien local"),
+        (IPNetwork.Parse("ff00::/8"), "Multicast"),
+        (IPNetwork.Parse("2000::/3"), "Unicast global"),
+    ];
+
+    /// <summary>Plage spéciale (RFC) contenant le réseau, sinon « Publique ».</summary>
+    public static string Classify(IPNetwork network) =>
+        SpecialRanges.FirstOrDefault(r => Contains(r.Network, network)).Label ?? "Publique";
+
+    /// <summary>Zone DNS inverse couvrant le réseau (octets entiers en IPv4, quartets en IPv6).</summary>
+    public static string ReverseZone(IPNetwork network)
+    {
+        byte[] bytes = network.BaseAddress.GetAddressBytes();
+        if (bytes.Length == 4)
+        {
+            IEnumerable<string> octets = bytes.Take(network.PrefixLength / 8).Reverse().Select(b => b.ToString(CultureInfo.InvariantCulture));
+            return string.Join('.', octets.Append("in-addr.arpa"));
+        }
+        IEnumerable<string> nibbles = bytes.SelectMany(b => new[] { b >> 4, b & 0xF })
+            .Take(network.PrefixLength / 4).Reverse().Select(n => n.ToString("x", CultureInfo.InvariantCulture));
+        return string.Join('.', nibbles.Append("ip6.arpa"));
     }
 
     public static BigInteger AddressCount(IPNetwork network) =>

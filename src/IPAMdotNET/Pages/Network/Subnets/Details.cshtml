@@ -26,9 +26,14 @@
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center">
         <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
+        <form method="post" asp-page-handler="ToggleFavorite" asp-route-id="@Model.Subnet.Id" class="ms-auto me-2">
+            <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? "Retirer des favoris" : "Ajouter aux favoris")">
+                <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>Favori
+            </button>
+        </form>
         @if (User.IsInRole("Admin"))
         {
-            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
         }
     </div>
     <dl class="row mb-0 ipam-details">
@@ -69,6 +74,17 @@
         <dd class="col-sm-8 col-xl-9">
             @if (Model.Subnet.Location is null) { <text>—</text> }
             else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@Model.Subnet.Location.Id">@Model.Subnet.Location.Name</a> }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">Demandes d'adresses</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (Model.Subnet.AllowRequests)
+            {
+                <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>Demander une adresse</a>
+            }
+            else
+            {
+                <text>Fermé</text>
+            }
         </dd>
         <dt class="col-sm-4 col-xl-3">Client</dt>
         <dd class="col-sm-8 col-xl-9">

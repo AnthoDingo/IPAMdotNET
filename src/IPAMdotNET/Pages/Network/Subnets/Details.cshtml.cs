@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Navigation;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -41,6 +42,23 @@ public class DetailsModel(AppDbContext db) : PageModel
         int index = Tree.FindIndex(n => n.Subnet.Id == id);
         int depth = Tree[index].Depth;
         Descendants = Tree.Skip(index + 1).TakeWhile(n => n.Depth > depth).ToList();
+
+        int userId = User.UserId();
+        IsFavorite = await db.FavoriteSubnets.AnyAsync(f => f.UserId == userId && f.SubnetId == id);
         return Page();
+    }
+
+    public bool IsFavorite { get; private set; }
+
+    public async Task<IActionResult> OnPostToggleFavoriteAsync(int id)
+    {
+        int userId = User.UserId();
+        int removed = await db.FavoriteSubnets.Where(f => f.UserId == userId && f.SubnetId == id).ExecuteDeleteAsync();
+        if (removed == 0 && await db.Subnets.AnyAsync(s => s.Id == id))
+        {
+            db.FavoriteSubnets.Add(new FavoriteSubnet { UserId = userId, SubnetId = id });
+            await db.SaveChangesAsync();
+        }
+        return RedirectToPage(new { id });
     }
 }

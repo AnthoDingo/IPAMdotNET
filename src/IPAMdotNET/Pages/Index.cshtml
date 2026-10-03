@@ -1,10 +1,11 @@
 @page
+@using IPAMdotNet.Data
 @model IndexModel
 @{
     ViewData["Title"] = "Tableau de bord";
 }
 
-@* Widgets du tableau de bord de phpIPAM. Seules les statistiques sont alimentées pour l'instant. *@
+@* Widgets du tableau de bord de phpIPAM. Les Top 10 attendent la gestion des adresses IP. *@
 <div class="row g-3">
     <div class="col-lg-6 col-xxl-4">
         <div class="ipam-panel h-100">
@@ -24,14 +25,50 @@
     </div>
     <div class="col-lg-6 col-xxl-4">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-star"></i> Sous-réseaux favoris</div>
-            <p class="ipam-empty">Aucun sous-réseau favori.</p>
+            <div class="ipam-panel-title"><i class="bi bi-star"></i> <a asp-page="/Tools/Favorites/Index">Sous-réseaux favoris</a></div>
+            @if (Model.Favorites.Count == 0)
+            {
+                <p class="ipam-empty">Aucun sous-réseau favori.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (Subnet subnet in Model.Favorites)
+                    {
+                        <li><a class="font-monospace" asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a> <span class="text-body-secondary">@subnet.Description</span></li>
+                    }
+                </ul>
+            }
         </div>
     </div>
     <div class="col-lg-6 col-xxl-4">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-inbox"></i> Demandes d'adresses</div>
-            <p class="ipam-empty">Aucune demande en attente.</p>
+            <div class="ipam-panel-title"><i class="bi bi-inbox"></i> <a asp-page="/Tools/Requests/Index">Demandes d'adresses</a>
+                @if (Model.PendingRequestCount > 0)
+                {
+                    <span class="badge text-bg-warning ms-1">@Model.PendingRequestCount</span>
+                }
+            </div>
+            @if (Model.PendingRequests.Count == 0)
+            {
+                <p class="ipam-empty">Aucune demande en attente.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (IpRequest request in Model.PendingRequests)
+                    {
+                        <li>
+                            <span class="font-monospace">@request.Subnet?.Network</span>
+                            <span class="text-body-secondary">@request.Description</span>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-page="/Tools/Requests/Process" asp-route-id="@request.Id">traiter</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
         </div>
     </div>
     <div class="col-lg-6 col-xxl-4">
@@ -48,8 +85,24 @@
     </div>
     <div class="col-lg-6 col-xxl-4">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> Dernières modifications</div>
-            <p class="ipam-empty">Aucune modification enregistrée.</p>
+            <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> <a asp-page="/Tools/Changelog/Index">Dernières modifications</a></div>
+            @if (Model.LastChanges.Count == 0)
+            {
+                <p class="ipam-empty">Aucune modification enregistrée.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0 small">
+                    @foreach (ChangeLog change in Model.LastChanges)
+                    {
+                        string label = ChangeLog.Types.TryGetValue(change.EntityType, out (string Label, string Page, bool HasDetails) type) ? type.Label : change.EntityType;
+                        <li>
+                            <span class="text-body-secondary">@change.Date.ToLocalTime().ToString("g")</span>
+                            @change.UserName · @Html.DisplayFor(_ => change.Action) · @label <strong>@change.EntityLabel</strong>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
     </div>
 </div>

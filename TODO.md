@@ -14,6 +14,13 @@
 - [ ] BGP : association des sous-réseaux annoncés à un pair.
 - [ ] DNS : intégration PowerDNS (aujourd'hui seuls les jeux de serveurs de noms existent).
 
+## Outils — écarts restants avec phpIPAM
+
+- [ ] Demandes d'adresses : créer l'adresse IP à l'acceptation et proposer la première adresse libre (dépend des adresses IP) ; notifications par e-mail.
+- [ ] Journal : afficher les noms au lieu des identifiants pour les clés étrangères (VLAN, VRF…), historique sur la fiche de chaque objet.
+- [ ] Instructions : mise en forme (Markdown) — aujourd'hui texte brut.
+- [ ] Recherche : adresses IP individuelles (dépend des adresses IP).
+
 ## Partie Infrastructure — écarts restants avec phpIPAM
 
 - [ ] Tester sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).

@@ -1,0 +1,46 @@
+@page
+@model IPAMdotNet.Pages.Tools.Requests.NewModel
+@{
+    ViewData["Title"] = "Nouvelle demande d'adresse";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    @if (Model.Subnets.Count == 0)
+    {
+        <p class="ipam-empty">Aucun sous-réseau n'est ouvert aux demandes. Un administrateur peut l'activer dans la fiche d'un sous-réseau.</p>
+    }
+    else
+    {
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                    <label asp-for="IpRequest.SubnetId" class="form-label"></label>
+                    <select asp-for="IpRequest.SubnetId" asp-items="Model.Subnets" class="form-select"></select>
+                    <span asp-validation-for="IpRequest.SubnetId" class="text-danger"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="IpRequest.RequestedAddress" class="form-label"></label>
+                    <input asp-for="IpRequest.RequestedAddress" class="form-control font-monospace" placeholder="Facultatif" />
+                    <span asp-validation-for="IpRequest.RequestedAddress" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="IpRequest.Hostname" class="form-label"></label>
+                    <input asp-for="IpRequest.Hostname" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="IpRequest.Owner" class="form-label"></label>
+                    <input asp-for="IpRequest.Owner" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="IpRequest.Description" class="form-label"></label>
+                    <textarea asp-for="IpRequest.Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="IpRequest.Description" class="text-danger"></span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Envoyer la demande</button>
+            <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        </form>
+    }
+</div>

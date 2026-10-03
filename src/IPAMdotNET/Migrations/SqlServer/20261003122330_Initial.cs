@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using MySql.EntityFrameworkCore.Metadata;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace IPAMdotNet.Migrations.MySql
+namespace IPAMdotNet.Migrations.SqlServer
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -11,195 +11,214 @@ namespace IPAMdotNet.Migrations.MySql
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterDatabase()
-                .Annotation("MySQL:Charset", "utf8mb4");
+            migrationBuilder.CreateTable(
+                name: "AppSettings",
+                columns: table => new
+                {
+                    Key = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppSettings", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChangeLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    EntityType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    EntityId = table.Column<int>(type: "int", nullable: false),
+                    EntityLabel = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Action = table.Column<int>(type: "int", nullable: false),
+                    Changes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChangeLogs", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "CircuitProviders",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Contact = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Contact = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CircuitProviders", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Customers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Address = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: true),
-                    PostCode = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true),
-                    City = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
-                    State = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
-                    ContactPerson = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
-                    ContactPhone = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    ContactMail = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true),
-                    Note = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    PostCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    ContactPerson = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    ContactPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ContactMail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Note = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Customers", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "DeviceTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DeviceTypes", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Locations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true),
-                    Address = table.Column<string>(type: "varchar(300)", maxLength: 300, nullable: true),
-                    Latitude = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true),
-                    Longitude = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    Latitude = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Longitude = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Locations", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Nameservers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Servers = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Servers = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Nameservers", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "NatRules",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    Source = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     SourcePort = table.Column<int>(type: "int", nullable: true),
-                    Destination = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
+                    Destination = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     DestinationPort = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NatRules", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Sections",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Sections", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    UserName = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false),
-                    DisplayName = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true),
-                    IsAdmin = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    IsAdmin = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Vlans",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Number = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Vlans", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Vrfs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    RouteDistinguisher = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RouteDistinguisher = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Vrfs", x => x.Id);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Circuits",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Cid = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Cid = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ProviderId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    Capacity = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
+                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Capacity = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
                     LocationAId = table.Column<int>(type: "int", nullable: true),
                     LocationBId = table.Column<int>(type: "int", nullable: true),
                     CustomerId = table.Column<int>(type: "int", nullable: true),
-                    Comment = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -225,20 +244,19 @@ namespace IPAMdotNet.Migrations.MySql
                         column: x => x.LocationBId,
                         principalTable: "Locations",
                         principalColumn: "Id");
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Racks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Size = table.Column<int>(type: "int", nullable: false),
                     LocationId = table.Column<int>(type: "int", nullable: true),
                     CustomerId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -253,22 +271,21 @@ namespace IPAMdotNet.Migrations.MySql
                         column: x => x.LocationId,
                         principalTable: "Locations",
                         principalColumn: "Id");
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "BgpPeers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     LocalAs = table.Column<long>(type: "bigint", nullable: false),
-                    LocalAddress = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false),
+                    LocalAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
                     PeerAs = table.Column<long>(type: "bigint", nullable: false),
-                    PeerAddress = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false),
+                    PeerAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
                     VrfId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -279,24 +296,24 @@ namespace IPAMdotNet.Migrations.MySql
                         principalTable: "Vrfs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Subnets",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     SectionId = table.Column<int>(type: "int", nullable: false),
                     Address = table.Column<byte[]>(type: "varbinary(16)", maxLength: 16, nullable: false),
                     PrefixLength = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     VlanId = table.Column<int>(type: "int", nullable: true),
                     VrfId = table.Column<int>(type: "int", nullable: true),
                     NameserverId = table.Column<int>(type: "int", nullable: true),
                     LocationId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true)
+                    CustomerId = table.Column<int>(type: "int", nullable: true),
+                    AllowRequests = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -335,19 +352,18 @@ namespace IPAMdotNet.Migrations.MySql
                         principalTable: "Vrfs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "Devices",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Hostname = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
-                    IpAddress = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Hostname = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    IpAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
                     DeviceTypeId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     LocationId = table.Column<int>(type: "int", nullable: true),
                     CustomerId = table.Column<int>(type: "int", nullable: true),
                     RackId = table.Column<int>(type: "int", nullable: true),
@@ -377,21 +393,88 @@ namespace IPAMdotNet.Migrations.MySql
                         column: x => x.RackId,
                         principalTable: "Racks",
                         principalColumn: "Id");
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FavoriteSubnets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    SubnetId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FavoriteSubnets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FavoriteSubnets_Subnets_SubnetId",
+                        column: x => x.SubnetId,
+                        principalTable: "Subnets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FavoriteSubnets_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IpRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SubnetId = table.Column<int>(type: "int", nullable: false),
+                    RequestedAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
+                    Hostname = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Owner = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    State = table.Column<int>(type: "int", nullable: false),
+                    RequestedById = table.Column<int>(type: "int", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AssignedAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
+                    AdminComment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ProcessedById = table.Column<int>(type: "int", nullable: true),
+                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IpRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Subnets_SubnetId",
+                        column: x => x.SubnetId,
+                        principalTable: "Subnets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Users_ProcessedById",
+                        column: x => x.ProcessedById,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_IpRequests_Users_RequestedById",
+                        column: x => x.RequestedById,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
 
             migrationBuilder.CreateTable(
                 name: "PstnPrefixes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
-                    Prefix = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Prefix = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Start = table.Column<long>(type: "bigint", nullable: false),
                     Stop = table.Column<long>(type: "bigint", nullable: false),
                     DeviceId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -401,22 +484,21 @@ namespace IPAMdotNet.Migrations.MySql
                         column: x => x.DeviceId,
                         principalTable: "Devices",
                         principalColumn: "Id");
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateTable(
                 name: "PstnNumbers",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     PrefixId = table.Column<int>(type: "int", nullable: false),
                     Number = table.Column<long>(type: "bigint", nullable: false),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
-                    Owner = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Owner = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     State = table.Column<int>(type: "int", nullable: false),
                     DeviceId = table.Column<int>(type: "int", nullable: true),
-                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -432,13 +514,22 @@ namespace IPAMdotNet.Migrations.MySql
                         principalTable: "PstnPrefixes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BgpPeers_VrfId",
                 table: "BgpPeers",
                 column: "VrfId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_Date",
+                table: "ChangeLogs",
+                column: "Date");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChangeLogs_EntityType_EntityId",
+                table: "ChangeLogs",
+                columns: new[] { "EntityType", "EntityId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_CircuitProviders_Name",
@@ -492,6 +583,37 @@ namespace IPAMdotNet.Migrations.MySql
                 table: "DeviceTypes",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FavoriteSubnets_SubnetId",
+                table: "FavoriteSubnets",
+                column: "SubnetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FavoriteSubnets_UserId_SubnetId",
+                table: "FavoriteSubnets",
+                columns: new[] { "UserId", "SubnetId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_ProcessedById",
+                table: "IpRequests",
+                column: "ProcessedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_RequestedById",
+                table: "IpRequests",
+                column: "RequestedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_State",
+                table: "IpRequests",
+                column: "State");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IpRequests_SubnetId",
+                table: "IpRequests",
+                column: "SubnetId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PstnNumbers_DeviceId",
@@ -585,10 +707,22 @@ namespace IPAMdotNet.Migrations.MySql
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AppSettings");
+
+            migrationBuilder.DropTable(
                 name: "BgpPeers");
 
             migrationBuilder.DropTable(
+                name: "ChangeLogs");
+
+            migrationBuilder.DropTable(
                 name: "Circuits");
+
+            migrationBuilder.DropTable(
+                name: "FavoriteSubnets");
+
+            migrationBuilder.DropTable(
+                name: "IpRequests");
 
             migrationBuilder.DropTable(
                 name: "NatRules");
@@ -597,13 +731,13 @@ namespace IPAMdotNet.Migrations.MySql
                 name: "PstnNumbers");
 
             migrationBuilder.DropTable(
+                name: "CircuitProviders");
+
+            migrationBuilder.DropTable(
                 name: "Subnets");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "CircuitProviders");
 
             migrationBuilder.DropTable(
                 name: "PstnPrefixes");

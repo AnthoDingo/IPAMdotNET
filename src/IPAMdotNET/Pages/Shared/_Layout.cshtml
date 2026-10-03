@@ -40,9 +40,9 @@
             <div class="ms-auto d-flex align-items-center gap-2">
                 @if (authenticated)
                 {
-                    <form class="ipam-search d-none d-md-flex" role="search" title="Bientôt disponible">
-                        <input class="form-control form-control-sm" type="search" placeholder="Rechercher une adresse, un sous-réseau…" aria-label="Rechercher" disabled />
-                        <button class="btn btn-sm ipam-header-btn" type="submit" aria-label="Rechercher" disabled><i class="bi bi-search"></i></button>
+                    <form class="ipam-search d-none d-md-flex" role="search" method="get" asp-page="/Tools/Search/Index">
+                        <input class="form-control form-control-sm" type="search" name="q" value="@(path.StartsWithSegments("/Tools/Search") ? Context.Request.Query["q"].ToString() : "")" placeholder="Rechercher une adresse, un sous-réseau…" aria-label="Rechercher" />
+                        <button class="btn btn-sm ipam-header-btn" type="submit" aria-label="Rechercher"><i class="bi bi-search"></i></button>
                     </form>
                 }
                 <button type="button" class="btn btn-sm ipam-header-btn" id="theme-toggle" title="Changer de thème" aria-label="Changer de thème">
