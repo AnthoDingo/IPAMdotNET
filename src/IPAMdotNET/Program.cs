@@ -1,4 +1,6 @@
 using AnthoDingo.Setup;
+using AnthoDingo.Update;
+using IPAMdotNet.Components;
 using IPAMdotNet.Data;
 using System.Threading.RateLimiting;
 using IPAMdotNet.Setup;
@@ -21,6 +23,17 @@ string? connectionString = builder.Configuration.GetConnectionString("Default");
 if (Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provider) && connectionString is not null)
 {
     builder.Services.AddScoped<AppDbContext>(_ => AppDbContext.Create(provider, connectionString));
+
+    // Migrations en attente après une mise à jour : tout est redirigé vers /update, un admin confirme leur application.
+    builder.Services.AddDatabaseUpdate<AppDbContext>(options =>
+    {
+        options.ProductName = "IPAMdotNet";
+        options.RequireAuthentication = true;
+        options.SignInPath = "/Account/Login";
+        options.AuthorizationPolicy = "Admin";
+        // Connexion et déconnexion doivent rester accessibles pour changer de compte depuis /update.
+        options.ExemptPathPrefixes.Add("/Account");
+    });
 }
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -43,6 +56,9 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 });
 
+// Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
@@ -58,6 +74,9 @@ app.UseSetupMiddleware("IPAMdotNet");
 // Interface en français quelle que soit la culture du serveur (formats de nombres et de dates).
 app.UseRequestLocalization("fr-FR");
 
+// Après la garde d'installation, avant UseRouting : aucune page ne s'exécute sur un schéma obsolète.
+app.UseMigrationsGate();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -69,10 +88,14 @@ app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapRazorComponents<App>()
+   .AddInteractiveServerRenderMode()
+   .AddAdditionalAssemblies(ServiceCollectionExtensions.UpdateAssembly);
 
 app.Run();
 

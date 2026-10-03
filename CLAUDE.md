@@ -64,6 +64,7 @@ Trois moteurs doivent être supportés : **SQL Server, PostgreSQL, MySQL**. Le m
     2. regénérer une seule migration par moteur avec les trois commandes ci-dessus ;
     3. recréer les bases de dev qui avaient appliqué les migrations intermédiaires.
   - Les migrations d'une version déjà publiée ne sont jamais modifiées ni supprimées. Avant la première release, tout est fusionné dans `Initial`.
+- **Mise à niveau** via le package `AnthoDingo.Update` : tant que des migrations sont en attente, toute requête est redirigée vers `/update` (composant Blazor, seul composant de l'app : `Components/App.razor` + `Routes.razor`), où un admin confirme leur application. Aucune migration n'est appliquée silencieusement au démarrage. `/Account` est exempté de la garde : la connexion s'exécute donc sur l'**ancien** schéma. Elle ne lit que les colonnes dont elle a besoin (projection dans `Login.cshtml.cs`) ; une migration ne doit jamais renommer ni supprimer `Users.Id`, `UserName`, `PasswordHash`, `DisplayName`, `IsAdmin`.
 - Pas de SQL brut spécifique à un moteur. Si c'est inévitable, fournir les trois variantes.
 - Éviter les types non portables (`jsonb`, `inet`/`cidr`, `hierarchyid`, tableaux Postgres, etc.).
 - Adresses IP : stockage portable, de longueur fixe (ex. `byte[]` de 16 octets, IPv4 mappée en IPv6) pour garantir le tri et les comparaisons de plages de façon identique sur les trois moteurs.
