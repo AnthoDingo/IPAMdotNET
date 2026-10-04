@@ -25,7 +25,7 @@
                     <span class="badge text-bg-secondary ms-auto">Désactivé</span>
                 }
             </div>
-            <p class="text-body-secondary">Ping des adresses et découverte des hôtes, depuis le serveur IPAMdotNet, pour les sous-réseaux où le scan est activé (fiche du sous-réseau).</p>
+            <p class="text-body-secondary">Ping des adresses (puis ports TCP si configurés) et découverte des hôtes, depuis le serveur IPAMdotNet, pour les sous-réseaux où le scan est activé (fiche du sous-réseau).</p>
             <form method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                 <div class="form-check form-switch mb-3">
@@ -47,6 +47,12 @@
                         <label asp-for="Settings.Parallelism" class="form-label"></label>
                         <input asp-for="Settings.Parallelism" class="form-control" min="1" max="256" />
                         <span asp-validation-for="Settings.Parallelism" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Settings.TcpPorts" class="form-label"></label>
+                        <input asp-for="Settings.TcpPorts" class="form-control font-monospace" placeholder="22, 80, 443, 3389" />
+                        <div class="form-text">Pour les hôtes qui ne répondent pas au ping (pare-feu) : une connexion acceptée ou refusée prouve leur présence. Vide = ping seul. Sur un serveur Windows, un refus n'est reçu qu'après 2 s environ : délai de 2500 ms au moins pour en tenir compte.</div>
+                        <span asp-validation-for="Settings.TcpPorts" class="text-danger"></span>
                     </div>
                     <div class="col-12">
                         <div class="form-check form-switch">

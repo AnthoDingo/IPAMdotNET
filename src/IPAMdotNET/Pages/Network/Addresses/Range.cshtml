@@ -1,0 +1,48 @@
+@page
+@model IPAMdotNet.Pages.Network.Addresses.RangeModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Ajouter une plage d'adresses";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section?.Name</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id">@Model.Subnet.Network</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"] <span class="text-body-secondary font-monospace small">(@Model.Subnet.Network)</span></div>
+    <form method="post" asp-route-subnetId="@Model.Subnet.Id">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <p class="text-body-secondary small">Crée toutes les adresses de la plage (@RangeModel.MaxAddresses au plus) ; celles qui existent déjà sont ignorées.</p>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="First" class="form-label"></label>
+                <input asp-for="First" class="form-control font-monospace" />
+                <span asp-validation-for="First" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Last" class="form-label"></label>
+                <input asp-for="Last" class="form-control font-monospace" />
+                <span asp-validation-for="Last" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="TagId" class="form-label"></label>
+                <select asp-for="TagId" asp-items="Model.Tags" class="form-select"><option value="">Aucune</option></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Owner" class="form-label"></label>
+                <input asp-for="Owner" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>

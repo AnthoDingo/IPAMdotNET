@@ -1,6 +1,7 @@
 @page "{id:int}"
 @using System.Net
 @using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
 @using IPAMdotNet.Networking
 @using IPAMdotNet.Pages.Network.Subnets
 @model IPAMdotNet.Pages.Network.Subnets.DetailsModel
@@ -8,6 +9,7 @@
     Layout = "_Layout";
     IPNetwork network = Model.Subnet.Network;
     ViewData["Title"] = network.ToString();
+    const int RangeModelLimit = IPAMdotNet.Pages.Network.Addresses.RangeModel.MaxAddresses;
 }
 
 @section Breadcrumb {
@@ -177,6 +179,7 @@
         @if (Model.CanWrite)
         {
             <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> Ajouter une adresse</a>
+            <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-square-dotted"></i>Ajouter une plage</a>
         }
     </div>
     @if (Model.FirstFree is not null)
@@ -190,7 +193,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Adresse</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th><th>Propriétaire</th><th>Équipement</th><th>Vue le</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
+            <thead><tr><th>Adresse</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th><th>Propriétaire</th><th>Équipement</th>@foreach (CustomField field in Model.AddressFields) { <th>@field.Name</th> }<th>Vue le</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (object item in Model.Rows)
                 {
@@ -204,11 +207,15 @@
                                     <text>– </text>@free.Last
                                 }
                             </td>
-                            <td colspan="7" class="text-body-secondary fst-italic">@free.Count.ToString("N0") @(free.Count > 1 ? "adresses libres" : "adresse libre")</td>
+                            <td colspan="@(7 + Model.AddressFields.Count)" class="text-body-secondary fst-italic">@free.Count.ToString("N0") @(free.Count > 1 ? "adresses libres" : "adresse libre")</td>
                             @if (Model.CanWrite)
                             {
                                 <td class="text-end">
                                     <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" asp-route-ip="@free.First" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Ajouter @free.First"><i class="bi bi-plus-lg"></i></a>
+                                    @if (free.Count > 1)
+                                    {
+                                        <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" asp-route-first="@free.First" asp-route-last="@(free.Count <= RangeModelLimit ? free.Last.ToString() : null)" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Ajouter la plage"><i class="bi bi-plus-square-dotted"></i></a>
+                                    }
                                 </td>
                             }
                         </tr>
@@ -230,7 +237,7 @@
                         <td>@if (address.Tag is not null && address.Tag.ShowTag) { <partial name="_TagBadge" model="address.Tag" /> }</td>
                         @if (row.Count > 1)
                         {
-                            <td colspan="5" class="text-body-secondary">Plage regroupée</td>
+                            <td colspan="@(5 + Model.AddressFields.Count)" class="text-body-secondary">Plage regroupée</td>
                         }
                         else
                         {
@@ -239,6 +246,10 @@
                             <td class="font-monospace small">@address.MacAddress</td>
                             <td>@address.Owner</td>
                             <td>@address.Device?.Hostname</td>
+                            @foreach (CustomField field in Model.AddressFields)
+                            {
+                                <td>@CustomFieldForm.Display(field, Model.AddressValues.GetValueOrDefault(address.Id)?.GetValueOrDefault(field.Id))</td>
+                            }
                         }
                         <td class="small text-nowrap">@(address.ExcludePing ? "exclue" : address.LastSeen?.ToLocalTime().ToString("g"))</td>
                         @if (Model.CanWrite)

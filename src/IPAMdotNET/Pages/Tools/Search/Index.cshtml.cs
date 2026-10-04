@@ -107,6 +107,10 @@ public class IndexModel(AppDbContext db) : PageModel
             // Valeurs portées par des sous-réseaux de sections non lisibles : retirées.
             HashSet<int> readableSubnets = (await access.Readable(db.Subnets).Select(s => s.Id).ToListAsync()).ToHashSet();
             CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(Subnet) && !readableSubnets.Contains(v.EntityId));
+            List<int> addressIds = CustomValues.Where(v => v.Field!.EntityType == nameof(IpAddress)).Select(v => v.EntityId).ToList();
+            HashSet<int> readableAddresses = (await db.IpAddresses.Where(a => addressIds.Contains(a.Id) && readableSubnets.Contains(a.SubnetId))
+                .Select(a => a.Id).ToListAsync()).ToHashSet();
+            CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(IpAddress) && !readableAddresses.Contains(v.EntityId));
         }
     }
 

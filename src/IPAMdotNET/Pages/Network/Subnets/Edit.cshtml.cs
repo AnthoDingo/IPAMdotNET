@@ -147,6 +147,10 @@ public class EditModel(AppDbContext db) : PageModel
         {
             return Forbid();
         }
+        // Les adresses partent en cascade côté base : leurs champs personnalisés (sans clé étrangère) d'abord.
+        await db.CustomFieldValues
+            .Where(v => v.Field!.EntityType == nameof(IpAddress) && db.IpAddresses.Any(a => a.Id == v.EntityId && a.SubnetId == id))
+            .ExecuteDeleteAsync();
         db.Subnets.Remove(subnet);
         await db.SaveChangesAsync();
         return RedirectToPage("/Sections/Index", new { id = subnet.SectionId });

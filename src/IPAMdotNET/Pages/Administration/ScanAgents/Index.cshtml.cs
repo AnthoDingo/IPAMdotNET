@@ -27,6 +27,10 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (Settings.TcpPortList.Length != (Settings.TcpPorts ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Length)
+        {
+            ModelState.AddModelError("Settings.TcpPorts", "Ports entre 1 et 65535, sans doublon.");
+        }
         if (!ModelState.IsValid)
         {
             await OnGetAsync();

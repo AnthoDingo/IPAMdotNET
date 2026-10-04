@@ -7,7 +7,8 @@
 ## Serveur — écarts restants avec phpIPAM
 
 - [x] Agent de scan intégré (ping, découverte IPv4, mise à jour des étiquettes) ; désactivable.
-- [ ] Agents de scan distants (phpIPAM : agents installés dans d'autres réseaux qui remontent leurs résultats par l'API) ; scan par ports TCP en plus du ping.
+- [x] Scan par ports TCP en plus du ping (ports configurables).
+- [ ] Agents de scan distants (phpIPAM : agents installés dans d'autres réseaux qui remontent leurs résultats par l'API).
 - [x] Étiquettes : gestion, affichage dans les adresses, regroupement des plages, mise à jour par le scan.
 - [ ] Langues : l'interface est en français uniquement ; une traduction suppose d'extraire tous les textes (ressources .resx).
 - [ ] API : écriture (création / modification), droits par clé, recherche.
@@ -19,7 +20,8 @@
 
 - [ ] Tester les migrations et les pages réseau sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).
 - [x] Adresses IP dans les sous-réseaux (taux d'occupation, Top 10, recherche, API, CSV).
-- [ ] Adresses IP : champs personnalisés, plages (ajout en masse), vue « carte » des adresses libres/occupées.
+- [x] Adresses IP : champs personnalisés, ajout en masse d'une plage, affichage visuel.
+- [ ] Adresses IP : champs personnalisés dans l'API et le CSV ; modification / suppression en masse.
 - [x] Permissions par section (groupes + accès par défaut, voir partie Serveur).
 - [ ] Domaines L2 pour les VLAN (aujourd'hui un numéro de VLAN est unique globalement).
 - [ ] NAT : lier source/destination aux objets sous-réseaux/adresses et à un équipement (aujourd'hui saisie d'une adresse ou d'un réseau).

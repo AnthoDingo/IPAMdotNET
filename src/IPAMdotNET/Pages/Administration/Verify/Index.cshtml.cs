@@ -183,6 +183,7 @@ public class IndexModel(AppDbContext db) : PageModel
     private Task<List<int>> ExistingIdsAsync(string entityType) => entityType switch
     {
         nameof(Subnet) => db.Subnets.Select(x => x.Id).ToListAsync(),
+        nameof(IpAddress) => db.IpAddresses.Select(x => x.Id).ToListAsync(),
         nameof(Vlan) => db.Vlans.Select(x => x.Id).ToListAsync(),
         nameof(Vrf) => db.Vrfs.Select(x => x.Id).ToListAsync(),
         nameof(Device) => db.Devices.Select(x => x.Id).ToListAsync(),

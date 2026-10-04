@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Numerics;
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -18,6 +19,12 @@ public class EditModel(AppDbContext db) : PageModel
 
     [BindProperty, Required(ErrorMessage = "L'adresse est requise."), Display(Name = "Adresse IP")]
     public string Ip { get; set; } = "";
+
+    // Nom explicite : voir CustomFieldForm.
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
 
     public Subnet Subnet { get; private set; } = new();
     public List<SelectListItem> Tags { get; private set; } = [];
@@ -52,6 +59,7 @@ public class EditModel(AppDbContext db) : PageModel
             Ip = ip ?? Networking.Ip.FirstFree(Subnet.Network, used)?.ToString() ?? "";
             Entry.TagId = await db.Tags.Where(t => t.SystemKey == Tag.UsedKey).Select(t => (int?)t.Id).SingleOrDefaultAsync();
         }
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(IpAddress), id ?? 0);
         return Page();
     }
 
@@ -106,8 +114,11 @@ public class EditModel(AppDbContext db) : PageModel
         {
             Entry.MacAddress = null;
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(IpAddress));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         if (id is not null)
@@ -117,6 +128,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         db.Update(Entry);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Entry.Id, customValues);
         return Redirect(Url.Page("/Network/Subnets/Details", new { id = Entry.SubnetId }) + $"#address-{Entry.Id}");
     }
 

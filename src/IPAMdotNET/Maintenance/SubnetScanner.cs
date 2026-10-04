@@ -15,7 +15,7 @@ public sealed record ScanReport(int Pinged, int Online, int Discovered, int TagC
 }
 
 /// <summary>
-/// Scan d'un sous-réseau par ping (agent de scan intégré, comme celui de phpIPAM) :
+/// Scan d'un sous-réseau par ping, puis ports TCP si configurés (agent de scan intégré, comme celui de phpIPAM) :
 /// vérification de l'état des adresses connues et découverte des nouveaux hôtes.
 /// </summary>
 public static class SubnetScanner
@@ -66,7 +66,7 @@ public static class SubnetScanner
             }
         }
 
-        HashSet<IPAddress> online = await PingAllAsync(toPing.Select(a => a.Value).Concat(toDiscover), settings, cancellationToken);
+        HashSet<IPAddress> online = await ProbeAllAsync(toPing.Select(a => a.Value).Concat(toDiscover), settings, cancellationToken);
         DateTime now = DateTime.UtcNow;
 
         // « Vu le » : mise à jour en masse, volontairement hors journal des modifications (elle change à chaque scan).
@@ -112,30 +112,70 @@ public static class SubnetScanner
         return new ScanReport(toPing.Count, seen.Count, discovered.Count, tagChanges);
     }
 
-    private static async Task<HashSet<IPAddress>> PingAllAsync(IEnumerable<IPAddress> addresses, ScanSettings settings, CancellationToken cancellationToken)
+    /// <summary>Adresses qui répondent au ping ou, à défaut, sur l'un des ports TCP configurés.</summary>
+    private static async Task<HashSet<IPAddress>> ProbeAllAsync(IEnumerable<IPAddress> addresses, ScanSettings settings, CancellationToken cancellationToken)
     {
         using SemaphoreSlim slots = new(settings.Parallelism);
-        IEnumerable<Task<IPAddress?>> pings = addresses.Select(async address =>
+        TimeSpan timeout = TimeSpan.FromMilliseconds(settings.TimeoutMilliseconds);
+        int[] ports = settings.TcpPortList;
+        IEnumerable<Task<IPAddress?>> probes = addresses.Select(async address =>
         {
             await slots.WaitAsync(cancellationToken);
             try
             {
-                // Une instance de Ping par envoi : la classe n'accepte pas d'envois simultanés.
-                using Ping ping = new();
-                PingReply reply = await ping.SendPingAsync(address, TimeSpan.FromMilliseconds(settings.TimeoutMilliseconds), cancellationToken: cancellationToken);
-                return reply.Status == IPStatus.Success ? address : null;
-            }
-            catch (PingException)
-            {
-                return null;
+                if (await PingAsync(address, timeout, cancellationToken))
+                {
+                    return address;
+                }
+                // Ports essayés en parallèle : un hôte éteint coûte un seul délai, pas un par port.
+                bool[] open = await Task.WhenAll(ports.Select(port => TcpAsync(address, port, timeout, cancellationToken)));
+                return open.Any(o => o) ? address : null;
             }
             finally
             {
                 slots.Release();
             }
         });
-        IPAddress?[] results = await Task.WhenAll(pings);
+        IPAddress?[] results = await Task.WhenAll(probes);
         return results.OfType<IPAddress>().ToHashSet();
+    }
+
+    private static async Task<bool> PingAsync(IPAddress address, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Une instance de Ping par envoi : la classe n'accepte pas d'envois simultanés.
+            using Ping ping = new();
+            PingReply reply = await ping.SendPingAsync(address, timeout, cancellationToken: cancellationToken);
+            return reply.Status == IPStatus.Success;
+        }
+        catch (PingException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Connexion TCP : acceptée ou refusée (RST), l'hôte est présent ; sans réponse dans le délai, il est considéré absent.
+    /// </summary>
+    public static async Task<bool> TcpAsync(IPAddress address, int port, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(timeout);
+        using Socket socket = new(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        try
+        {
+            await socket.ConnectAsync(address, port, limit.Token);
+            return true;
+        }
+        catch (SocketException e)
+        {
+            return e.SocketErrorCode == SocketError.ConnectionRefused;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
     }
 
     /// <summary>Nom DNS inverse, avec un délai court ; null si aucun nom.</summary>

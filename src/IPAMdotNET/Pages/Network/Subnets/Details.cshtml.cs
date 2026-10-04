@@ -69,6 +69,14 @@ public class DetailsModel(AppDbContext db) : PageModel
         List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Tag).Include(a => a.Device)
             .Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync();
         AddressCount = addresses.Count;
+        AddressFields = await CustomFieldForm.DefinitionsAsync(db, nameof(IpAddress));
+        if (AddressFields.Count > 0)
+        {
+            AddressValues = (await db.CustomFieldValues
+                    .Where(v => v.Field!.EntityType == nameof(IpAddress) && db.IpAddresses.Any(a => a.Id == v.EntityId && a.SubnetId == id))
+                    .ToListAsync())
+                .GroupBy(v => v.EntityId).ToDictionary(g => g.Key, g => g.ToDictionary(v => v.FieldId, v => v.Value));
+        }
         List<AddressRow> rows = Compress(addresses);
         Rows = SettingsStore.Server.HideFreeRanges ? [.. rows] : WithFreeRanges(subnet.Network, rows);
         if (subnet.IsIPv4 && Ip.AddressCount(subnet.Network) <= GridMaxAddresses)
@@ -94,6 +102,10 @@ public class DetailsModel(AppDbContext db) : PageModel
     /// <summary>Légende de l'affichage visuel : étiquettes présentes (null = adresse sans étiquette).</summary>
     public IEnumerable<Tag?> GridTags => Grid.Select(c => c.Entry).OfType<IpAddress>().Select(a => a.Tag).DistinctBy(t => t?.Id).OrderBy(t => t?.Name);
     public int AddressCount { get; private set; }
+
+    /// <summary>Champs personnalisés des adresses (colonnes de la liste) et leurs valeurs : adresse → (champ → valeur).</summary>
+    public List<CustomField> AddressFields { get; private set; } = [];
+    public Dictionary<int, Dictionary<int, string>> AddressValues { get; private set; } = [];
     public System.Net.IPAddress? FirstFree { get; private set; }
     public bool ScanEnabled { get; private set; }
 

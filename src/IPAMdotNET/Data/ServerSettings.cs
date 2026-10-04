@@ -53,6 +53,14 @@ public sealed class ScanSettings
 
     [Display(Name = "Résoudre le nom des hôtes découverts (DNS inverse)")]
     public bool ResolveHostnames { get; set; } = true;
+
+    /// <summary>Ports TCP essayés quand le ping ne répond pas (hôtes qui filtrent l'ICMP) ; vide = ping seul.</summary>
+    [MaxLength(200), RegularExpression(@"^\s*\d{1,5}(\s*,\s*\d{1,5})*\s*$", ErrorMessage = "Ports séparés par des virgules (ex. 22, 80, 443, 3389)."),
+     Display(Name = "Ports TCP testés si le ping échoue")]
+    public string? TcpPorts { get; set; }
+
+    public int[] TcpPortList => (TcpPorts ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(p => int.TryParse(p, out int port) ? port : 0).Where(p => p is > 0 and <= 65535).Distinct().ToArray();
 }
 
 /// <summary>Configuration SMTP (Administration › Messagerie).</summary>
