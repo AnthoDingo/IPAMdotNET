@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
@@ -8,6 +9,7 @@ using IPAMdotNet.Maintenance;
 using IPAMdotNet.Networking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace IPAMdotNet.Data;
 
@@ -207,19 +209,30 @@ public abstract partial class AppDbContext
         Type principalType = foreignKey.PrincipalEntityType.ClrType;
         if (!labels.TryGetValue((principalType, value!), out string? label))
         {
-            string keyName = foreignKey.PrincipalKey.Properties[0].Name;
+            IProperty keyProperty = foreignKey.PrincipalKey.Properties[0];
             EntityEntry? local = ChangeTracker.Entries()
-                .FirstOrDefault(e => e.Metadata.ClrType == principalType && Equals(e.Property(keyName).CurrentValue, value));
-            object? principal = local?.Entity ?? await FindAsync(principalType, [value], cancellationToken);
+                .FirstOrDefault(e => e.Metadata.ClrType == principalType && Equals(e.Property(keyProperty.Name).CurrentValue, value));
+            // Lu sans suivi : charger puis détacher l'objet détacherait aussi ses dépendants en cours d'ajout (cascade).
+            object? principal = local?.Entity ?? await (Task<object?>)typeof(AppDbContext)
+                .GetMethod(nameof(FindUntrackedAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
+                .MakeGenericMethod(principalType, keyProperty.ClrType)
+                .Invoke(this, [keyProperty.Name, value, cancellationToken])!;
             label = principal is null ? null : Label(Entry(principal), original: false);
-            if (local is null && principal is not null)
-            {
-                // Chargé pour le libellé seulement : ne doit pas rester suivi (il serait enregistré avec le reste).
-                Entry(principal).State = EntityState.Detached;
-            }
             labels[(principalType, value!)] = label;
         }
         return label is null ? text : $"{label} (n°{text})";
+    }
+
+    /// <summary>Objet par sa clé, sans suivi (libellé du journal).</summary>
+    private async Task<object?> FindUntrackedAsync<TEntity, TKey>(string keyName, TKey key, CancellationToken cancellationToken) where TEntity : class
+    {
+        ParameterExpression entity = Expression.Parameter(typeof(TEntity), "e");
+        Expression<Func<TEntity, bool>> predicate = Expression.Lambda<Func<TEntity, bool>>(
+            Expression.Equal(
+                Expression.Call(typeof(EF), nameof(EF.Property), [typeof(TKey)], entity, Expression.Constant(keyName)),
+                Expression.Constant(key, typeof(TKey))),
+            entity);
+        return await Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(predicate, cancellationToken);
     }
 
     private static string? Format(EntityEntry entry, PropertyEntry property, object? value)

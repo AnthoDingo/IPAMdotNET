@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Numerics;
+using System.Text.Json;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using IPAMdotNet.Networking;
@@ -9,36 +10,33 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IPAMdotNet.Api;
 
-public sealed record SectionDto(int Id, string Name, string? Description);
 public sealed record SubnetDto(int Id, int SectionId, string? Section, string Network, string? Description, int? Vlan, string? Vrf,
     string? Location, string? Customer, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record AddressDto(int Id, int SubnetId, string? Subnet, string Address, string? Hostname, string? Description,
     string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen, IReadOnlyDictionary<string, string>? CustomFields = null);
-public sealed record VlanDto(int Id, int Number, string Name, string? Description);
-public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description);
+public sealed record VlanDto(int Id, int Number, string Name, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
+public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record DeviceDto(int Id, string Hostname, string? IpAddress, string? Type, string? Location, string? Rack, int? RackStart, int? RackSize,
-    string? Description, int[] SectionIds);
-public sealed record LocationDto(int Id, string Name, string? Address, string? Latitude, string? Longitude, string? Description);
-public sealed record CustomerDto(int Id, string Name, string? City, string? ContactPerson, string? ContactPhone, string? ContactMail);
+    string? Description, int[] SectionIds, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record SearchDto(List<SubnetDto> Subnets, List<AddressDto> Addresses, List<DeviceDto> Devices);
 public sealed record FirstFreeDto(string Address);
 
 // Corps des créations (POST) et modifications (PATCH). En PATCH, un champ absent ou null reste inchangé ;
 // une chaîne vide efface la valeur, un identifiant 0 retire la référence (VLAN, VRF, équipement…).
 public sealed record SubnetInput(int? SectionId, string? Network, string? Description, int? VlanId, int? VrfId, int? LocationId, int? CustomerId,
-    bool? PingCheck, bool? Discover, bool? AllowRequests);
+    bool? PingCheck, bool? Discover, bool? AllowRequests, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 public sealed record AddressInput(int? SubnetId, string? Address, string? Hostname, string? Description, string? MacAddress, string? Owner, string? Tag,
-    int? DeviceId, bool? ExcludePing);
-public sealed record VlanInput(int? Number, string? Name, string? Description);
-public sealed record VrfInput(string? Name, string? RouteDistinguisher, string? Description);
-public sealed record DeviceInput(string? Hostname, string? IpAddress, int? DeviceTypeId, int? LocationId, int? CustomerId, string? Description, int[]? SectionIds);
+    int? DeviceId, bool? ExcludePing, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
+public sealed record VlanInput(int? Number, string? Name, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
+public sealed record VrfInput(string? Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
+public sealed record DeviceInput(string? Hostname, string? IpAddress, int? DeviceTypeId, int? LocationId, int? CustomerId, string? Description, int[]? SectionIds, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 
 /// <summary>
 /// API REST authentifiée par clé d'API (Administration › API). Une clé prend les droits de son utilisateur (ou tous) ;
 /// l'écriture exige une clé « écriture » et le droit d'écriture sur la section (droits d'admin pour VLAN, VRF et équipements).
 /// Un objet illisible répond 404, comme s'il n'existait pas.
 /// </summary>
-public static class ApiEndpoints
+public static partial class ApiEndpoints
 {
     public const string RateLimitPolicy = "api";
 
@@ -57,17 +55,11 @@ public static class ApiEndpoints
         MapSubnetWrites(api);
         MapAddressWrites(api);
         MapAdminWrites(api);
+        MapResources(api);
     }
 
     private static void MapReads(RouteGroupBuilder api)
     {
-        api.MapGet("/sections", async (HttpContext http, AppDbContext db) =>
-        {
-            IReadOnlyCollection<int>? ids = Context(http).Access.ReadableIds;
-            return await db.Sections.Where(s => ids == null || ids.Contains(s.Id)).OrderBy(s => s.Name)
-                .Select(s => new SectionDto(s.Id, s.Name, s.Description)).ToListAsync();
-        });
-
         api.MapGet("/subnets", async (HttpContext http, AppDbContext db, int? section, string? ip) =>
         {
             IQueryable<Subnet> query = Context(http).Access.Readable(Subnets(db));
@@ -194,19 +186,26 @@ public static class ApiEndpoints
         });
 
         api.MapGet("/vlans", async (AppDbContext db) =>
-            await db.Vlans.OrderBy(v => v.Number).Select(v => new VlanDto(v.Id, v.Number, v.Name, v.Description)).ToListAsync());
+        {
+            Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, nameof(Vlan));
+            return (await db.Vlans.OrderBy(v => v.Number).Select(v => new VlanDto(v.Id, v.Number, v.Name, v.Description, null)).ToListAsync())
+                .Select(v => v with { CustomFields = custom.GetValueOrDefault(v.Id) ?? [] });
+        });
 
         api.MapGet("/vrfs", async (AppDbContext db) =>
-            await db.Vrfs.OrderBy(v => v.Name).Select(v => new VrfDto(v.Id, v.Name, v.RouteDistinguisher, v.Description)).ToListAsync());
+        {
+            Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, nameof(Vrf));
+            return (await db.Vrfs.OrderBy(v => v.Name).Select(v => new VrfDto(v.Id, v.Name, v.RouteDistinguisher, v.Description, null)).ToListAsync())
+                .Select(v => v with { CustomFields = custom.GetValueOrDefault(v.Id) ?? [] });
+        });
 
         api.MapGet("/devices", async (HttpContext http, AppDbContext db) =>
-            await DevicesQuery(db, Context(http).Access).OrderBy(d => d.Hostname).Select(DeviceProjection).ToListAsync());
+        {
+            Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, nameof(Device));
+            return (await DevicesQuery(db, Context(http).Access).OrderBy(d => d.Hostname).Select(DeviceProjection).ToListAsync())
+                .Select(d => d with { CustomFields = custom.GetValueOrDefault(d.Id) ?? [] });
+        });
 
-        api.MapGet("/locations", async (AppDbContext db) =>
-            await db.Locations.OrderBy(l => l.Name).Select(l => new LocationDto(l.Id, l.Name, l.Address, l.Latitude, l.Longitude, l.Description)).ToListAsync());
-
-        api.MapGet("/customers", async (AppDbContext db) =>
-            await db.Customers.OrderBy(c => c.Name).Select(c => new CustomerDto(c.Id, c.Name, c.City, c.ContactPerson, c.ContactPhone, c.ContactMail)).ToListAsync());
     }
 
     private static void MapSubnetWrites(RouteGroupBuilder api)
@@ -240,9 +239,15 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Subnet), input.CustomFields, creating: true);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             db.Subnets.Add(subnet);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/subnets/{subnet.Id}", ToDto(await Subnets(db).SingleAsync(s => s.Id == subnet.Id)));
+            await SaveCustomFieldsAsync(db, subnet.Id, custom);
+            return Results.Created($"/api/subnets/{subnet.Id}", ToDto(await Subnets(db).SingleAsync(s => s.Id == subnet.Id), await CustomOfAsync(db, nameof(Subnet), subnet.Id)));
         });
 
         // Le réseau d'un sous-réseau existant ne change pas par l'API (adresses à revalider) : depuis l'interface.
@@ -274,8 +279,14 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Subnet), input.CustomFields, creating: false);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             await db.SaveChangesAsync();
-            return Results.Ok(ToDto(await Subnets(db).SingleAsync(s => s.Id == id)));
+            await SaveCustomFieldsAsync(db, subnet.Id, custom);
+            return Results.Ok(ToDto(await Subnets(db).SingleAsync(s => s.Id == id), await CustomOfAsync(db, nameof(Subnet), id)));
         });
 
         api.MapDelete("/subnets/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
@@ -341,8 +352,14 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(IpAddress), input.CustomFields, creating: true);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             db.IpAddresses.Add(entry);
             await db.SaveChangesAsync();
+            await SaveCustomFieldsAsync(db, entry.Id, custom);
             return Results.Created($"/api/addresses/{entry.Id}", (await ListAddressesAsync(db, Addresses(db).Where(a => a.Id == entry.Id), 1))[0]);
         });
 
@@ -370,7 +387,13 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(IpAddress), input.CustomFields, creating: false);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             await db.SaveChangesAsync();
+            await SaveCustomFieldsAsync(db, entry.Id, custom);
             return Results.Ok((await ListAddressesAsync(db, Addresses(db).Where(a => a.Id == id), 1))[0]);
         });
 
@@ -410,9 +433,15 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Vlan), input.CustomFields, creating: true);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             db.Vlans.Add(vlan);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description));
+            await SaveCustomFieldsAsync(db, vlan.Id, custom);
+            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
         });
 
         api.MapPatch("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id, VlanInput input) =>
@@ -430,8 +459,14 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Vlan), input.CustomFields, creating: false);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             await db.SaveChangesAsync();
-            return Results.Ok(new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description));
+            await SaveCustomFieldsAsync(db, vlan.Id, custom);
+            return Results.Ok(new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
         });
 
         api.MapDelete("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
@@ -461,9 +496,15 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Vrf), input.CustomFields, creating: true);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             db.Vrfs.Add(vrf);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/vrfs/{vrf.Id}", new VrfDto(vrf.Id, vrf.Name, vrf.RouteDistinguisher, vrf.Description));
+            await SaveCustomFieldsAsync(db, vrf.Id, custom);
+            return Results.Created($"/api/vrfs/{vrf.Id}", new VrfDto(vrf.Id, vrf.Name, vrf.RouteDistinguisher, vrf.Description, await CustomOfAsync(db, nameof(Vrf), vrf.Id)));
         });
 
         api.MapPatch("/vrfs/{id:int}", async (HttpContext http, AppDbContext db, int id, VrfInput input) =>
@@ -481,8 +522,14 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Vrf), input.CustomFields, creating: false);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             await db.SaveChangesAsync();
-            return Results.Ok(new VrfDto(vrf.Id, vrf.Name, vrf.RouteDistinguisher, vrf.Description));
+            await SaveCustomFieldsAsync(db, vrf.Id, custom);
+            return Results.Ok(new VrfDto(vrf.Id, vrf.Name, vrf.RouteDistinguisher, vrf.Description, await CustomOfAsync(db, nameof(Vrf), vrf.Id)));
         });
 
         api.MapDelete("/vrfs/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
@@ -512,9 +559,15 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Device), input.CustomFields, creating: true);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             db.Devices.Add(device);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/devices/{device.Id}", await DevicesQuery(db, Context(http).Access).Where(d => d.Id == device.Id).Select(DeviceProjection).SingleAsync());
+            await SaveCustomFieldsAsync(db, device.Id, custom);
+            return Results.Created($"/api/devices/{device.Id}", (await DevicesQuery(db, Context(http).Access).Where(d => d.Id == device.Id).Select(DeviceProjection).SingleAsync()) with { CustomFields = await CustomOfAsync(db, nameof(Device), device.Id) });
         });
 
         api.MapPatch("/devices/{id:int}", async (HttpContext http, AppDbContext db, int id, DeviceInput input) =>
@@ -532,8 +585,14 @@ public static class ApiEndpoints
             {
                 return invalid;
             }
+            (Dictionary<int, string?> custom, Dictionary<string, string[]> customErrors) = await PrepareCustomFieldsAsync(db, nameof(Device), input.CustomFields, creating: false);
+            if (customErrors.Count > 0)
+            {
+                return Results.ValidationProblem(customErrors);
+            }
             await db.SaveChangesAsync();
-            return Results.Ok(await DevicesQuery(db, Context(http).Access).Where(d => d.Id == id).Select(DeviceProjection).SingleAsync());
+            await SaveCustomFieldsAsync(db, device.Id, custom);
+            return Results.Ok((await DevicesQuery(db, Context(http).Access).Where(d => d.Id == id).Select(DeviceProjection).SingleAsync()) with { CustomFields = await CustomOfAsync(db, nameof(Device), id) });
         });
 
         api.MapDelete("/devices/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
