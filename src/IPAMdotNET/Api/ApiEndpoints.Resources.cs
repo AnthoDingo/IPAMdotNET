@@ -28,10 +28,44 @@ internal sealed class ApiResource<T> where T : class
     public Func<AppDbContext, T, Dictionary<string, string[]>, Task>? Validate { get; init; }
 
     /// <summary>Avant suppression : renvoie un motif de refus (409), ou détache les références et renvoie null.</summary>
-    public Func<AppDbContext, int, Task<string?>>? BeforeDelete { get; init; }
+    public Func<AppDbContext, int, ApiKey, Task<string?>>? BeforeDelete { get; init; }
 
     /// <summary>Filtre de lecture selon les droits (sections) ; null = lisible par toute clé.</summary>
     public Func<IQueryable<T>, SectionAccess, IQueryable<T>>? ReadFilter { get; init; }
+
+    /// <summary>Nouvel objet (types à membres « required ») ; par défaut, constructeur sans paramètre.</summary>
+    public Func<T>? Create { get; init; }
+
+    /// <summary>Champs JSON traités par <see cref="Check"/> / <see cref="AfterSave"/> (mot de passe, membres…), hors propriétés directes.</summary>
+    public string[] ExtraFields { get; init; } = [];
+
+    /// <summary>Règles qui ont besoin de la clé appelante ou du corps JSON (champs supplémentaires), avant l'enregistrement.</summary>
+    public Func<ApiCall<T>, Task>? Check { get; init; }
+
+    /// <summary>Après l'enregistrement (identifiant connu) : données liées, ex. permissions d'un groupe.</summary>
+    public Func<ApiCall<T>, Task>? AfterSave { get; init; }
+
+    /// <summary>Propriétés calculées ajoutées à la réponse (membres, groupes…).</summary>
+    public Func<AppDbContext, T, Task<Dictionary<string, object?>>>? ExtraJson { get; init; }
+}
+
+/// <summary>Contexte d'une création / modification : base, clé appelante, objet, corps JSON, erreurs à compléter.</summary>
+internal sealed record ApiCall<T>(AppDbContext Db, ApiKey Key, T Item, JsonElement Body, bool Creating, Dictionary<string, string[]> Errors)
+{
+    /// <summary>Champ du corps JSON, sans tenir compte de la casse.</summary>
+    public bool TryGet(string name, out JsonElement value)
+    {
+        foreach (JsonProperty property in Body.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+        value = default;
+        return false;
+    }
 }
 
 public static partial class ApiEndpoints
@@ -49,7 +83,7 @@ public static partial class ApiEndpoints
             ReadFilter = (query, access) => access.ReadableIds is { } ids ? query.Where(s => ids.Contains(s.Id)) : query,
             Validate = async (db, s, errors) =>
                 AddIf(errors, await db.Sections.AnyAsync(x => x.Name == s.Name && x.Id != s.Id), "name", "Une section porte déjà ce nom."),
-            BeforeDelete = async (db, id) =>
+            BeforeDelete = async (db, id, key) =>
                 await db.Subnets.AnyAsync(s => s.SectionId == id) ? "Impossible de supprimer une section qui contient des sous-réseaux." : null,
         });
         MapResource(api, new ApiResource<Location>
@@ -63,14 +97,14 @@ public static partial class ApiEndpoints
                 (l.Latitude, l.Longitude) = (latitude, longitude);
                 return Task.CompletedTask;
             },
-            BeforeDelete = async (db, id) => { await db.DetachLocationAsync(id); return null; },
+            BeforeDelete = async (db, id, key) => { await db.DetachLocationAsync(id); return null; },
         });
         MapResource(api, new ApiResource<Customer>
         {
             Path = "customers", Label = "Client",
             Fields = [nameof(Customer.Name), nameof(Customer.Address), nameof(Customer.PostCode), nameof(Customer.City), nameof(Customer.State),
                 nameof(Customer.ContactPerson), nameof(Customer.ContactPhone), nameof(Customer.ContactMail), nameof(Customer.Note)],
-            BeforeDelete = async (db, id) => { await db.DetachCustomerAsync(id); return null; },
+            BeforeDelete = async (db, id, key) => { await db.DetachCustomerAsync(id); return null; },
         });
         MapResource(api, new ApiResource<Rack>
         {
@@ -82,7 +116,7 @@ public static partial class ApiEndpoints
                     .Select(d => (int?)(d.RackStart + d.RackSize - 1)).MaxAsync() ?? 0;
                 AddIf(errors, highest > r.Size, "size", $"Un équipement occupe l'unité {highest} : la hauteur ne peut pas être inférieure.");
             },
-            BeforeDelete = async (db, id) => { await db.DetachRackAsync(id); return null; },
+            BeforeDelete = async (db, id, key) => { await db.DetachRackAsync(id); return null; },
         });
         MapResource(api, new ApiResource<Nameserver>
         {
@@ -101,7 +135,7 @@ public static partial class ApiEndpoints
             Path = "device-types", Label = "Type d'équipement", Fields = [nameof(DeviceType.Name), nameof(DeviceType.Description)],
             Validate = async (db, t, errors) =>
                 AddIf(errors, await db.DeviceTypes.AnyAsync(x => x.Name == t.Name && x.Id != t.Id), "name", "Ce type existe déjà."),
-            BeforeDelete = async (db, id) => { await db.DetachDeviceTypeAsync(id); return null; },
+            BeforeDelete = async (db, id, key) => { await db.DetachDeviceTypeAsync(id); return null; },
         });
         MapResource(api, new ApiResource<CircuitProvider>
         {
@@ -109,7 +143,7 @@ public static partial class ApiEndpoints
             Fields = [nameof(CircuitProvider.Name), nameof(CircuitProvider.Contact), nameof(CircuitProvider.Description)],
             Validate = async (db, p, errors) =>
                 AddIf(errors, await db.CircuitProviders.AnyAsync(x => x.Name == p.Name && x.Id != p.Id), "name", "Un fournisseur porte déjà ce nom."),
-            BeforeDelete = async (db, id) =>
+            BeforeDelete = async (db, id, key) =>
                 await db.Circuits.AnyAsync(c => c.ProviderId == id) ? "Impossible de supprimer un fournisseur qui a des circuits." : null,
         });
         MapResource(api, new ApiResource<Circuit>
@@ -179,9 +213,150 @@ public static partial class ApiEndpoints
                     "Ce numéro existe déjà dans le préfixe.");
             },
         });
+
+        MapResource(api, new ApiResource<Tag>
+        {
+            Path = "tags", Label = "Étiquette",
+            Fields = [nameof(Tag.Name), nameof(Tag.Description), nameof(Tag.BackgroundColor), nameof(Tag.TextColor), nameof(Tag.ShowTag),
+                nameof(Tag.Compress), nameof(Tag.UpdateByScan)],
+            Validate = async (db, t, errors) =>
+                AddIf(errors, await db.Tags.AnyAsync(x => x.Name == t.Name && x.Id != t.Id), "name", "Une étiquette porte déjà ce nom."),
+            // Clé système et verrouillage : en lecture seule.
+            ExtraJson = (db, t) => Task.FromResult(new Dictionary<string, object?> { ["systemKey"] = t.SystemKey, ["locked"] = t.Locked }),
+            BeforeDelete = async (db, id, key) =>
+                await db.Tags.AnyAsync(t => t.Id == id && t.Locked) ? "Une étiquette système ne peut pas être supprimée." : null,
+        });
+        MapResource(api, new ApiResource<CustomField>
+        {
+            Path = "custom-fields", Label = "Champ personnalisé",
+            Fields = [nameof(CustomField.EntityType), nameof(CustomField.Name), nameof(CustomField.Type), nameof(CustomField.Options),
+                nameof(CustomField.Required), nameof(CustomField.Order), nameof(CustomField.Description)],
+            Validate = async (db, f, errors) =>
+            {
+                AddIf(errors, !CustomField.SupportedTypes.Contains(f.EntityType), "entityType",
+                    $"Type d'objet inconnu (possibles : {string.Join(", ", CustomField.SupportedTypes)}).");
+                AddIf(errors, f.Id != 0 && await db.CustomFields.AnyAsync(x => x.Id == f.Id && x.EntityType != f.EntityType), "entityType",
+                    "Le type d'objet d'un champ existant ne peut pas changer.");
+                AddIf(errors, await db.CustomFields.AnyAsync(x => x.EntityType == f.EntityType && x.Name == f.Name && x.Id != f.Id), "name",
+                    "Ce type d'objet a déjà un champ de ce nom.");
+                // Liste : un choix par ligne, sans doublon ; autres types : pas de choix.
+                f.Options = f.Type == CustomFieldType.List ? string.Join('\n', f.OptionList.Distinct()) : null;
+                AddIf(errors, f.Type == CustomFieldType.List && f.OptionList.Length == 0, "options", "Une liste doit proposer au moins un choix (un par ligne).");
+            },
+        });
+        MapResource(api, new ApiResource<Group>
+        {
+            Path = "groups", Label = "Groupe", Fields = [nameof(Group.Name), nameof(Group.Description)],
+            ExtraFields = ["memberIds", "permissions"],
+            ReadFilter = (query, access) => access.IsAdmin ? query : query.Where(_ => false),
+            Validate = async (db, g, errors) =>
+                AddIf(errors, await db.Groups.AnyAsync(x => x.Name == g.Name && x.Id != g.Id), "name", "Un groupe porte déjà ce nom."),
+            Check = async call =>
+            {
+                if (call.TryGet("memberIds", out JsonElement members))
+                {
+                    if (await IdsAsync(call.Db.Users, members, "memberIds", "Utilisateur inexistant.", call.Errors) is { } users)
+                    {
+                        if (!call.Creating)
+                        {
+                            await call.Db.Entry(call.Item).Collection(g => g.Users).LoadAsync();
+                        }
+                        call.Item.Users.Clear();
+                        call.Item.Users.AddRange(users);
+                    }
+                }
+                if (call.TryGet("permissions", out JsonElement permissions))
+                {
+                    await ParsePermissionsAsync(call.Db, permissions, call.Errors);
+                }
+            },
+            // Permissions remplacées en bloc quand elles sont envoyées (comme le formulaire) ; « None » = pas de ligne.
+            AfterSave = async call =>
+            {
+                if (!call.TryGet("permissions", out JsonElement permissions)
+                    || await ParsePermissionsAsync(call.Db, permissions, []) is not { } levels)
+                {
+                    return;
+                }
+                await call.Db.SectionPermissions.Where(p => p.GroupId == call.Item.Id).ExecuteDeleteAsync();
+                call.Db.SectionPermissions.AddRange(levels.Where(l => l.Value != SectionAccessLevel.None)
+                    .Select(l => new SectionPermission { GroupId = call.Item.Id, SectionId = l.Key, Level = l.Value }));
+                await call.Db.SaveChangesAsync();
+            },
+            ExtraJson = async (db, g) => new Dictionary<string, object?>
+            {
+                ["memberIds"] = await db.Groups.Where(x => x.Id == g.Id).SelectMany(x => x.Users).Select(u => u.Id).OrderBy(id => id).ToListAsync(),
+                ["permissions"] = await db.SectionPermissions.Where(p => p.GroupId == g.Id)
+                    .ToDictionaryAsync(p => p.SectionId.ToString(), p => p.Level.ToString()),
+            },
+        });
+        MapResource(api, new ApiResource<User>
+        {
+            Path = "users", Label = "Utilisateur",
+            Fields = [nameof(User.UserName), nameof(User.DisplayName), nameof(User.Email), nameof(User.IsAdmin), nameof(User.Enabled), nameof(User.AuthMethodId)],
+            ExtraFields = ["password", "groupIds"],
+            Create = () => new User { UserName = "", PasswordHash = "" },
+            ReadFilter = (query, access) => access.IsAdmin ? query : query.Where(_ => false),
+            Check = async call =>
+            {
+                User user = call.Item;
+                AppDbContext db = call.Db;
+                user.UserName = User.NormalizeUserName(user.UserName ?? "");
+                AddIf(call.Errors, user.UserName.Length == 0, "userName", "Le nom d'utilisateur est requis.");
+                AddIf(call.Errors, user.UserName.Length > 100, "userName", "100 caractères au plus.");
+                AddIf(call.Errors, await db.Users.AnyAsync(u => u.UserName == user.UserName && u.Id != user.Id), "userName", "Ce nom d'utilisateur existe déjà.");
+                AddIf(call.Errors, user.Email is not null && !new EmailAddressAttribute().IsValid(user.Email), "email", "Adresse e-mail invalide.");
+
+                // Mot de passe (écriture seule) : comptes locaux uniquement ; un compte d'annuaire n'en a pas.
+                string? password = call.TryGet("password", out JsonElement value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+                if (user.AuthMethodId is not null)
+                {
+                    user.PasswordHash = "";
+                }
+                else if (!string.IsNullOrEmpty(password))
+                {
+                    AddIf(call.Errors, password.Length < Pages.Administration.Users.EditModel.MinPasswordLength, "password",
+                        $"Le mot de passe doit faire au moins {Pages.Administration.Users.EditModel.MinPasswordLength} caractères.");
+                    user.PasswordHash = Passwords.Hash(user, password);
+                }
+                else
+                {
+                    AddIf(call.Errors, string.IsNullOrEmpty(user.PasswordHash), "password", "Mot de passe requis pour un compte local.");
+                }
+
+                // Comme le formulaire : on ne se retire pas ses propres droits, et il reste un administrateur actif.
+                User? original = call.Creating ? null : await db.Users.AsNoTracking().SingleAsync(u => u.Id == user.Id);
+                bool losesAdmin = original is { IsAdmin: true, Enabled: true } && (!user.IsAdmin || !user.Enabled);
+                AddIf(call.Errors, losesAdmin && call.Key.UserId == user.Id, "isAdmin",
+                    "Une clé ne peut pas retirer les droits d'administration de son propre compte ni le désactiver.");
+                AddIf(call.Errors, losesAdmin && call.Key.UserId != user.Id && !await db.Users.AnyAsync(u => u.Id != user.Id && u.IsAdmin && u.Enabled),
+                    "isAdmin", "Il doit rester au moins un administrateur actif.");
+
+                if (call.TryGet("groupIds", out JsonElement groupIds)
+                    && await IdsAsync(db.Groups, groupIds, "groupIds", "Groupe inexistant.", call.Errors) is { } groups)
+                {
+                    if (!call.Creating)
+                    {
+                        await db.Entry(user).Collection(u => u.Groups).LoadAsync();
+                    }
+                    user.Groups.Clear();
+                    user.Groups.AddRange(groups);
+                }
+            },
+            ExtraJson = async (db, u) => new Dictionary<string, object?>
+            {
+                ["groupIds"] = await db.Users.Where(x => x.Id == u.Id).SelectMany(x => x.Groups).Select(g => g.Id).OrderBy(id => id).ToListAsync(),
+            },
+            BeforeDelete = async (db, id, key) =>
+                key.UserId == id ? "Une clé ne peut pas supprimer son propre compte."
+                : await db.Users.AnyAsync(u => u.Id == id && u.IsAdmin && u.Enabled) && !await db.Users.AnyAsync(u => u.Id != id && u.IsAdmin && u.Enabled)
+                    ? "Il doit rester au moins un administrateur actif."
+                : await db.IpRequests.AnyAsync(r => r.RequestedById == id) ? "Cet utilisateur a des demandes d'adresses : désactivez-le plutôt que de le supprimer."
+                : null,
+        });
     }
 
-    private static void MapResource<T>(RouteGroupBuilder api, ApiResource<T> resource) where T : class, new()
+    private static void MapResource<T>(RouteGroupBuilder api, ApiResource<T> resource) where T : class
     {
         string entityType = typeof(T).Name;
 
@@ -189,13 +364,18 @@ public static partial class ApiEndpoints
         {
             List<T> items = await Readable(db, resource, Context(http).Access).ToListAsync();
             Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, entityType);
-            return Results.Ok(items.Select(item => ToJson(resource, item, custom)).OrderBy(i => (int)i["id"]!));
+            List<Dictionary<string, object?>> json = [];
+            foreach (T item in items)
+            {
+                json.Add(await ToJsonAsync(db, resource, item, custom));
+            }
+            return Results.Ok(json.OrderBy(i => (int)i["id"]!));
         });
 
         api.MapGet($"/{resource.Path}/{{id:int}}", async (HttpContext http, AppDbContext db, int id) =>
         {
             T? item = await Readable(db, resource, Context(http).Access).SingleOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
-            return item is null ? NotFound(resource.Label, id) : Results.Ok(ToJson(resource, item, await CustomFieldsByIdAsync(db, entityType)));
+            return item is null ? NotFound(resource.Label, id) : Results.Ok(await ToJsonAsync(db, resource, item, await CustomFieldsByIdAsync(db, entityType)));
         });
 
         api.MapPost($"/{resource.Path}", async (HttpContext http, AppDbContext db, JsonElement body) =>
@@ -204,7 +384,7 @@ public static partial class ApiEndpoints
             {
                 return denied;
             }
-            T item = new();
+            T item = resource.Create?.Invoke() ?? Activator.CreateInstance<T>();
             return await SaveAsync(http, db, resource, item, body, creating: true);
         });
 
@@ -230,7 +410,7 @@ public static partial class ApiEndpoints
                 return NotFound(resource.Label, id);
             }
             await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
-            if (resource.BeforeDelete is not null && await resource.BeforeDelete(db, id) is { } refusal)
+            if (resource.BeforeDelete is not null && await resource.BeforeDelete(db, id, Context(http).Key) is { } refusal)
             {
                 return Results.Conflict(new { error = refusal });
             }
@@ -246,6 +426,64 @@ public static partial class ApiEndpoints
             await transaction.CommitAsync();
             return Results.NoContent();
         });
+    }
+
+    /// <summary>Liste JSON d'identifiants → objets existants ; null (et erreur) si invalide ou si un identifiant n'existe pas.</summary>
+    private static async Task<List<TEntity>?> IdsAsync<TEntity>(DbSet<TEntity> set, JsonElement json, string field, string missing,
+        Dictionary<string, string[]> errors) where TEntity : class
+    {
+        int[]? ids = null;
+        try
+        {
+            ids = json.ValueKind == JsonValueKind.Array ? json.Deserialize<int[]>() : null;
+        }
+        catch (JsonException)
+        {
+        }
+        if (ids is null)
+        {
+            errors.TryAdd(field, ["Liste d'identifiants attendue, ex. [1, 2]."]);
+            return null;
+        }
+        List<TEntity> found = await set.Where(e => ids.Contains(EF.Property<int>(e, "Id"))).ToListAsync();
+        if (found.Count != ids.Distinct().Count())
+        {
+            errors.TryAdd(field, [missing]);
+            return null;
+        }
+        return found;
+    }
+
+    /// <summary>Permissions d'un groupe : { "idSection": "None" | "Read" | "Write" } ; null (et erreur) si invalide.</summary>
+    private static async Task<Dictionary<int, SectionAccessLevel>?> ParsePermissionsAsync(AppDbContext db, JsonElement json, Dictionary<string, string[]> errors)
+    {
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            errors.TryAdd("permissions", ["Objet attendu, ex. { \"1\": \"Read\", \"2\": \"Write\" }."]);
+            return null;
+        }
+        HashSet<int> sections = (await db.Sections.Select(s => s.Id).ToListAsync()).ToHashSet();
+        Dictionary<int, SectionAccessLevel> levels = [];
+        foreach (JsonProperty property in json.EnumerateObject())
+        {
+            SectionAccessLevel level = SectionAccessLevel.None;
+            bool valid = int.TryParse(property.Name, out int sectionId) && sections.Contains(sectionId);
+            try
+            {
+                valid = valid && (level = property.Value.Deserialize<SectionAccessLevel>(ValueOptions)) is var parsed && Enum.IsDefined(parsed);
+            }
+            catch (JsonException)
+            {
+                valid = false;
+            }
+            if (!valid)
+            {
+                errors.TryAdd($"permissions.{property.Name}", ["Section inexistante ou niveau invalide (None, Read, Write)."]);
+                continue;
+            }
+            levels[sectionId] = level;
+        }
+        return errors.Keys.Any(k => k.StartsWith("permissions", StringComparison.Ordinal)) ? null : levels;
     }
 
     private static IQueryable<T> Readable<T>(AppDbContext db, ApiResource<T> resource, SectionAccess access) where T : class =>
@@ -271,7 +509,8 @@ public static partial class ApiEndpoints
                 }
                 continue;
             }
-            if (string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase)
+                || resource.ExtraFields.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -299,6 +538,11 @@ public static partial class ApiEndpoints
         {
             await resource.Validate(db, item, errors);
         }
+        ApiCall<T> call = new(db, Context(http).Key, item, body, creating, errors);
+        if (resource.Check is not null)
+        {
+            await resource.Check(call);
+        }
         foreach (KeyValuePair<string, string[]> error in Validate(item))
         {
             errors.TryAdd(error.Key, error.Value);
@@ -323,7 +567,11 @@ public static partial class ApiEndpoints
         {
             await CustomFieldForm.SaveAsync(db, id, customValues);
         }
-        Dictionary<string, object?> json = ToJson(resource, item, await CustomFieldsByIdAsync(db, typeof(T).Name));
+        if (resource.AfterSave is not null)
+        {
+            await resource.AfterSave(call);
+        }
+        Dictionary<string, object?> json = await ToJsonAsync(db, resource, item, await CustomFieldsByIdAsync(db, typeof(T).Name));
         return creating ? Results.Created($"/api/{resource.Path}/{id}", json) : Results.Ok(json);
     }
 
@@ -369,6 +617,20 @@ public static partial class ApiEndpoints
                 errors.TryAdd(JsonName(foreignKey.Properties[0].Name), ["Objet référencé inexistant."]);
             }
         }
+    }
+
+    private static async Task<Dictionary<string, object?>> ToJsonAsync<T>(AppDbContext db, ApiResource<T> resource, T item,
+        Dictionary<int, Dictionary<string, string>> custom) where T : class
+    {
+        Dictionary<string, object?> json = ToJson(resource, item, custom);
+        if (resource.ExtraJson is not null)
+        {
+            foreach (KeyValuePair<string, object?> extra in await resource.ExtraJson(db, item))
+            {
+                json[extra.Key] = extra.Value;
+            }
+        }
+        return json;
     }
 
     private static Dictionary<string, object?> ToJson<T>(ApiResource<T> resource, T item, Dictionary<int, Dictionary<string, string>> custom)

@@ -15,7 +15,7 @@
 - [x] Profil : format d'affichage des adresses MAC par utilisateur.
 - [x] API : écriture (sous-réseaux, adresses avec première adresse libre, VLAN, VRF, équipements), droits par clé (compte et écriture), recherche.
 - [x] API : champs personnalisés en lecture / écriture ; sections, emplacements, clients, racks, serveurs de noms, types, fournisseurs, circuits, NAT, BGP, préfixes et numéros RTC en lecture / écriture.
-- [ ] API : utilisateurs, groupes, étiquettes et champs personnalisés (définitions) en écriture.
+- [x] API : utilisateurs (mot de passe en écriture seule, groupes), groupes (membres, permissions), étiquettes et définitions de champs personnalisés en écriture.
 - [x] LDAP : création des comptes à la première connexion, synchronisation des groupes (memberOf ↔ nom du groupe local), testées sur OpenLDAP.
 - [ ] LDAP : tester sur un Active Directory réel (testé sur OpenLDAP avec le module memberof).
 - [x] Permissions : sections appliquées au journal des modifications (page et tableau de bord, objets d'administration réservés aux admins), aux statistiques et aux compteurs de sous-réseaux (VLAN, VRF, DNS, emplacements).

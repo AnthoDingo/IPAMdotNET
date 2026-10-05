@@ -95,6 +95,7 @@
                 <li>@L.T("GET /api/devices · /api/locations · /api/customers")</li>
                 <li>GET /api/racks · /api/nameservers · /api/device-types · /api/circuits · /api/circuit-providers</li>
                 <li>GET /api/nat · /api/bgp · /api/pstn-prefixes · /api/pstn-numbers @L.T("(et /{id})")</li>
+                <li>GET /api/tags · /api/custom-fields · /api/users · /api/groups @L.T("(utilisateurs et groupes : droits d'administration)")</li>
                 <li>GET /api/addresses/{id} · /api/subnets/{id}/first-free</li>
                 <li>GET /api/search ?q=adresse, réseau ou texte</li>
             </ul>
@@ -106,6 +107,7 @@
             </ul>
             <pre class="bg-body-tertiary p-2 rounded my-2"><code>curl -X POST -H "X-Api-Key: &lt;clé&gt;" -H "Content-Type: application/json" \
   -d '{"subnetId": 12, "hostname": "srv-01"}' @baseUrl/addresses</code></pre>
+            <p class="mb-1">@L.T("Utilisateurs : « password » en écriture seule, « groupIds » (liste). Groupes : « memberIds » (liste) et « permissions » ({ \"idSection\": \"Read\" | \"Write\" | \"None\" }), remplacés en bloc quand ils sont envoyés.")</p>
             <p class="mb-0">@L.T("Sans « address », la première adresse libre est attribuée. En PATCH, un champ absent reste inchangé, une chaîne vide l'efface et l'identifiant 0 retire une référence. Erreurs de validation : 400 (détail par champ), doublon : 409, droits : 403.")</p>
             <p class="mt-2 mb-0">@L.T("Champs personnalisés : objet") <code>customFields</code> @L.T("(nom → valeur), en lecture comme en écriture, sur les objets qui en portent. En création, les champs obligatoires sont exigés ; en modification, seuls les champs envoyés changent.")</p>
         </div>
