@@ -4,7 +4,8 @@ namespace IPAMdotNet.Data;
 
 /// <summary>
 /// Annuaire LDAP / Active Directory. L'utilisateur est authentifié par une liaison (bind) avec le DN construit
-/// depuis <see cref="BindTemplate"/> ; le compte doit exister dans IPAMdotNet (droits, groupes).
+/// depuis <see cref="BindTemplate"/>. Avec une base de recherche, son entrée est lue (nom, e-mail, groupes) : le compte
+/// peut alors être créé à la première connexion et ses groupes synchronisés.
 /// </summary>
 public class AuthMethod
 {
@@ -31,4 +32,21 @@ public class AuthMethod
 
     [MaxLength(500), Display(Name = "Description")]
     public string? Description { get; set; }
+
+    /// <summary>Base de recherche des comptes (ex. DC=corp,DC=local) ; vide = pas de lecture de l'annuaire.</summary>
+    [MaxLength(300), Display(Name = "Base de recherche des comptes")]
+    public string? SearchBase { get; set; }
+
+    /// <summary>Filtre de recherche, « {0} » = nom d'utilisateur ; vide = <see cref="DefaultUserFilter"/> (Active Directory).</summary>
+    [MaxLength(200), Display(Name = "Filtre de recherche")]
+    public string? UserFilter { get; set; }
+
+    public const string DefaultUserFilter = "(sAMAccountName={0})";
+
+    [Display(Name = "Créer les comptes à la première connexion")]
+    public bool AutoCreateUsers { get; set; }
+
+    /// <summary>Appartenance aux groupes locaux dont le nom est celui (CN) d'un groupe de l'annuaire (memberOf), à chaque connexion.</summary>
+    [Display(Name = "Synchroniser les groupes")]
+    public bool SyncGroups { get; set; }
 }

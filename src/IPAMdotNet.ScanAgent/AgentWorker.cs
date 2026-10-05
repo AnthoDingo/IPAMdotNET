@@ -22,13 +22,16 @@ public sealed class AgentOptions
 
     /// <summary>Accepter un certificat non valide (autosigné). À réserver aux tests.</summary>
     public bool IgnoreCertificateErrors { get; set; }
+
+    /// <summary>Installer la version distribuée par le serveur (voir <see cref="AgentUpdater"/>).</summary>
+    public bool AutoUpdate { get; set; } = true;
 }
 
 /// <summary>
 /// Boucle de l'agent : demande au serveur les sous-réseaux à scanner, les sonde (ping, ports TCP),
 /// résout le nom des hôtes découverts et renvoie les résultats. Le serveur décide de tout le reste (étiquettes, découvertes).
 /// </summary>
-public sealed class AgentWorker(IOptions<AgentOptions> options, ILogger<AgentWorker> logger) : BackgroundService
+public sealed class AgentWorker(IOptions<AgentOptions> options, IHostApplicationLifetime lifetime, ILogger<AgentWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -45,16 +48,21 @@ public sealed class AgentWorker(IOptions<AgentOptions> options, ILogger<AgentWor
         }
         using HttpClient http = new(handler) { BaseAddress = server, Timeout = TimeSpan.FromMinutes(2) };
         http.DefaultRequestHeaders.Add(AgentProtocol.KeyHeader, settings.Key);
-        http.DefaultRequestHeaders.Add(AgentProtocol.VersionHeader,
-            Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "?");
-        logger.LogInformation("Agent démarré, serveur {Server}, interrogation toutes les {Seconds} s.", server, settings.PollSeconds);
+        http.DefaultRequestHeaders.Add(AgentProtocol.VersionHeader, AgentUpdater.Version);
+        AgentUpdater.CleanUp();
+        logger.LogInformation("Agent {Version} démarré, serveur {Server}, interrogation toutes les {Seconds} s.", AgentUpdater.Version, server, settings.PollSeconds);
 
         using PeriodicTimer timer = new(TimeSpan.FromSeconds(Math.Max(10, settings.PollSeconds)));
         do
         {
             try
             {
-                await CycleAsync(http, stoppingToken);
+                if (await CycleAsync(http, settings.AutoUpdate, stoppingToken))
+                {
+                    Environment.ExitCode = AgentUpdater.RestartExitCode;
+                    lifetime.StopApplication();
+                    return;
+                }
             }
             catch (Exception exception) when (exception is not OperationCanceledException || !stoppingToken.IsCancellationRequested)
             {
@@ -65,10 +73,15 @@ public sealed class AgentWorker(IOptions<AgentOptions> options, ILogger<AgentWor
         while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
-    private async Task CycleAsync(HttpClient http, CancellationToken cancellationToken)
+    /// <returns>true si l'agent vient d'être mis à jour et doit redémarrer.</returns>
+    private async Task<bool> CycleAsync(HttpClient http, bool autoUpdate, CancellationToken cancellationToken)
     {
         AgentWork work = await http.GetFromJsonAsync<AgentWork>("api/agent/work", cancellationToken)
             ?? throw new InvalidOperationException("Réponse vide du serveur.");
+        if (autoUpdate && await AgentUpdater.TryUpdateAsync(http, work.AgentVersion, logger, cancellationToken))
+        {
+            return true;
+        }
         AgentScanSettings settings = work.Settings;
         foreach (AgentTask task in work.Subnets)
         {
@@ -88,6 +101,7 @@ public sealed class AgentWorker(IOptions<AgentOptions> options, ILogger<AgentWor
             response.EnsureSuccessStatusCode();
             logger.LogInformation("{Network} : {Online}/{Count} en ligne.", task.Network, online.Count, check.Count + discover.Count);
         }
+        return false;
     }
 
     private static List<IPAddress> Parse(List<string> addresses) =>

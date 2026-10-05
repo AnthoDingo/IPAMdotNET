@@ -32,7 +32,7 @@ public class IndexModel(AppDbContext db) : PageModel
         SubnetCount = await access.Readable(db.Subnets).CountAsync();
         VlanCount = await db.Vlans.CountAsync();
         VrfCount = await db.Vrfs.CountAsync();
-        DeviceCount = await db.Devices.CountAsync();
+        DeviceCount = await access.Readable(db.Devices).CountAsync();
         UserCount = await db.Users.CountAsync();
 
         int userId = User.UserId();

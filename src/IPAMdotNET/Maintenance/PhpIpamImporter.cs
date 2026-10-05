@@ -71,6 +71,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         await VlansAsync();
         await VrfsAsync();
         await SectionsAsync();
+        await DeviceSectionsAsync();
         await SubnetsAsync();
         await AddressesAsync();
         await CircuitsAsync();
@@ -168,6 +169,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                     ? $"{(parameters.GetValueOrDefault("uid_attr") is { Length: > 0 } uid ? uid : "uid")}={{0}},{baseDn}"
                     : "{0}" + parameters.GetValueOrDefault("account_suffix"), 300)!,
                 Description = "Importée de phpIPAM",
+                SearchBase = Truncate(baseDn.Length > 0 ? baseDn : null, 300),
+                UserFilter = type == "ldap" ? $"({(parameters.GetValueOrDefault("uid_attr") is { Length: > 0 } uidAttr ? uidAttr : "uid")}={{0}})" : null,
             }));
         }
         foreach (KeyValuePair<int, int> pair in await SaveAsync(newMethods, m => m.Id))
@@ -446,6 +449,28 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         await db.SaveChangesAsync(cancellationToken);
         db.ChangeTracker.Clear();
         report.Counts.Add(("permission(s) de section", permissions.Count));
+    }
+
+    /// <summary>Sections où chaque équipement est visible (colonne phpIPAM « sections » : « 1;2;3 »).</summary>
+    private async Task DeviceSectionsAsync()
+    {
+        List<Section> allSections = await db.Sections.ToListAsync(cancellationToken);
+        int count = 0;
+        foreach (Dictionary<string, string?> row in data.Rows("devices"))
+        {
+            HashSet<int> wanted = (S(row, "sections") ?? "").Split([';', ','], StringSplitOptions.RemoveEmptyEntries)
+                .Select(v => int.TryParse(v, out int old) && sections.TryGetValue(old, out int id) ? id : 0).Where(id => id != 0).ToHashSet();
+            if (wanted.Count == 0 || !devices.TryGetValue(I(row, "id") ?? 0, out int deviceId))
+            {
+                continue;
+            }
+            Device device = await db.Devices.Include(d => d.Sections).SingleAsync(d => d.Id == deviceId, cancellationToken);
+            device.Sections.AddRange(allSections.Where(s => wanted.Contains(s.Id)));
+            count++;
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
+        report.Counts.Add(("équipement(s) limité(s) à des sections", count));
     }
 
     private async Task SubnetsAsync()

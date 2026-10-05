@@ -46,6 +46,32 @@
                 <input asp-for="Method.Description" class="form-control" />
             </div>
         </div>
+        <fieldset class="row g-3 mb-3">
+            <legend class="fs-6 fw-semibold border-bottom pb-1 mb-0">@L.T("Lecture de l'annuaire")</legend>
+            <div class="col-md-7">
+                <label asp-for="Method.SearchBase" class="form-label"></label>
+                <input asp-for="Method.SearchBase" class="form-control font-monospace" placeholder="DC=corp,DC=local" />
+                <span asp-validation-for="Method.SearchBase" class="text-danger"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Method.UserFilter" class="form-label"></label>
+                <input asp-for="Method.UserFilter" class="form-control font-monospace" placeholder="@IPAMdotNet.Data.AuthMethod.DefaultUserFilter" />
+                <span asp-validation-for="Method.UserFilter" class="text-danger"></span>
+            </div>
+            <div class="col-12 form-text mt-1">@L.T("Après la connexion, le compte est recherché avec ses propres droits pour lire son nom, son e-mail et ses groupes (memberOf). OpenLDAP : filtre (uid={0}) et module memberof.")</div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="Method.AutoCreateUsers" class="form-check-input" role="switch" />
+                    <label asp-for="Method.AutoCreateUsers" class="form-check-label"></label>
+                    <div class="form-text">@L.T("Un utilisateur inconnu ici mais accepté par l'annuaire est créé à sa première connexion (sans droits d'administration).")</div>
+                </div>
+                <div class="form-check form-switch mt-2">
+                    <input asp-for="Method.SyncGroups" class="form-check-input" role="switch" />
+                    <label asp-for="Method.SyncGroups" class="form-check-label"></label>
+                    <div class="form-text">@L.T("À chaque connexion, l'utilisateur est membre des groupes IPAMdotNet qui portent le nom d'un de ses groupes dans l'annuaire, et seulement de ceux-là.")</div>
+                </div>
+            </div>
+        </fieldset>
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
 

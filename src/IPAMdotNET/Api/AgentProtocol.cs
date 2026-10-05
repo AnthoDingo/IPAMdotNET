@@ -3,8 +3,11 @@ namespace IPAMdotNet.Api;
 // Échanges entre le serveur et l'agent de scan distant (/api/agent). Sans dépendance : ce fichier est aussi
 // compilé dans IPAMdotNet.ScanAgent, les deux côtés partagent donc exactement les mêmes contrats.
 
-/// <summary>Réponse de GET /api/agent/work : réglages du scan et sous-réseaux à scanner maintenant.</summary>
-public sealed record AgentWork(AgentScanSettings Settings, List<AgentTask> Subnets);
+/// <summary>
+/// Réponse de GET /api/agent/work : réglages du scan, sous-réseaux à scanner maintenant, et version de l'agent distribuée
+/// par le serveur (mise à jour automatique par GET /api/agent/update/{rid}).
+/// </summary>
+public sealed record AgentWork(AgentScanSettings Settings, List<AgentTask> Subnets, string? AgentVersion = null);
 
 public sealed record AgentScanSettings(int TimeoutMilliseconds, int Parallelism, int[] TcpPorts, bool ResolveHostnames);
 
@@ -22,4 +25,10 @@ public static class AgentProtocol
 
     /// <summary>En-tête facultatif portant la version de l'agent (affichée dans l'administration).</summary>
     public const string VersionHeader = "X-Agent-Version";
+
+    /// <summary>Paquet de l'agent pour une plateforme (zip du dossier publié), servi par le serveur : « agent/IPAMdotNet.ScanAgent-{rid}.zip ».</summary>
+    public static string PackageName(string rid) => $"IPAMdotNet.ScanAgent-{rid}.zip";
+
+    /// <summary>Version sans métadonnées de build (« 1.2.0+abc » → « 1.2.0 »).</summary>
+    public static string? CleanVersion(string? informational) => informational?.Split('+')[0];
 }

@@ -18,13 +18,23 @@ public sealed class SectionAccess
         this.levels = levels;
     }
 
-    public static async Task<SectionAccess> ForAsync(AppDbContext db, ClaimsPrincipal user)
+    public static Task<SectionAccess> ForAsync(AppDbContext db, ClaimsPrincipal user) =>
+        user.IsInRole("Admin") ? Task.FromResult(new SectionAccess(true, []))
+            : ForUserAsync(db, int.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : 0);
+
+    /// <summary>Droits d'une clé d'API : ceux de son compte, ou de tout si elle n'en a pas.</summary>
+    public static async Task<SectionAccess> ForApiKeyAsync(AppDbContext db, ApiKey key)
     {
-        if (user.IsInRole("Admin"))
+        if (key.UserId is not int userId || await db.Users.AnyAsync(u => u.Id == userId && u.IsAdmin))
         {
             return new SectionAccess(true, []);
         }
-        int userId = int.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : 0;
+        // Compte désactivé : la clé ne voit plus rien.
+        return await db.Users.AnyAsync(u => u.Id == userId && u.Enabled) ? await ForUserAsync(db, userId) : new SectionAccess(false, []);
+    }
+
+    private static async Task<SectionAccess> ForUserAsync(AppDbContext db, int userId)
+    {
         Dictionary<int, SectionAccessLevel> levels = await db.Sections.ToDictionaryAsync(s => s.Id, s => s.DefaultAccess);
         List<SectionPermission> permissions = await db.SectionPermissions
             .Where(p => db.Users.Where(u => u.Id == userId).SelectMany(u => u.Groups).Any(g => g.Id == p.GroupId))
@@ -67,6 +77,12 @@ public sealed class SectionAccess
     }
 
     public bool IsAdmin => isAdmin;
+
+    /// <summary>Équipements visibles : ceux sans section, ou rattachés à une section lisible.</summary>
+    public IQueryable<Device> Readable(IQueryable<Device> devices) =>
+        ReadableIds is { } ids ? devices.Where(d => !d.Sections.Any() || d.Sections.Any(s => ids.Contains(s.Id))) : devices;
+
+    public bool CanSee(Device device) => ReadableIds is not { } ids || device.Sections.Count == 0 || device.Sections.Any(s => ids.Contains(s.Id));
 
     /// <summary>Identifiants des sections lisibles ; null = toutes (admin).</summary>
     public IReadOnlyCollection<int>? ReadableIds => isAdmin ? null : levels.Where(l => l.Value >= SectionAccessLevel.Read).Select(l => l.Key).ToList();

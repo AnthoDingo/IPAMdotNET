@@ -22,6 +22,7 @@ public class DetailsModel(AppDbContext db) : PageModel
         Rack? rack = await db.Racks
             .Include(r => r.Location).Include(r => r.Customer)
             .Include(r => r.Devices).ThenInclude(d => d.DeviceType)
+            .Include(r => r.Devices).ThenInclude(d => d.Sections)
             .SingleOrDefaultAsync(r => r.Id == id);
         if (rack is null)
         {
@@ -29,7 +30,10 @@ public class DetailsModel(AppDbContext db) : PageModel
         }
         Rack = rack;
         Units = new Device?[rack.Size + 1];
-        foreach (Device device in rack.Devices)
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        // Un équipement non visible occupe quand même ses unités : affiché sans ses informations.
+        foreach (Device device in rack.Devices.Select(d => access.CanSee(d) ? d
+            : new Device { Hostname = "Équipement masqué", RackStart = d.RackStart, RackSize = d.RackSize }))
         {
             if (device.RackStart is null || device.RackEnd is null)
             {

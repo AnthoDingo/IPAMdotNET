@@ -68,7 +68,7 @@ public class IndexModel(AppDbContext db) : PageModel
             .Where(v => v.Name.ToLower().Contains(text) || (v.RouteDistinguisher != null && v.RouteDistinguisher.ToLower().Contains(text))
                 || (v.Description != null && v.Description.ToLower().Contains(text)))
             .OrderBy(v => v.Name).Take(Limit).ToListAsync();
-        Devices = await db.Devices.Include(d => d.DeviceType)
+        Devices = await access.Readable(db.Devices).Include(d => d.DeviceType)
             .Where(d => d.Hostname.ToLower().Contains(text) || (d.IpAddress != null && d.IpAddress.Contains(text))
                 || (d.Description != null && d.Description.ToLower().Contains(text)))
             .OrderBy(d => d.Hostname).Take(Limit).ToListAsync();

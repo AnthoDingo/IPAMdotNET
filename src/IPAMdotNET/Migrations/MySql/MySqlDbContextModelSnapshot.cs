@@ -19,11 +19,29 @@ namespace IPAMdotNet.Migrations.MySql
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("DeviceSections", b =>
+                {
+                    b.Property<int>("DeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SectionsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DeviceId", "SectionsId");
+
+                    b.HasIndex("SectionsId");
+
+                    b.ToTable("DeviceSections");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<bool>("CanWrite")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -53,10 +71,15 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("KeyHash")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ApiKeys");
                 });
@@ -81,6 +104,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("AutoCreateUsers")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("BindTemplate")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -103,11 +129,22 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Property<int>("Port")
                         .HasColumnType("int");
 
+                    b.Property<string>("SearchBase")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<bool>("SyncGroups")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("TimeoutSeconds")
                         .HasColumnType("int");
 
                     b.Property<bool>("UseSsl")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("UserFilter")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.HasKey("Id");
 
@@ -1206,6 +1243,31 @@ namespace IPAMdotNet.Migrations.MySql
                     b.HasIndex("UsersId");
 
                     b.ToTable("UserGroups");
+                });
+
+            modelBuilder.Entity("DeviceSections", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", null)
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Section", null)
+                        .WithMany()
+                        .HasForeignKey("SectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>

@@ -7,16 +7,19 @@
 - [x] Agent de scan intégré (ping, découverte IPv4, mise à jour des étiquettes) ; désactivable.
 - [x] Scan par ports TCP en plus du ping (ports configurables).
 - [x] Agents de scan distants (projet `IPAMdotNet.ScanAgent`, service Windows / systemd).
-- [ ] Agents de scan distants : tester le service Windows et systemd en conditions réelles ; mise à jour automatique de l'agent.
+- [x] Agents de scan distants : mise à jour automatique (paquets embarqués par le serveur) ; service systemd testé (Type=notify, relance après mise à jour), notice d'installation (`src/IPAMdotNet.ScanAgent/README.md`).
+- [ ] Agents de scan distants : tester l'installation en service Windows (droits administrateur nécessaires, non testée).
 - [x] Étiquettes : gestion, affichage dans les adresses, regroupement des plages, mise à jour par le scan.
 - [x] Langues : catalogue de traduction façon gettext (`Localization/L.cs`, clé = texte français), langue par défaut du serveur et choix par utilisateur (profil).
 - [ ] Langues : remplir les fichiers `Localization/i18n/*.json` (tous vides, l'interface reste en français) ; traduire `/setup` et `/update` ; page Administration › Langues (entrée de menu désactivée).
 - [x] Profil : format d'affichage des adresses MAC par utilisateur.
-- [ ] API : écriture (création / modification), droits par clé, recherche.
-- [ ] LDAP : synchronisation des groupes de l'annuaire, création automatique des comptes à la première connexion ; tester sur un vrai annuaire (seul le cas « annuaire injoignable » a pu l'être).
+- [x] API : écriture (sous-réseaux, adresses avec première adresse libre, VLAN, VRF, équipements), droits par clé (compte et écriture), recherche.
+- [ ] API : champs personnalisés en écriture ; sections, emplacements, clients et autres objets en écriture.
+- [x] LDAP : création des comptes à la première connexion, synchronisation des groupes (memberOf ↔ nom du groupe local), testées sur OpenLDAP.
+- [ ] LDAP : tester sur un Active Directory réel (testé sur OpenLDAP avec le module memberof).
 - [x] Permissions : sections appliquées au journal des modifications (page et tableau de bord, objets d'administration réservés aux admins), aux statistiques et aux compteurs de sous-réseaux (VLAN, VRF, DNS, emplacements).
-- [ ] Permissions : droits par clé d'API (aujourd'hui une clé lit toutes les sections) ; visibilité des équipements par section.
-- [ ] Paramètres : en multi-instance, le cache des paramètres n'est rafraîchi qu'au redémarrage des autres instances.
+- [x] Permissions : droits par clé d'API ; visibilité des équipements par section (aucune section = visible de tous).
+- [x] Paramètres : cache relu toutes les 30 s (multi-instance).
 
 ## Partie Réseau — écarts restants avec phpIPAM
 

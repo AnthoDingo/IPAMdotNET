@@ -68,11 +68,13 @@ public class EditModel(AppDbContext db) : PageModel
             return Page();
         }
         LdapResult result = LdapAuthenticator.Verify(Method,
-            string.IsNullOrWhiteSpace(TestUserName) ? "" : Data.User.NormalizeUserName(TestUserName), TestPassword ?? "", out string? error);
+            string.IsNullOrWhiteSpace(TestUserName) ? "" : Data.User.NormalizeUserName(TestUserName), TestPassword ?? "", out string? error, out LdapUserInfo? entry);
         TestSucceeded = result == LdapResult.Success;
         TestResult = result switch
         {
-            LdapResult.Success => "Connexion réussie : l'annuaire a accepté ces identifiants.",
+            LdapResult.Success when string.IsNullOrWhiteSpace(Method.SearchBase) => "Connexion réussie : l'annuaire a accepté ces identifiants.",
+            LdapResult.Success when entry is null => "Connexion réussie, mais le compte est introuvable avec cette base et ce filtre de recherche (pas de nom, d'e-mail ni de groupes).",
+            LdapResult.Success => $"Connexion réussie. Compte trouvé : {entry!.DisplayName ?? "(sans nom)"}, {entry.Email ?? "(sans e-mail)"} ; groupes : {(entry.Groups.Count == 0 ? "aucun" : string.Join(", ", entry.Groups))}.",
             LdapResult.InvalidCredentials => "L'annuaire répond, mais refuse ces identifiants (ou le modèle d'identifiant ne correspond pas).",
             _ => $"Annuaire injoignable : {error}",
         };
@@ -99,6 +101,14 @@ public class EditModel(AppDbContext db) : PageModel
 
     private void Validate()
     {
+        if ((Method.AutoCreateUsers || Method.SyncGroups) && string.IsNullOrWhiteSpace(Method.SearchBase))
+        {
+            ModelState.AddModelError("Method.SearchBase", "La création des comptes et la synchronisation des groupes lisent l'annuaire : indiquez la base de recherche.");
+        }
+        if (!string.IsNullOrWhiteSpace(Method.UserFilter) && !Method.UserFilter.Contains("{0}", StringComparison.Ordinal))
+        {
+            ModelState.AddModelError("Method.UserFilter", "Le filtre doit contenir {0} (remplacé par le nom d'utilisateur).");
+        }
         if (!Method.BindTemplate.Contains("{0}", StringComparison.Ordinal))
         {
             ModelState.AddModelError("Method.BindTemplate", "Le modèle doit contenir {0} (remplacé par le nom d'utilisateur).");

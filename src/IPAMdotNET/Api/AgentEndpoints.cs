@@ -1,4 +1,6 @@
 using System.Net;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +34,20 @@ public static class AgentEndpoints
                 (List<IPAddress> check, List<IPAddress> discover) = await SubnetScanner.TargetsAsync(db, subnet, cancellationToken);
                 tasks.Add(new AgentTask(subnet.Id, subnet.Network.ToString(), check.Select(t => t.ToString()).ToList(), discover.Select(t => t.ToString()).ToList()));
             }
-            return new AgentWork(new AgentScanSettings(settings.TimeoutMilliseconds, settings.Parallelism, settings.TcpPortList, settings.ResolveHostnames), tasks);
+            return new AgentWork(new AgentScanSettings(settings.TimeoutMilliseconds, settings.Parallelism, settings.TcpPortList, settings.ResolveHostnames), tasks,
+                ServerVersion);
+        });
+
+        // Paquet de mise à jour de l'agent, déposé par la release dans « agent/ » à côté du serveur ; 404 s'il n'y en a pas.
+        agent.MapGet("/update/{rid}", (string rid, IWebHostEnvironment environment) =>
+        {
+            if (!Regex.IsMatch(rid, "^[a-z0-9-]{1,40}$"))
+            {
+                return Results.BadRequest(new { error = "Plateforme invalide." });
+            }
+            string path = Path.Combine(environment.ContentRootPath, "agent", AgentProtocol.PackageName(rid));
+            return File.Exists(path) ? Results.File(path, "application/zip", AgentProtocol.PackageName(rid))
+                : Results.NotFound(new { error = $"Aucun paquet d'agent pour {rid} sur ce serveur." });
         });
 
         agent.MapPost("/results", async (HttpContext http, AppDbContext db, AgentResult result, CancellationToken cancellationToken) =>
@@ -53,6 +68,10 @@ public static class AgentEndpoints
             return Results.Ok(report);
         });
     }
+
+    /// <summary>Version du serveur, qui est aussi celle des paquets d'agent publiés avec lui.</summary>
+    private static readonly string? ServerVersion =
+        AgentProtocol.CleanVersion(typeof(AgentEndpoints).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
 
     private static HashSet<IPAddress> Parse(List<string>? addresses) =>
         (addresses ?? []).Select(a => IPAddress.TryParse(a, out IPAddress? address) ? address : null).OfType<IPAddress>().ToHashSet();

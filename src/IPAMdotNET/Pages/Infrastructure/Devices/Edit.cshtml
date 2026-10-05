@@ -53,6 +53,20 @@
             </div>
         </div>
         <p class="form-text">Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).</p>
+        @if (Model.AllSections.Count > 0)
+        {
+            <fieldset class="mb-3">
+                <legend class="fs-6 fw-semibold border-bottom pb-1 mb-2">@L.T("Sections")</legend>
+                @foreach (IPAMdotNet.Data.Section visible in Model.AllSections)
+                {
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="section-@visible.Id" name="SectionIds" value="@visible.Id" checked="@Model.SectionIds.Contains(visible.Id)" />
+                        <label class="form-check-label" for="section-@visible.Id">@visible.Name</label>
+                    </div>
+                }
+                <div class="form-text">@L.T("Seuls les utilisateurs qui lisent l'une de ces sections voient l'équipement. Aucune : visible de tous.")</div>
+            </fieldset>
+        }
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>

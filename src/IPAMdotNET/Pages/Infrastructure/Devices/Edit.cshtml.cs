@@ -20,6 +20,11 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Locations { get; private set; } = [];
     public List<SelectListItem> Customers { get; private set; } = [];
     public List<SelectListItem> Racks { get; private set; } = [];
+    public List<Section> AllSections { get; private set; } = [];
+
+    /// <summary>Sections où l'équipement est visible (aucune = toutes).</summary>
+    [BindProperty]
+    public List<int> SectionIds { get; set; } = [];
 
     // Nom explicite : sans lui, si aucun champ « Custom[…] » n'est posté, ASP.NET retombe sur le préfixe vide et lit les autres champs comme clés.
     [BindProperty(Name = CustomFieldForm.Prefix)]
@@ -31,12 +36,13 @@ public class EditModel(AppDbContext db) : PageModel
     {
         if (id is not null)
         {
-            Device? device = await db.Devices.FindAsync(id);
+            Device? device = await db.Devices.Include(d => d.Sections).SingleOrDefaultAsync(d => d.Id == id);
             if (device is null)
             {
                 return NotFound();
             }
             Device = device;
+            SectionIds = device.Sections.Select(s => s.Id).ToList();
         }
         await LoadListsAsync();
         CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Device), id ?? 0);
@@ -74,6 +80,11 @@ public class EditModel(AppDbContext db) : PageModel
             return Page();
         }
         db.Update(Device);
+        await db.SaveChangesAsync();
+        Device tracked = await db.Devices.Include(d => d.Sections).SingleAsync(d => d.Id == Device.Id);
+        List<Section> sections = await db.Sections.Where(s => SectionIds.Contains(s.Id)).ToListAsync();
+        tracked.Sections.Clear();
+        tracked.Sections.AddRange(sections);
         await db.SaveChangesAsync();
         await CustomFieldForm.SaveAsync(db, Device.Id, customValues);
         return RedirectToPage("Index", null, $"device-{Device.Id}");
@@ -133,6 +144,7 @@ public class EditModel(AppDbContext db) : PageModel
 
     private async Task LoadListsAsync()
     {
+        AllSections = await db.Sections.OrderBy(s => s.Name).ToListAsync();
         Types = await db.DeviceTypes.OrderBy(t => t.Name).Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToListAsync();
         Locations = await db.Locations.OrderBy(l => l.Name).Select(l => new SelectListItem(l.Name, l.Id.ToString())).ToListAsync();
         Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();

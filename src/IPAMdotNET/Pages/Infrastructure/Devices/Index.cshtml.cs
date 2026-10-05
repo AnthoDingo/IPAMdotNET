@@ -16,7 +16,7 @@ public class IndexModel(AppDbContext db) : PageModel
     {
         CustomFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Device));
         CustomValues = await CustomFieldForm.ValuesForAsync(db, nameof(Device));
-        Devices = await db.Devices
+        Devices = await (await SectionAccess.ForAsync(db, User)).Readable(db.Devices)
             .Include(d => d.DeviceType).Include(d => d.Location).Include(d => d.Customer).Include(d => d.Rack)
             .OrderBy(d => d.Hostname)
             .ToListAsync();

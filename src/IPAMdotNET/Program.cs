@@ -112,7 +112,7 @@ app.UseSetupMiddleware("IPAM.Net");
 // Après la garde d'installation, avant UseRouting : aucune page ne s'exécute sur un schéma obsolète.
 app.UseMigrationsGate();
 
-// Paramètres serveur chargés une fois en cache (titre, fonctionnalités, sécurité), relus après chaque enregistrement.
+// Paramètres serveur en cache (titre, fonctionnalités, sécurité), relus après chaque enregistrement et toutes les 30 s.
 app.Use(async (context, next) =>
 {
     if (context.RequestServices.GetService<AppDbContext>() is { } db)

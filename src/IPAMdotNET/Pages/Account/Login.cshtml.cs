@@ -59,9 +59,13 @@ public class LoginModel(AppDbContext db) : PageModel
 
         bool authenticated;
         bool rehash = false;
+        AuthMethod? directory = null;
+        LdapUserInfo? directoryEntry = null;
         if (user is not null && extras.AuthMethod is not null)
         {
-            LdapResult ldap = LdapAuthenticator.Verify(extras.AuthMethod, userName, Password, out string? error);
+            directory = extras.AuthMethod;
+            await LoadDirectoryOptionsAsync(directory);
+            LdapResult ldap = LdapAuthenticator.Verify(directory, userName, Password, out string? error, out directoryEntry);
             if (ldap == LdapResult.ServerError)
             {
                 await TryLogAsync(LogSeverity.Error, $"Annuaire injoignable : {error}", userName);
@@ -69,6 +73,13 @@ public class LoginModel(AppDbContext db) : PageModel
                 return Page();
             }
             authenticated = ldap == LdapResult.Success;
+        }
+        else if (user is null && await ProvisionAsync(userName) is { } provisioned)
+        {
+            // Compte inconnu ici mais accepté par un annuaire qui crée les comptes : créé à la volée.
+            (user, directory, directoryEntry) = provisioned;
+            extras = new User { UserName = "", PasswordHash = "" };
+            authenticated = true;
         }
         else
         {
@@ -92,6 +103,10 @@ public class LoginModel(AppDbContext db) : PageModel
             return Page();
         }
         await TryLogAsync(LogSeverity.Info, LogEntry.LoginSucceeded, user.UserName);
+        if (directory is { SyncGroups: true } && directoryEntry is not null)
+        {
+            await SyncGroupsAsync(user.Id, directory, directoryEntry);
+        }
 
         if (rehash)
         {
@@ -111,19 +126,114 @@ public class LoginModel(AppDbContext db) : PageModel
     /// <summary>
     /// Colonnes ajoutées après Initial (actif, méthode d'authentification), lues à part : tant que la migration
     /// n'est pas appliquée elles n'existent pas, et les valeurs par défaut (actif, compte local) sont les bonnes.
+    /// L'annuaire est projeté sur ses colonnes d'origine ; les options ajoutées depuis sont lues par <see cref="LoadDirectoryOptionsAsync"/>.
     /// </summary>
     private async Task<User> ExtrasAsync(int userId)
     {
         try
         {
             return await db.Users.Where(u => u.Id == userId)
-                .Select(u => new User { UserName = "", PasswordHash = "", Enabled = u.Enabled, AuthMethod = u.AuthMethod })
+                .Select(u => new User
+                {
+                    UserName = "",
+                    PasswordHash = "",
+                    Enabled = u.Enabled,
+                    AuthMethod = u.AuthMethod == null ? null : new AuthMethod
+                    {
+                        Id = u.AuthMethod.Id,
+                        Name = u.AuthMethod.Name,
+                        Host = u.AuthMethod.Host,
+                        Port = u.AuthMethod.Port,
+                        UseSsl = u.AuthMethod.UseSsl,
+                        BindTemplate = u.AuthMethod.BindTemplate,
+                        TimeoutSeconds = u.AuthMethod.TimeoutSeconds,
+                    },
+                })
                 .SingleAsync();
         }
         catch (DbException)
         {
             return new User { UserName = "", PasswordHash = "" };
         }
+    }
+
+    /// <summary>Recherche, création de compte et synchronisation des groupes : colonnes absentes avant la migration (repli : désactivées).</summary>
+    private async Task LoadDirectoryOptionsAsync(AuthMethod method)
+    {
+        try
+        {
+            AuthMethod options = await db.AuthMethods.Where(a => a.Id == method.Id)
+                .Select(a => new AuthMethod { SearchBase = a.SearchBase, UserFilter = a.UserFilter, SyncGroups = a.SyncGroups }).SingleAsync();
+            method.SearchBase = options.SearchBase;
+            method.UserFilter = options.UserFilter;
+            method.SyncGroups = options.SyncGroups;
+        }
+        catch (DbException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Premier annuaire « créer les comptes » qui accepte ces identifiants : le compte est créé et rattaché à cet annuaire
+    /// (nom et e-mail lus dans l'annuaire). Null si aucun ne les accepte.
+    /// </summary>
+    private async Task<(User User, AuthMethod Method, LdapUserInfo? Entry)?> ProvisionAsync(string userName)
+    {
+        List<AuthMethod> methods;
+        try
+        {
+            methods = await db.AuthMethods.AsNoTracking().Where(a => a.AutoCreateUsers).OrderBy(a => a.Id).ToListAsync();
+        }
+        catch (DbException)
+        {
+            return null;
+        }
+        foreach (AuthMethod method in methods)
+        {
+            LdapResult result = LdapAuthenticator.Verify(method, userName, Password, out string? error, out LdapUserInfo? entry);
+            if (result == LdapResult.ServerError)
+            {
+                await TryLogAsync(LogSeverity.Error, $"Annuaire injoignable : {error}", userName);
+                continue;
+            }
+            if (result != LdapResult.Success)
+            {
+                continue;
+            }
+            User created = new()
+            {
+                UserName = userName,
+                PasswordHash = "",
+                DisplayName = entry?.DisplayName is { Length: > 100 } longName ? longName[..100] : entry?.DisplayName,
+                Email = entry?.Email is { Length: <= 200 } email ? email : null,
+                AuthMethodId = method.Id,
+            };
+            db.AuditUserId = null;
+            db.AuditUserName = $"Annuaire « {method.Name} »";
+            db.Users.Add(created);
+            await db.SaveChangesAsync();
+            await TryLogAsync(LogSeverity.Info, $"Compte créé depuis l'annuaire « {method.Name} ».", userName);
+            return (created, method, entry);
+        }
+        return null;
+    }
+
+    /// <summary>Groupes locaux = ceux dont le nom est celui d'un groupe de l'annuaire (comparaison sans casse).</summary>
+    private async Task SyncGroupsAsync(int userId, AuthMethod method, LdapUserInfo entry)
+    {
+        HashSet<string> names = new(entry.Groups, StringComparer.OrdinalIgnoreCase);
+        User tracked = await db.Users.Include(u => u.Groups).SingleAsync(u => u.Id == userId);
+        List<Group> wanted = (await db.Groups.ToListAsync()).Where(g => names.Contains(g.Name)).ToList();
+        if (tracked.Groups.Select(g => g.Id).Order().SequenceEqual(wanted.Select(g => g.Id).Order()))
+        {
+            return;
+        }
+        tracked.Groups.Clear();
+        tracked.Groups.AddRange(wanted);
+        await db.SaveChangesAsync();
+        await TryLogAsync(LogSeverity.Info,
+            $"Groupes synchronisés depuis l'annuaire « {method.Name} » : {(wanted.Count == 0 ? "aucun" : string.Join(", ", wanted.Select(g => g.Name)))}.",
+            tracked.UserName);
     }
 
     /// <summary>Verrouillage : trop d'échecs (journal système) depuis la dernière connexion réussie, dans la fenêtre de verrouillage.</summary>

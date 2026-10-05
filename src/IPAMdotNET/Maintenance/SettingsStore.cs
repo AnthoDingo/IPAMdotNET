@@ -16,14 +16,25 @@ public static class SettingsStore
     public const string WidgetsPrefix = "Widgets";
     public const string ScanPrefix = "Scan";
 
-    // ponytail: cache par processus, rechargé à chaque enregistrement ; en multi-instance, les autres instances
-    // ne voient le changement qu'au redémarrage (passer à un cache distribué si besoin).
+    // Cache par processus : rechargé à l'enregistrement et relu au plus toutes les RefreshInterval, pour que les autres
+    // instances (multi-instance derrière un répartiteur) voient un changement sans redémarrage.
     private static ServerSettings? server;
+    private static DateTime loadedAt;
+
+    public static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(30);
 
     /// <summary>Paramètres serveur en cache (valeurs par défaut tant qu'ils n'ont pas été chargés).</summary>
     public static ServerSettings Server => server ?? new ServerSettings();
 
-    public static async Task<ServerSettings> GetServerAsync(AppDbContext db) => server ??= await LoadAsync<ServerSettings>(db, ServerPrefix);
+    public static async Task<ServerSettings> GetServerAsync(AppDbContext db)
+    {
+        if (server is null || DateTime.UtcNow - loadedAt > RefreshInterval)
+        {
+            server = await LoadAsync<ServerSettings>(db, ServerPrefix);
+            loadedAt = DateTime.UtcNow;
+        }
+        return server;
+    }
 
     public static async Task<T> LoadAsync<T>(AppDbContext db, string prefix) where T : new()
     {
@@ -64,6 +75,7 @@ public static class SettingsStore
         if (settings is ServerSettings saved)
         {
             server = saved;
+            loadedAt = DateTime.UtcNow;
         }
     }
 

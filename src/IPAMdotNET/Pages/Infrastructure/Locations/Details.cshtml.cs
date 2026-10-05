@@ -25,7 +25,7 @@ public class DetailsModel(AppDbContext db) : PageModel
         SectionAccess access = await SectionAccess.ForAsync(db, User);
         Linked = new LinkedObjects(
             await access.Readable(db.Subnets).Where(s => s.LocationId == id).OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync(),
-            await db.Devices.Where(d => d.LocationId == id).OrderBy(d => d.Hostname).ToListAsync(),
+            await access.Readable(db.Devices).Where(d => d.LocationId == id).OrderBy(d => d.Hostname).ToListAsync(),
             await db.Racks.Where(r => r.LocationId == id).OrderBy(r => r.Name).ToListAsync(),
             await db.Circuits.Include(c => c.Provider).Where(c => c.LocationAId == id || c.LocationBId == id).OrderBy(c => c.Cid).ToListAsync());
         CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Location), id);

@@ -155,6 +155,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(d => d.Location).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(d => d.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(d => d.Rack).WithMany(r => r.Devices).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasMany(d => d.Sections).WithMany().UsingEntity("DeviceSections");
         });
 
         modelBuilder.Entity<Rack>(entity =>
@@ -237,6 +238,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
         modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<ApiKey>().HasOne(k => k.User).WithMany().OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<RemoteAgent>().HasIndex(a => a.KeyHash).IsUnique();
         // Agent supprimé : ses sous-réseaux reviennent à l'agent intégré (chemin unique, SET NULL accepté par SQL Server).
         modelBuilder.Entity<Subnet>().HasOne(s => s.ScanAgent).WithMany().OnDelete(DeleteBehavior.SetNull);

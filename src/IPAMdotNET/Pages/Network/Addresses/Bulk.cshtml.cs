@@ -147,7 +147,8 @@ public class BulkModel(AppDbContext db) : PageModel
         Addresses = (await db.IpAddresses.Include(a => a.Tag).Where(a => a.SubnetId == subnetId).OrderBy(a => a.Address).ToListAsync())
             .Where(a => selected.Contains(a.Id)).ToList();
         Tags = await db.Tags.OrderByDescending(t => t.Locked).ThenBy(t => t.Name).Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToListAsync();
-        Devices = await db.Devices.OrderBy(d => d.Hostname).Select(d => new SelectListItem(d.Hostname, d.Id.ToString())).ToListAsync();
+        // Équipements de la section du sous-réseau, ou sans section (comme phpIPAM).
+        Devices = await db.Devices.Where(d => !d.Sections.Any() || d.Sections.Any(s => s.Id == subnet.SectionId)).OrderBy(d => d.Hostname).Select(d => new SelectListItem(d.Hostname, d.Id.ToString())).ToListAsync();
         return null;
     }
 }

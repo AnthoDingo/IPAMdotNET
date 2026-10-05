@@ -22,6 +22,21 @@ namespace IPAMdotNet.Migrations.Postgres
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DeviceSections", b =>
+                {
+                    b.Property<int>("DeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SectionsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("DeviceId", "SectionsId");
+
+                    b.HasIndex("SectionsId");
+
+                    b.ToTable("DeviceSections");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
                 {
                     b.Property<int>("Id")
@@ -29,6 +44,9 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CanWrite")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -58,10 +76,15 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("KeyHash")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ApiKeys");
                 });
@@ -88,6 +111,9 @@ namespace IPAMdotNet.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AutoCreateUsers")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("BindTemplate")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -110,11 +136,22 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Property<int>("Port")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SearchBase")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("SyncGroups")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("TimeoutSeconds")
                         .HasColumnType("integer");
 
                     b.Property<bool>("UseSsl")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("UserFilter")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -1267,6 +1304,31 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.HasIndex("UsersId");
 
                     b.ToTable("UserGroups");
+                });
+
+            modelBuilder.Entity("DeviceSections", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Device", null)
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Section", null)
+                        .WithMany()
+                        .HasForeignKey("SectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.ApiKey", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>

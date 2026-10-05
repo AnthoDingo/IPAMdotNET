@@ -49,4 +49,8 @@ public class Device
     public int? RackSize { get; set; }
 
     public int? RackEnd => RackStart + RackSize - 1;
+
+    /// <summary>Sections où l'équipement est visible (comme phpIPAM) ; aucune = visible de tous.</summary>
+    [ValidateNever]
+    public List<Section> Sections { get; set; } = [];
 }

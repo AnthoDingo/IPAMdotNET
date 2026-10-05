@@ -4,7 +4,7 @@ using System.Text;
 
 namespace IPAMdotNet.Data;
 
-/// <summary>Clé d'accès à l'API REST (lecture seule). Seul le haché SHA-256 est stocké : la clé n'est affichée qu'à sa création.</summary>
+/// <summary>Clé d'accès à l'API REST. Seul le haché SHA-256 est stocké : la clé n'est affichée qu'à sa création.</summary>
 public class ApiKey
 {
     public int Id { get; set; }
@@ -30,6 +30,19 @@ public class ApiKey
 
     [MaxLength(500), Display(Name = "Description")]
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Compte dont la clé prend les droits (sections lisibles / modifiables) ; null = toutes les sections, comme un admin.
+    /// Supprimer le compte supprime ses clés.
+    /// </summary>
+    [Display(Name = "Droits de l'utilisateur")]
+    public int? UserId { get; set; }
+
+    public User? User { get; set; }
+
+    /// <summary>Création, modification et suppression autorisées (dans la limite des droits de l'utilisateur).</summary>
+    [Display(Name = "Écriture")]
+    public bool CanWrite { get; set; }
 
     public static string NewKey() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
