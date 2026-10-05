@@ -131,6 +131,8 @@ public abstract partial class AppDbContext
     private async Task<List<PendingChange>> CollectChangesAsync(CancellationToken cancellationToken)
     {
         List<PendingChange> pending = [];
+        // Libellés des objets référencés, résolus une fois par enregistrement (ajout en masse : même sous-réseau, même étiquette).
+        Dictionary<(Type, object), string?> labels = [];
         foreach (EntityEntry entry in ChangeTracker.Entries().ToList())
         {
             if (!ChangeLog.Types.ContainsKey(entry.Metadata.ClrType.Name))
@@ -143,7 +145,7 @@ public abstract partial class AppDbContext
                 case EntityState.Added:
                     foreach (PropertyEntry property in entry.Properties.Where(p => !p.Metadata.IsPrimaryKey()))
                     {
-                        string? value = Format(entry, property, property.CurrentValue);
+                        string? value = await FormatAsync(entry, property, property.CurrentValue, labels, cancellationToken);
                         if (value is not null)
                         {
                             changes[FieldLabel(property)] = [null, value];
@@ -155,7 +157,7 @@ public abstract partial class AppDbContext
                 case EntityState.Deleted:
                     foreach (PropertyEntry property in entry.Properties.Where(p => !p.Metadata.IsPrimaryKey()))
                     {
-                        string? value = Format(entry, property, property.OriginalValue);
+                        string? value = await FormatAsync(entry, property, property.OriginalValue, labels, cancellationToken);
                         if (value is not null)
                         {
                             changes[FieldLabel(property)] = [value, null];
@@ -169,8 +171,8 @@ public abstract partial class AppDbContext
                     PropertyValues? database = await entry.GetDatabaseValuesAsync(cancellationToken);
                     foreach (PropertyEntry property in entry.Properties.Where(p => p.IsModified))
                     {
-                        string? before = Format(entry, property, database?[property.Metadata.Name]);
-                        string? after = Format(entry, property, property.CurrentValue);
+                        string? before = await FormatAsync(entry, property, database?[property.Metadata.Name], labels, cancellationToken);
+                        string? after = await FormatAsync(entry, property, property.CurrentValue, labels, cancellationToken);
                         if (before != after)
                         {
                             changes[FieldLabel(property)] = [before, after];
@@ -188,6 +190,37 @@ public abstract partial class AppDbContext
 
     private static string FieldLabel(PropertyEntry property) =>
         property.Metadata.PropertyInfo?.GetCustomAttribute<DisplayAttribute>()?.Name ?? property.Metadata.Name;
+
+    /// <summary>
+    /// Comme <see cref="Format"/>, mais une clé étrangère est écrite avec le libellé de l'objet référencé au moment du changement
+    /// (« Serveurs (n°3) » plutôt que « 3 ») : le journal reste lisible même si l'objet est renommé ou supprimé ensuite.
+    /// </summary>
+    private async Task<string?> FormatAsync(EntityEntry entry, PropertyEntry property, object? value, Dictionary<(Type, object), string?> labels,
+        CancellationToken cancellationToken)
+    {
+        string? text = Format(entry, property, value);
+        if (text is null || property.Metadata.GetContainingForeignKeys().FirstOrDefault() is not { } foreignKey
+            || foreignKey.PrincipalKey.Properties.Count != 1)
+        {
+            return text;
+        }
+        Type principalType = foreignKey.PrincipalEntityType.ClrType;
+        if (!labels.TryGetValue((principalType, value!), out string? label))
+        {
+            string keyName = foreignKey.PrincipalKey.Properties[0].Name;
+            EntityEntry? local = ChangeTracker.Entries()
+                .FirstOrDefault(e => e.Metadata.ClrType == principalType && Equals(e.Property(keyName).CurrentValue, value));
+            object? principal = local?.Entity ?? await FindAsync(principalType, [value], cancellationToken);
+            label = principal is null ? null : Label(Entry(principal), original: false);
+            if (local is null && principal is not null)
+            {
+                // Chargé pour le libellé seulement : ne doit pas rester suivi (il serait enregistré avec le reste).
+                Entry(principal).State = EntityState.Detached;
+            }
+            labels[(principalType, value!)] = label;
+        }
+        return label is null ? text : $"{label} (n°{text})";
+    }
 
     private static string? Format(EntityEntry entry, PropertyEntry property, object? value)
     {

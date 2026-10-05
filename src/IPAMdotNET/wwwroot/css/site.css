@@ -457,6 +457,68 @@ fieldset legend {
     font-weight: 600;
 }
 
+/* Texte Markdown (instructions) */
+.ipam-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.ipam-markdown h1,
+.ipam-markdown h2,
+.ipam-markdown h3 {
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.ipam-markdown h1 {
+    font-size: 1.4rem;
+}
+
+.ipam-markdown h2 {
+    font-size: 1.2rem;
+}
+
+.ipam-markdown h3 {
+    font-size: 1.05rem;
+}
+
+.ipam-markdown table {
+    width: auto;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.ipam-markdown th,
+.ipam-markdown td {
+    border: 1px solid var(--ipam-border);
+    padding: .3rem .6rem;
+}
+
+.ipam-markdown th {
+    background: var(--ipam-panel-head-bg);
+}
+
+.ipam-markdown code {
+    background: var(--ipam-panel-head-bg);
+    border-radius: .25rem;
+    padding: .1rem .3rem;
+}
+
+.ipam-markdown pre code {
+    display: block;
+    padding: .6rem;
+}
+
+.ipam-markdown blockquote {
+    border-left: 3px solid var(--ipam-accent);
+    padding-left: .8rem;
+    color: var(--bs-secondary-color);
+}
+
+.ipam-markdown .contains-task-list {
+    list-style: none;
+    padding-left: 1rem;
+}
+
 /* Vue de face d'un rack */
 .ipam-rack {
     width: 100%;

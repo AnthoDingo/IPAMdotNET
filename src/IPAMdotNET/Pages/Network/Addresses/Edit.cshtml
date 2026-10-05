@@ -63,3 +63,8 @@
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Entry.Id, "cette adresse"))" />
 </div>
+
+@if (Model.Entry.Id != 0)
+{
+    <vc:history entity-type="IpAddress" entity-id="@Model.Entry.Id" />
+}

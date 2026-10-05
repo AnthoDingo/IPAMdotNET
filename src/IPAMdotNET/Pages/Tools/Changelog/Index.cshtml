@@ -7,6 +7,12 @@
 
 <div class="ipam-panel">
     <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> @L.T("Journal des modifications")</div>
+    @if (Model.Id is not null && Model.Type is not null)
+    {
+        <div class="alert alert-info py-2">
+            @L.T("Historique d'un seul objet.") <a asp-page="Index">@L.T("Tout le journal")</a>
+        </div>
+    }
     <form method="get" class="row g-2 mb-3">
         <div class="col-md-4">
             <select asp-for="Type" asp-items="Model.Types" class="form-select" aria-label="@L.T("Type d'objet")">
@@ -61,23 +67,7 @@
                             }
                         </td>
                         <td>
-                            @if (row.Changes.Count > 0)
-                            {
-                                <details>
-                                    <summary>@(L.T("{0} champ(s)", row.Changes.Count))</summary>
-                                    <table class="table table-sm table-borderless small mb-0">
-                                        @foreach (KeyValuePair<string, string?[]> change in row.Changes)
-                                        {
-                                            <tr>
-                                                <th scope="row">@change.Key</th>
-                                                <td class="text-danger">@(change.Value.ElementAtOrDefault(0) ?? "—")</td>
-                                                <td><i class="bi bi-arrow-right"></i></td>
-                                                <td class="text-success">@(change.Value.ElementAtOrDefault(1) ?? "—")</td>
-                                            </tr>
-                                        }
-                                    </table>
-                                </details>
-                            }
+                            <partial name="_ChangeDetails" model="row.Changes" />
                         </td>
                     </tr>
                 }
@@ -88,11 +78,11 @@
             <nav aria-label="@L.T("Pages")">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                        <a class="page-link" asp-route-p="@(Model.PageNumber - 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q">@L.T("Précédent")</a>
+                        <a class="page-link" asp-route-p="@(Model.PageNumber - 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q" asp-route-id="@Model.Id">@L.T("Précédent")</a>
                     </li>
                     <li class="page-item disabled"><span class="page-link">@(L.T("Page {0} / {1}", Model.PageNumber, Model.PageCount))</span></li>
                     <li class="page-item @(Model.PageNumber == Model.PageCount ? "disabled" : "")">
-                        <a class="page-link" asp-route-p="@(Model.PageNumber + 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q">@L.T("Suivant")</a>
+                        <a class="page-link" asp-route-p="@(Model.PageNumber + 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q" asp-route-id="@Model.Id">@L.T("Suivant")</a>
                     </li>
                 </ul>
             </nav>

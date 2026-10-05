@@ -26,6 +26,18 @@
             <label asp-for="AssignedAddress" class="form-label"></label>
             <input asp-for="AssignedAddress" class="form-control font-monospace" />
             <span asp-validation-for="AssignedAddress" class="text-danger"></span>
+            @if (Model.RequestedTaken)
+            {
+                <div class="form-text text-warning">@L.T("L'adresse demandée est déjà utilisée : la première adresse libre est proposée.")</div>
+            }
+            else if (Model.IpRequest.RequestedAddress is null && Model.FirstFree is not null)
+            {
+                <div class="form-text">@L.T("Aucune adresse demandée : la première adresse libre est proposée.")</div>
+            }
+            else if (Model.FirstFree is null && Model.IpRequest.RequestedAddress is null)
+            {
+                <div class="form-text text-warning">@L.T("Le sous-réseau n'a plus d'adresse libre.")</div>
+            }
         </div>
         <div class="mb-3">
             <label asp-for="AdminComment" class="form-label"></label>

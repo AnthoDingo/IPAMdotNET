@@ -35,3 +35,8 @@
 </div>
 
 <partial name="_LinkedObjects" model="Model.Linked" />
+
+@if (Model.Customer.Id != 0)
+{
+    <vc:history entity-type="Customer" entity-id="@Model.Customer.Id" />
+}

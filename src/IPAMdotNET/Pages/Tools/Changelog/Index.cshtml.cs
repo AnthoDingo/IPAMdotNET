@@ -19,6 +19,10 @@ public class IndexModel(AppDbContext db) : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Q { get; set; }
 
+    /// <summary>Historique d'un seul objet (avec <see cref="Type"/>).</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? Id { get; set; }
+
     [BindProperty(SupportsGet = true, Name = "p")]
     public int PageNumber { get; set; } = 1;
 
@@ -41,6 +45,10 @@ public class IndexModel(AppDbContext db) : PageModel
         if (!string.IsNullOrEmpty(Type))
         {
             query = query.Where(c => c.EntityType == Type);
+            if (Id is not null)
+            {
+                query = query.Where(c => c.EntityId == Id);
+            }
         }
         if (!string.IsNullOrWhiteSpace(Q))
         {

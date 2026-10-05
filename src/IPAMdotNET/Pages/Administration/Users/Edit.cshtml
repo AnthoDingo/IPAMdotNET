@@ -76,3 +76,8 @@
         <partial name="_DeleteForm" model="@(new DeleteForm(Model.UserId, "cet utilisateur"))" />
     }
 </div>
+
+@if (Model.UserId != 0)
+{
+    <vc:history entity-type="User" entity-id="@Model.UserId" />
+}

@@ -35,3 +35,8 @@
         <partial name="_SubnetTable" model="Model.Tree" />
     }
 </div>
+
+@if (Model.Section.Id != 0)
+{
+    <vc:history entity-type="Section" entity-id="@Model.Section.Id" />
+}

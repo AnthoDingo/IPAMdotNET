@@ -75,3 +75,8 @@
         </div>
     </div>
 </div>
+
+@if (Model.Rack.Id != 0)
+{
+    <vc:history entity-type="Rack" entity-id="@Model.Rack.Id" />
+}

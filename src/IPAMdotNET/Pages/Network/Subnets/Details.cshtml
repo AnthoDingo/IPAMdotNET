@@ -295,3 +295,8 @@
         <partial name="_SubnetTable" model="Model.Descendants" />
     }
 </div>
+
+@if (Model.Subnet.Id != 0)
+{
+    <vc:history entity-type="Subnet" entity-id="@Model.Subnet.Id" />
+}

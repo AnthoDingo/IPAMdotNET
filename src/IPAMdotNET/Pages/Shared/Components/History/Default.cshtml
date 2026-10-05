@@ -1,0 +1,39 @@
+@using IPAMdotNet.Data
+@model IPAMdotNet.Navigation.HistoryModel
+
+<div class="ipam-panel mt-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-clock-history"></i> @L.T("Historique") (@Model.Total)</span>
+        @if (Model.Total > Model.Entries.Count)
+        {
+            <a asp-page="/Tools/Changelog/Index" asp-route-type="@Model.EntityType" asp-route-id="@Model.EntityId" class="btn btn-outline-secondary btn-sm ms-auto">@L.T("Tout l'historique")</a>
+        }
+    </div>
+    @if (Model.Entries.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucune modification enregistrée.")</p>
+    }
+    else
+    {
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>@L.T("Date")</th><th>@L.T("Utilisateur")</th><th>@L.T("Action")</th><th>@L.T("Détail")</th></tr></thead>
+            <tbody>
+                @foreach ((ChangeLog log, Dictionary<string, string?[]> changes) in Model.Entries)
+                {
+                    string badge = log.Action switch
+                    {
+                        ChangeAction.Created => "text-bg-success",
+                        ChangeAction.Deleted => "text-bg-danger",
+                        _ => "text-bg-primary",
+                    };
+                    <tr>
+                        <td class="text-nowrap">@log.Date.ToLocalTime().ToString("g")</td>
+                        <td>@log.UserName</td>
+                        <td><span class="badge @badge">@Html.DisplayFor(_ => log.Action)</span></td>
+                        <td><partial name="_ChangeDetails" model="changes" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

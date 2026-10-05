@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="AnthoDingo.Setup" Version="2.1.1" />
     <PackageReference Include="AnthoDingo.Update" Version="1.0.0" />
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

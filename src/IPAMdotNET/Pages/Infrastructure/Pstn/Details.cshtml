@@ -65,3 +65,8 @@
         </table>
     }
 </div>
+
+@if (Model.Prefix.Id != 0)
+{
+    <vc:history entity-type="PstnPrefix" entity-id="@Model.Prefix.Id" />
+}

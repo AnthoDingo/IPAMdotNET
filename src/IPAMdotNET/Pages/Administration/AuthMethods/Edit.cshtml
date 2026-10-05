@@ -99,3 +99,8 @@
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, "cet annuaire"))" />
 </div>
+
+@if (Model.Method.Id != 0)
+{
+    <vc:history entity-type="AuthMethod" entity-id="@Model.Method.Id" />
+}

@@ -76,3 +76,8 @@
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Group.Id, "ce groupe"))" />
 </div>
+
+@if (Model.Group.Id != 0)
+{
+    <vc:history entity-type="Group" entity-id="@Model.Group.Id" />
+}

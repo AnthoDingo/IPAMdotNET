@@ -10,10 +10,17 @@
         <div class="mb-3">
             <label asp-for="Text" class="form-label"></label>
             <textarea asp-for="Text" class="form-control" rows="16"></textarea>
-            <div class="form-text">@L.T("Texte brut, affiché à tous les utilisateurs ; les retours à la ligne sont conservés.")</div>
+            <div class="form-text">@L.T("Markdown, affiché à tous les utilisateurs : # titre, **gras**, *italique*, listes (- ou 1.), [lien](https://…), `code`, tableaux. Les retours à la ligne sont conservés ; le HTML n'est pas interprété.")</div>
             <span asp-validation-for="Text" class="text-danger"></span>
         </div>
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <button type="submit" asp-page-handler="Preview" class="btn btn-outline-primary"><i class="bi bi-eye"></i>@L.T("Aperçu")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
+    @if (Model.Preview is not null)
+    {
+        <hr />
+        <div class="small text-body-secondary mb-2">@L.T("Aperçu (non enregistré) :")</div>
+        <div class="ipam-markdown">@Html.Raw(Model.Preview)</div>
+    }
 </div>

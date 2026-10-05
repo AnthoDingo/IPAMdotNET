@@ -37,9 +37,10 @@
 
 ## Outils — écarts restants avec phpIPAM
 
-- [ ] Demandes d'adresses : proposer la première adresse libre au traitement (l'adresse est désormais créée à l'acceptation).
-- [ ] Journal : afficher les noms au lieu des identifiants pour les clés étrangères (VLAN, VRF…), historique sur la fiche de chaque objet.
-- [ ] Instructions : mise en forme (Markdown) — aujourd'hui texte brut.
+- [x] Demandes d'adresses : adresse demandée si elle est libre, sinon première adresse libre proposée au traitement.
+- [x] Journal : libellé des objets référencés (« Serveurs (n°3) »), historique sur la fiche de chaque objet et filtre par objet.
+- [ ] Journal : les entrées antérieures gardent les identifiants seuls (libellés résolus à l'écriture).
+- [x] Instructions : Markdown (Markdig, HTML désactivé, liens filtrés), avec aperçu.
 - [x] Recherche : adresses IP individuelles (IP exacte, nom d'hôte, MAC, propriétaire).
 
 ## Maintenance — écarts restants avec phpIPAM

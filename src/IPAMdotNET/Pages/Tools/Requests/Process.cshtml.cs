@@ -24,13 +24,25 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
     [BindProperty, MaxLength(500), Display(Name = "Commentaire")]
     public string? AdminComment { get; set; }
 
+    /// <summary>Première adresse attribuable libre du sous-réseau (null si plein).</summary>
+    public IPAddress? FirstFree { get; private set; }
+
+    /// <summary>L'adresse demandée est déjà utilisée (attribuée entre-temps) : la première libre est proposée à la place.</summary>
+    public bool RequestedTaken { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         if (!await LoadAsync(id))
         {
             return NotFound();
         }
-        AssignedAddress = IpRequest.RequestedAddress;
+        // Adresse demandée si elle est encore libre, sinon la première libre du sous-réseau (comme phpIPAM).
+        HashSet<System.Numerics.BigInteger> used = (await db.IpAddresses.Where(a => a.SubnetId == IpRequest.SubnetId).Select(a => a.Address).ToListAsync())
+            .Select(bytes => Ip.ToNumber(Ip.FromBytes(bytes))).ToHashSet();
+        FirstFree = Ip.FirstFree(IpRequest.Subnet!.Network, used);
+        bool requestedFree = IPAddress.TryParse(IpRequest.RequestedAddress, out IPAddress? requested) && !used.Contains(Ip.ToNumber(requested));
+        RequestedTaken = IpRequest.RequestedAddress is not null && !requestedFree;
+        AssignedAddress = requestedFree ? IpRequest.RequestedAddress : FirstFree?.ToString();
         return Page();
     }
 
