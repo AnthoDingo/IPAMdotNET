@@ -4,10 +4,10 @@
 <div class="row g-3">
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Sous-réseaux (@Model.Subnets.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> @(L.T("Sous-réseaux ({0})", Model.Subnets.Count))</div>
             @if (Model.Subnets.Count == 0)
             {
-                <p class="ipam-empty">Aucun sous-réseau.</p>
+                <p class="ipam-empty">@L.T("Aucun sous-réseau.")</p>
             }
             else
             {
@@ -22,10 +22,10 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> Équipements (@Model.Devices.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> @(L.T("Équipements ({0})", Model.Devices.Count))</div>
             @if (Model.Devices.Count == 0)
             {
-                <p class="ipam-empty">Aucun équipement.</p>
+                <p class="ipam-empty">@L.T("Aucun équipement.")</p>
             }
             else
             {
@@ -40,10 +40,10 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-hdd-stack"></i> Racks (@Model.Racks.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-hdd-stack"></i> @(L.T("Racks ({0})", Model.Racks.Count))</div>
             @if (Model.Racks.Count == 0)
             {
-                <p class="ipam-empty">Aucun rack.</p>
+                <p class="ipam-empty">@L.T("Aucun rack.")</p>
             }
             else
             {
@@ -58,10 +58,10 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-plug"></i> Circuits (@Model.Circuits.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-plug"></i> @(L.T("Circuits ({0})", Model.Circuits.Count))</div>
             @if (Model.Circuits.Count == 0)
             {
-                <p class="ipam-empty">Aucun circuit.</p>
+                <p class="ipam-empty">@L.T("Aucun circuit.")</p>
             }
             else
             {

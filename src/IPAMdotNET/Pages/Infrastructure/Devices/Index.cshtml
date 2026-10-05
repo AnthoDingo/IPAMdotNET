@@ -3,26 +3,26 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Infrastructure.Devices.IndexModel
 @{
-    ViewData["Title"] = "Équipements";
+    ViewData["Title"] = L.T("Équipements");
     bool admin = User.IsInRole("Admin");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-hdd"></i> Équipements</span>
+        <span><i class="bi bi-hdd"></i> @L.T("Équipements")</span>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
     @if (Model.Devices.Count == 0)
     {
-        <p class="ipam-empty">Aucun équipement.</p>
+        <p class="ipam-empty">@L.T("Aucun équipement.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom d'hôte</th><th>Adresse IP</th><th>Type</th><th>Emplacement</th><th>Rack</th><th>Client</th><th>Description</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom d'hôte")</th><th>@L.T("Adresse IP")</th><th>@L.T("Type")</th><th>@L.T("Emplacement")</th><th>@L.T("Rack")</th><th>@L.T("Client")</th><th>@L.T("Description")</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (Device device in Model.Devices)
                 {
@@ -59,7 +59,7 @@
                         }
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Edit" asp-route-id="@device.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@device.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                         }
                     </tr>
                 }

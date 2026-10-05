@@ -73,6 +73,11 @@ public class IndexModel(AppDbContext db) : PageModel
         }
         db.AddRange(Result.Entities);
         await db.SaveChangesAsync();
+        // ponytail: un enregistrement par objet pour ses champs personnalisés ; à regrouper si les imports deviennent volumineux.
+        foreach (KeyValuePair<object, Dictionary<int, string?>> pair in Result.CustomValues)
+        {
+            await CustomFieldForm.SaveAsync(db, (int)db.Entry(pair.Key).Property("Id").CurrentValue!, pair.Value);
+        }
         string label = CsvTransfer.Formats.First(f => f.Key == Format).Label;
         await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Import CSV : {Result.Entities.Count} objet(s) « {label} » créé(s).",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());

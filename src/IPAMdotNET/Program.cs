@@ -1,4 +1,10 @@
 using System.Data.Common;
+using System.Globalization;
+using System.Security.Claims;
+using IPAMdotNet.Localization;
+using IPAMdotNet.Navigation;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Localization;
 using AnthoDingo.Setup;
 using AnthoDingo.Update;
 using IPAMdotNet.Api;
@@ -29,12 +35,13 @@ if (Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provid
     // L'utilisateur courant signe les entrées du journal des modifications.
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<AppDbContext>(services => AppDbContext.Create(provider, connectionString)
-        .WithAuditUser(services.GetRequiredService<IHttpContextAccessor>().HttpContext?.User));
+        .WithAuditUser(() => services.GetRequiredService<IHttpContextAccessor>().HttpContext?.User));
 
     // Migrations en attente après une mise à jour : tout est redirigé vers /update, un admin confirme leur application.
     builder.Services.AddDatabaseUpdate<AppDbContext>(options =>
     {
-        options.ProductName = "IPAMdotNet";
+        options.ProductName = "IPAM.Net";
+        options.IconCssClass = "ipam-update-logo";
         options.RequireAuthentication = true;
         options.SignInPath = "/Account/Login";
         options.AuthorizationPolicy = "Admin";
@@ -85,20 +92,22 @@ builder.Services.AddHostedService<ScanAgent>();
 // Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
+// Libellés [Display], messages de validation et noms d'énumération traduits par le catalogue (Localization/L.cs).
+CatalogLocalizer catalog = new();
+builder.Services.AddSingleton<IStringLocalizerFactory>(catalog);
+builder.Services.AddSingleton<IStringLocalizer>(catalog);
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
     options.Conventions.AuthorizeFolder("/Administration", "Admin");
     options.Conventions.AllowAnonymousToPage("/Account/Login");
     options.Conventions.AllowAnonymousToPage("/Error");
-});
+}).AddDataAnnotationsLocalization();
 
 WebApplication app = builder.Build();
 
-app.UseSetupMiddleware("IPAMdotNet");
-
-// Interface en français quelle que soit la culture du serveur (formats de nombres et de dates).
-app.UseRequestLocalization("fr-FR");
+app.UseSetupMiddleware("IPAM.Net");
 
 // Après la garde d'installation, avant UseRouting : aucune page ne s'exécute sur un schéma obsolète.
 app.UseMigrationsGate();
@@ -131,12 +140,28 @@ app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Langue de l'interface (textes, dates, nombres) : choix de l'utilisateur, sinon langue par défaut du serveur. Après l'authentification
+// (claim de langue) et le chargement des paramètres ; /setup et /update, servis avant, restent en français.
+CultureInfo[] cultures = [.. L.Languages.Select(l => CultureInfo.GetCultureInfo(l.Code))];
+app.UseRequestLocalization(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(L.Source);
+    options.SupportedCultures = cultures;
+    options.SupportedUICultures = cultures;
+    options.RequestCultureProviders =
+    [
+        new CustomRequestCultureProvider(context => Task.FromResult<ProviderCultureResult?>(
+            new ProviderCultureResult(context.User.FindFirstValue(ClaimsExtensions.LanguageClaim) ?? SettingsStore.Server.Language))),
+    ];
+});
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
 app.MapIpamApi();
+app.MapAgentApi();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode()
    .AddAdditionalAssemblies(ServiceCollectionExtensions.UpdateAssembly);

@@ -6,7 +6,7 @@ namespace IPAMdotNet.Data;
 public sealed class ServerSettings
 {
     [Required(ErrorMessage = "Le titre est requis."), MaxLength(100), Display(Name = "Titre du site")]
-    public string SiteTitle { get; set; } = "IPAMdotNet";
+    public string SiteTitle { get; set; } = "IPAM.Net";
 
     [MaxLength(200), Url(ErrorMessage = "URL invalide."), Display(Name = "URL du site", Description = "Utilisée dans les liens des e-mails.")]
     public string? SiteUrl { get; set; }
@@ -26,6 +26,12 @@ public sealed class ServerSettings
     [Display(Name = "Masquer les plages libres dans la liste des adresses")]
     public bool HideFreeRanges { get; set; }
 
+    [MaxLength(10), Display(Name = "Langue par défaut")]
+    public string Language { get; set; } = Localization.L.Source;
+
+    [Display(Name = "Format d'affichage des adresses MAC")]
+    public MacFormat MacFormat { get; set; }
+
     [Range(0, 100, ErrorMessage = "Entre 0 et 100."), Display(Name = "Échecs de connexion avant verrouillage", Description = "0 = pas de verrouillage.")]
     public int MaxFailedLogins { get; set; } = 5;
 
@@ -34,6 +40,16 @@ public sealed class ServerSettings
 
     [Range(5, 43200, ErrorMessage = "Entre 5 et 43200 minutes."), Display(Name = "Durée de session (minutes)", Description = "Hors « Se souvenir de moi » (30 jours).")]
     public int SessionMinutes { get; set; } = 480;
+}
+
+/// <summary>Formats d'affichage des MAC ; elles restent stockées en aa:bb:cc:dd:ee:ff (<see cref="IpAddress.NormalizeMac"/>).</summary>
+public enum MacFormat
+{
+    [Display(Name = "Unix / Linux — aa:bb:cc:dd:ee:ff")] Unix,
+    [Display(Name = "Windows — AA-BB-CC-DD-EE-FF")] Windows,
+    [Display(Name = "Cisco — aabb.ccdd.eeff")] Cisco,
+    [Display(Name = "HP / Aruba — aabbcc-ddeeff")] Hp,
+    [Display(Name = "Sans séparateur — aabbccddeeff")] Bare,
 }
 
 /// <summary>Agent de scan intégré (Administration › Agents de scan). Préfixe à part : la page Paramètres ne l'écrase pas.</summary>

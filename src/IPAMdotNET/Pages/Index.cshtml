@@ -3,7 +3,7 @@
 @using IPAMdotNet.Maintenance
 @model IndexModel
 @{
-    ViewData["Title"] = "Tableau de bord";
+    ViewData["Title"] = L.T("Tableau de bord");
     WidgetSettings widgets = Model.Widgets;
 }
 
@@ -13,16 +13,16 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-bar-chart"></i> Statistiques</div>
+                <div class="ipam-panel-title"><i class="bi bi-bar-chart"></i> @L.T("Statistiques")</div>
                 <table class="table table-sm mb-0">
                     <tbody>
-                        <tr><th scope="row">Sections</th><td class="text-end">@Model.SectionCount</td></tr>
-                        <tr><th scope="row"><a asp-page="/Network/Subnets/Index">Sous-réseaux</a></th><td class="text-end">@Model.SubnetCount</td></tr>
-                        <tr><th scope="row">Adresses IP</th><td class="text-end">@Model.AddressCount</td></tr>
+                        <tr><th scope="row">@L.T("Sections")</th><td class="text-end">@Model.SectionCount</td></tr>
+                        <tr><th scope="row"><a asp-page="/Network/Subnets/Index">@L.T("Sous-réseaux")</a></th><td class="text-end">@Model.SubnetCount</td></tr>
+                        <tr><th scope="row">@L.T("Adresses IP")</th><td class="text-end">@Model.AddressCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Network/Vlans/Index">VLAN</a></th><td class="text-end">@Model.VlanCount</td></tr>
                         <tr><th scope="row"><a asp-page="/Network/Vrfs/Index">VRF</a></th><td class="text-end">@Model.VrfCount</td></tr>
-                        <tr><th scope="row"><a asp-page="/Infrastructure/Devices/Index">Équipements</a></th><td class="text-end">@Model.DeviceCount</td></tr>
-                        <tr><th scope="row">Utilisateurs</th><td class="text-end">@Model.UserCount</td></tr>
+                        <tr><th scope="row"><a asp-page="/Infrastructure/Devices/Index">@L.T("Équipements")</a></th><td class="text-end">@Model.DeviceCount</td></tr>
+                        <tr><th scope="row">@L.T("Utilisateurs")</th><td class="text-end">@Model.UserCount</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -32,10 +32,10 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-star"></i> <a asp-page="/Tools/Favorites/Index">Sous-réseaux favoris</a></div>
+                <div class="ipam-panel-title"><i class="bi bi-star"></i> <a asp-page="/Tools/Favorites/Index">@L.T("Sous-réseaux favoris")</a></div>
                 @if (Model.Favorites.Count == 0)
                 {
-                    <p class="ipam-empty">Aucun sous-réseau favori.</p>
+                    <p class="ipam-empty">@L.T("Aucun sous-réseau favori.")</p>
                 }
                 else
                 {
@@ -53,7 +53,7 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-inbox"></i> <a asp-page="/Tools/Requests/Index">Demandes d'adresses</a>
+                <div class="ipam-panel-title"><i class="bi bi-inbox"></i> <a asp-page="/Tools/Requests/Index">@L.T("Demandes d'adresses")</a>
                     @if (Model.PendingRequestCount > 0)
                     {
                         <span class="badge text-bg-warning ms-1">@Model.PendingRequestCount</span>
@@ -61,7 +61,7 @@
                 </div>
                 @if (Model.PendingRequests.Count == 0)
                 {
-                    <p class="ipam-empty">Aucune demande en attente.</p>
+                    <p class="ipam-empty">@L.T("Aucune demande en attente.")</p>
                 }
                 else
                 {
@@ -73,7 +73,7 @@
                                 <span class="text-body-secondary">@request.Description</span>
                                 @if (User.IsInRole("Admin"))
                                 {
-                                    <a asp-page="/Tools/Requests/Process" asp-route-id="@request.Id">traiter</a>
+                                    <a asp-page="/Tools/Requests/Process" asp-route-id="@request.Id">@L.T("traiter")</a>
                                 }
                             </li>
                         }
@@ -86,10 +86,10 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv4</div>
+                <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> @L.T("Top 10 sous-réseaux IPv4")</div>
                 @if (Model.TopIpv4.Count == 0)
                 {
-                    <p class="ipam-empty">Aucune adresse dans un sous-réseau IPv4.</p>
+                    <p class="ipam-empty">@L.T("Aucune adresse dans un sous-réseau IPv4.")</p>
                 }
                 else
                 {
@@ -109,10 +109,10 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Top 10 sous-réseaux IPv6</div>
+                <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> @L.T("Top 10 sous-réseaux IPv6")</div>
                 @if (Model.TopIpv6.Count == 0)
                 {
-                    <p class="ipam-empty">Aucune adresse dans un sous-réseau IPv6.</p>
+                    <p class="ipam-empty">@L.T("Aucune adresse dans un sous-réseau IPv6.")</p>
                 }
                 else
                 {
@@ -132,10 +132,10 @@
     {
         <div class="col-lg-6 col-xxl-4">
             <div class="ipam-panel h-100">
-                <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> <a asp-page="/Tools/Changelog/Index">Dernières modifications</a></div>
+                <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> <a asp-page="/Tools/Changelog/Index">@L.T("Dernières modifications")</a></div>
                 @if (Model.LastChanges.Count == 0)
                 {
-                    <p class="ipam-empty">Aucune modification enregistrée.</p>
+                    <p class="ipam-empty">@L.T("Aucune modification enregistrée.")</p>
                 }
                 else
                 {

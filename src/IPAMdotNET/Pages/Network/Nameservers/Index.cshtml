@@ -1,26 +1,26 @@
 @page
 @model IPAMdotNet.Pages.Network.Nameservers.IndexModel
 @{
-    ViewData["Title"] = "Serveurs de noms";
+    ViewData["Title"] = L.T("Serveurs de noms");
     bool admin = User.IsInRole("Admin");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-globe"></i> Serveurs de noms</span>
+        <span><i class="bi bi-globe"></i> @L.T("Serveurs de noms")</span>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
     @if (Model.Nameservers.Count == 0)
     {
-        <p class="ipam-empty">Aucun jeu de serveurs de noms.</p>
+        <p class="ipam-empty">@L.T("Aucun jeu de serveurs de noms.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom</th><th>Serveurs</th><th>Description</th><th class="text-end">Sous-réseaux</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Serveurs")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th>@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (NameserverRow row in Model.Nameservers)
                 {
@@ -31,7 +31,7 @@
                         <td class="text-end">@row.SubnetCount</td>
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Nameserver.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Nameserver.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                         }
                     </tr>
                 }

@@ -31,7 +31,7 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Prefix.DeviceId" class="form-label"></label>
-                <select asp-for="Prefix.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Prefix.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-12">
                 <label asp-for="Prefix.Description" class="form-label"></label>
@@ -39,9 +39,9 @@
                 <span asp-validation-for="Prefix.Description" class="text-danger"></span>
             </div>
         </div>
-        <p class="form-text">La hiérarchie est calculée automatiquement : un préfixe est rangé sous le plus long préfixe qui le commence.</p>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <p class="form-text">@L.T("La hiérarchie est calculée automatiquement : un préfixe est rangé sous le plus long préfixe qui le commence.")</p>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Prefix.Id, "ce préfixe et tous ses numéros"))" />
 </div>

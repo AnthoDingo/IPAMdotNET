@@ -21,11 +21,11 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Rack.LocationId" class="form-label"></label>
-                <select asp-for="Rack.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Rack.LocationId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Rack.CustomerId" class="form-label"></label>
-                <select asp-for="Rack.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Rack.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-12">
                 <label asp-for="Rack.Description" class="form-label"></label>
@@ -34,8 +34,8 @@
             </div>
         </div>
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Rack.Id, "ce rack"))" />
 </div>

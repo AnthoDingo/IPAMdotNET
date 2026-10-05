@@ -196,6 +196,9 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int?>("SectionId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
@@ -923,6 +926,55 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.ToTable("Racks");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.RemoteAgent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("LastContactAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<DateTime?>("LastContactAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("RemoteAgents");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
                 {
                     b.Property<int>("Id")
@@ -1010,6 +1062,9 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Property<int>("PrefixLength")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ScanAgentId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("integer");
 
@@ -1026,6 +1081,8 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.HasIndex("LocationId");
 
                     b.HasIndex("NameserverId");
+
+                    b.HasIndex("ScanAgentId");
 
                     b.HasIndex("VlanId");
 
@@ -1112,6 +1169,13 @@ namespace IPAMdotNet.Migrations.Postgres
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int?>("MacFormat")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1426,6 +1490,11 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasForeignKey("NameserverId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("IPAMdotNet.Data.RemoteAgent", "ScanAgent")
+                        .WithMany()
+                        .HasForeignKey("ScanAgentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("IPAMdotNet.Data.Section", "Section")
                         .WithMany("Subnets")
                         .HasForeignKey("SectionId")
@@ -1447,6 +1516,8 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Navigation("Location");
 
                     b.Navigation("Nameserver");
+
+                    b.Navigation("ScanAgent");
 
                     b.Navigation("Section");
 

@@ -8,7 +8,7 @@
     <div class="ipam-panel-title">@ViewData["Title"]</div>
     @if (Model.Sections.Count == 0)
     {
-        <p class="ipam-empty">Aucune section. <a asp-page="/Administration/Sections/Edit">Créez une section</a> avant d'ajouter des sous-réseaux.</p>
+        <p class="ipam-empty">@L.T("Aucune section.") <a asp-page="/Administration/Sections/Edit">@L.T("Créez une section")</a> @L.T("avant d'ajouter des sous-réseaux.")</p>
     }
     else
     {
@@ -18,7 +18,7 @@
                 <div class="col-md-6">
                     <label asp-for="Cidr" class="form-label"></label>
                     <input asp-for="Cidr" class="form-control font-monospace" placeholder="10.0.0.0/24" />
-                    <div class="form-text">La hiérarchie est calculée automatiquement : un sous-réseau est rangé sous le plus petit sous-réseau qui le contient.</div>
+                    <div class="form-text">@L.T("La hiérarchie est calculée automatiquement : un sous-réseau est rangé sous le plus petit sous-réseau qui le contient.")</div>
                     <span asp-validation-for="Cidr" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -33,23 +33,23 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Subnet.VlanId" class="form-label"></label>
-                    <select asp-for="Subnet.VlanId" asp-items="Model.Vlans" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Subnet.VlanId" asp-items="Model.Vlans" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Subnet.VrfId" class="form-label"></label>
-                    <select asp-for="Subnet.VrfId" asp-items="Model.Vrfs" class="form-select"><option value="">Aucune</option></select>
+                    <select asp-for="Subnet.VrfId" asp-items="Model.Vrfs" class="form-select"><option value="">@L.T("Aucune")</option></select>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Subnet.NameserverId" class="form-label"></label>
-                    <select asp-for="Subnet.NameserverId" asp-items="Model.Nameservers" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Subnet.NameserverId" asp-items="Model.Nameservers" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Subnet.LocationId" class="form-label"></label>
-                    <select asp-for="Subnet.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Subnet.LocationId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Subnet.CustomerId" class="form-label"></label>
-                    <select asp-for="Subnet.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Subnet.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-12">
                     <div class="form-check">
@@ -63,13 +63,18 @@
                     <div class="form-check">
                         <input asp-for="Subnet.Discover" class="form-check-input" />
                         <label asp-for="Subnet.Discover" class="form-check-label"></label>
-                        <div class="form-text">Agent de scan intégré. La découverte ne s'applique qu'aux sous-réseaux IPv4 d'au plus @IPAMdotNet.Maintenance.SubnetScanner.MaxDiscoveryHosts hôtes.</div>
+                        <div class="form-text">@(L.T("La découverte ne s'applique qu'aux sous-réseaux IPv4 d'au plus {0} hôtes.", IPAMdotNet.Maintenance.SubnetScanner.MaxDiscoveryHosts))</div>
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Subnet.ScanAgentId" class="form-label"></label>
+                    <select asp-for="Subnet.ScanAgentId" asp-items="Model.Agents" class="form-select"><option value="">@L.T("Agent intégré (serveur)")</option></select>
+                    <span asp-validation-for="Subnet.ScanAgentId" class="text-danger"></span>
                 </div>
             </div>
             <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+            <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
         <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau et ses adresses"))" />
     }

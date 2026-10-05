@@ -2,23 +2,23 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.Tags.IndexModel
 @{
-    ViewData["Title"] = "Étiquettes";
+    ViewData["Title"] = L.T("Étiquettes");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-tags"></i> Étiquettes d'adresses</span>
-        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        <span><i class="bi bi-tags"></i> @L.T("Étiquettes d'adresses")</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
     </div>
-    <p class="text-body-secondary">États attribuables aux adresses IP (comme dans phpIPAM). Les étiquettes système ne peuvent pas être supprimées.</p>
+    <p class="text-body-secondary">@L.T("États attribuables aux adresses IP (comme dans phpIPAM). Les étiquettes système ne peuvent pas être supprimées.")</p>
     @if (Model.Tags.Count == 0)
     {
-        <p class="ipam-empty">Aucune étiquette.</p>
+        <p class="ipam-empty">@L.T("Aucune étiquette.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Aperçu</th><th>Description</th><th>Affichée</th><th>Plages regroupées</th><th>Mise à jour par le scan</th><th></th><th></th></tr></thead>
+            <thead><tr><th>@L.T("Aperçu")</th><th>@L.T("Description")</th><th>@L.T("Affichée")</th><th>@L.T("Plages regroupées")</th><th>@L.T("Mise à jour par le scan")</th><th></th><th></th></tr></thead>
             <tbody>
                 @foreach (Tag tag in Model.Tags)
                 {
@@ -28,8 +28,8 @@
                         <td>@(tag.ShowTag ? "Oui" : "Non")</td>
                         <td>@(tag.Compress ? "Oui" : "Non")</td>
                         <td>@(tag.UpdateByScan ? "Oui" : "Non")</td>
-                        <td>@if (tag.Locked) { <span class="text-body-secondary" title="Étiquette système"><i class="bi bi-lock"></i>Système</span> }</td>
-                        <td class="text-end"><a asp-page="Edit" asp-route-id="@tag.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        <td>@if (tag.Locked) { <span class="text-body-secondary" title="@L.T("Étiquette système")"><i class="bi bi-lock"></i>@L.T("Système")</span> }</td>
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@tag.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                     </tr>
                 }
             </tbody>

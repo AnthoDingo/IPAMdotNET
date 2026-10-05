@@ -2,11 +2,11 @@
 @model IPAMdotNet.Pages.Network.Addresses.RangeModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Ajouter une plage d'adresses";
+    ViewData["Title"] = L.T("Ajouter une plage d'adresses");
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
     <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section?.Name</a></li>
     <li class="breadcrumb-item"><a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id">@Model.Subnet.Network</a></li>
     <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
@@ -16,7 +16,7 @@
     <div class="ipam-panel-title">@ViewData["Title"] <span class="text-body-secondary font-monospace small">(@Model.Subnet.Network)</span></div>
     <form method="post" asp-route-subnetId="@Model.Subnet.Id">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-        <p class="text-body-secondary small">Crée toutes les adresses de la plage (@RangeModel.MaxAddresses au plus) ; celles qui existent déjà sont ignorées.</p>
+        <p class="text-body-secondary small">@(L.T("Crée toutes les adresses de la plage ({0} au plus) ; celles qui existent déjà sont ignorées.", RangeModel.MaxAddresses))</p>
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label asp-for="First" class="form-label"></label>
@@ -30,7 +30,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="TagId" class="form-label"></label>
-                <select asp-for="TagId" asp-items="Model.Tags" class="form-select"><option value="">Aucune</option></select>
+                <select asp-for="TagId" asp-items="Model.Tags" class="form-select"><option value="">@L.T("Aucune")</option></select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Owner" class="form-label"></label>
@@ -42,7 +42,7 @@
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Ajouter</button>
-        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Ajouter")</button>
+        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
 </div>

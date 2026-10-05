@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.Widgets.IndexModel
 @{
-    ViewData["Title"] = "Widgets";
+    ViewData["Title"] = L.T("Widgets");
 }
 
 @if (Model.Message is not null)
@@ -11,8 +11,8 @@
 }
 
 <div class="ipam-panel ipam-form">
-    <div class="ipam-panel-title"><i class="bi bi-grid"></i> Widgets du tableau de bord</div>
-    <p class="text-body-secondary">Widgets affichés sur le tableau de bord de tous les utilisateurs.</p>
+    <div class="ipam-panel-title"><i class="bi bi-grid"></i> @L.T("Widgets du tableau de bord")</div>
+    <p class="text-body-secondary">@L.T("Widgets affichés sur le tableau de bord de tous les utilisateurs.")</p>
     <form method="post">
         @foreach ((string Key, string Label) widget in WidgetSettings.All)
         {
@@ -21,6 +21,6 @@
                 <label class="form-check-label" for="widget-@widget.Key">@widget.Label</label>
             </div>
         }
-        <button type="submit" class="btn btn-primary mt-2">Enregistrer</button>
+        <button type="submit" class="btn btn-primary mt-2">@L.T("Enregistrer")</button>
     </form>
 </div>

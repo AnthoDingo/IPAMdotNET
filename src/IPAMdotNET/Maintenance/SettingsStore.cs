@@ -36,7 +36,9 @@ public static class SettingsStore
             if (values.TryGetValue(property.Name, out string? text) && text is not null)
             {
                 Type type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-                property.SetValue(settings, Convert.ChangeType(text, type, CultureInfo.InvariantCulture));
+                property.SetValue(settings, type.IsEnum
+                    ? (Enum.TryParse(type, text, out object? value) ? value : Activator.CreateInstance(type))
+                    : Convert.ChangeType(text, type, CultureInfo.InvariantCulture));
             }
         }
         return settings;

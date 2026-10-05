@@ -16,11 +16,13 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
+        // Nombre de sous-réseaux limité aux sections lisibles.
+        IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
         CustomFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
         CustomValues = await CustomFieldForm.ValuesForAsync(db, nameof(Vlan));
         Vlans = await db.Vlans
             .OrderBy(v => v.Number)
-            .Select(v => new VlanRow(v, db.Subnets.Count(s => s.VlanId == v.Id)))
+            .Select(v => new VlanRow(v, readable.Count(s => s.VlanId == v.Id)))
             .ToListAsync();
     }
 }

@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Localization;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -20,12 +21,16 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (!L.IsSupported(Settings.Language))
+        {
+            ModelState.AddModelError("Settings.Language", L.T("Langue inconnue."));
+        }
         if (!ModelState.IsValid)
         {
             return Page();
         }
         await SettingsStore.SaveAsync(db, SettingsStore.ServerPrefix, Settings);
-        Message = "Paramètres enregistrés.";
+        Message = L.T("Paramètres enregistrés.");
         return RedirectToPage();
     }
 }

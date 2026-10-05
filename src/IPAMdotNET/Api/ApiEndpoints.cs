@@ -9,7 +9,7 @@ public sealed record SectionDto(int Id, string Name, string? Description);
 public sealed record SubnetDto(int Id, int SectionId, string? Section, string Network, string? Description, int? Vlan, string? Vrf,
     string? Location, string? Customer, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record AddressDto(int Id, int SubnetId, string? Subnet, string Address, string? Hostname, string? Description,
-    string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen);
+    string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record VlanDto(int Id, int Number, string Name, string? Description);
 public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description);
 public sealed record DeviceDto(int Id, string Hostname, string? IpAddress, string? Type, string? Location, string? Rack, int? RackStart, int? RackSize, string? Description);
@@ -66,7 +66,8 @@ public static class ApiEndpoints
 
         api.MapGet("/subnets/{id:int}/addresses", async (AppDbContext db, int id) =>
             await db.Subnets.AnyAsync(s => s.Id == id)
-                ? Results.Ok((await Addresses(db).Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync()).Select(ToDto))
+                ? Results.Ok(await WithCustomFieldsAsync(db, await Addresses(db).Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync(),
+                    db.IpAddresses.Where(a => a.SubnetId == id).Select(a => a.Id)))
                 : Results.NotFound(new { error = $"Sous-réseau {id} introuvable." }));
 
         api.MapGet("/addresses", async (AppDbContext db, string? ip, string? hostname) =>
@@ -86,7 +87,9 @@ public static class ApiEndpoints
                 string text = hostname.Trim().ToLowerInvariant();
                 query = query.Where(a => a.Hostname != null && a.Hostname.ToLower().Contains(text));
             }
-            return Results.Ok((await query.OrderBy(a => a.Address).Take(1000).ToListAsync()).Select(ToDto));
+            List<IpAddress> addresses = await query.OrderBy(a => a.Address).Take(1000).ToListAsync();
+            List<int> ids = addresses.Select(a => a.Id).ToList();
+            return Results.Ok(await WithCustomFieldsAsync(db, addresses, db.IpAddresses.Where(a => ids.Contains(a.Id)).Select(a => a.Id)));
         });
 
         api.MapGet("/vlans", async (AppDbContext db) =>
@@ -113,9 +116,18 @@ public static class ApiEndpoints
     private static IQueryable<IpAddress> Addresses(AppDbContext db) =>
         db.IpAddresses.Include(a => a.Subnet).Include(a => a.Tag).Include(a => a.Device);
 
-    private static AddressDto ToDto(IpAddress a) =>
-        new(a.Id, a.SubnetId, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner,
-            a.Tag?.Name, a.Device?.Hostname, a.LastSeen);
+    /// <summary>
+    /// Adresses avec leurs champs personnalisés (nom → valeur). <paramref name="ids"/> désigne les mêmes adresses sous forme
+    /// de requête : une sous-requête plutôt qu'une liste, qui dépasserait la limite de paramètres de SQL Server sur un grand sous-réseau.
+    /// </summary>
+    private static async Task<List<AddressDto>> WithCustomFieldsAsync(AppDbContext db, List<IpAddress> addresses, IQueryable<int> ids)
+    {
+        Dictionary<int, Dictionary<string, string>> custom = (await db.CustomFieldValues.Include(v => v.Field)
+                .Where(v => v.Field!.EntityType == nameof(IpAddress) && ids.Contains(v.EntityId)).ToListAsync())
+            .GroupBy(v => v.EntityId).ToDictionary(g => g.Key, g => g.ToDictionary(v => v.Field!.Name, v => v.Value));
+        return addresses.Select(a => new AddressDto(a.Id, a.SubnetId, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description,
+            a.MacAddress, a.Owner, a.Tag?.Name, a.Device?.Hostname, a.LastSeen, custom.GetValueOrDefault(a.Id))).ToList();
+    }
 
     private static SubnetDto ToDto(Subnet s, IReadOnlyDictionary<string, string>? custom = null) =>
         new(s.Id, s.SectionId, s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number, s.Vrf?.Name, s.Location?.Name, s.Customer?.Name, custom);

@@ -13,7 +13,7 @@
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
     <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section!.Name</a></li>
     @foreach (Subnet ancestor in Model.Ancestors)
     {
@@ -36,48 +36,48 @@
         <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
         <form method="post" asp-page-handler="ToggleFavorite" asp-route-id="@Model.Subnet.Id" class="ms-auto me-2">
             <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? "Retirer des favoris" : "Ajouter aux favoris")">
-                <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>Favori
+                <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>@L.T("Favori")
             </button>
         </form>
         @if (Model.CanWrite)
         {
-            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> @L.T("Modifier")</a>
         }
     </div>
     <dl class="row mb-0 ipam-details">
-        <dt class="col-sm-4 col-xl-3">Description</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Description ?? "—")</dd>
-        <dt class="col-sm-4 col-xl-3">Adresse réseau</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Adresse réseau")</dt>
         <dd class="col-sm-8 col-xl-9 font-monospace">@network.BaseAddress</dd>
         @if (Model.Subnet.IsIPv4)
         {
-            <dt class="col-sm-4 col-xl-3">Masque</dt>
+            <dt class="col-sm-4 col-xl-3">@L.T("Masque")</dt>
             <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.Ipv4Mask(network.PrefixLength) (/@network.PrefixLength)</dd>
-            <dt class="col-sm-4 col-xl-3">Diffusion</dt>
+            <dt class="col-sm-4 col-xl-3">@L.T("Diffusion")</dt>
             <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
         }
         else
         {
-            <dt class="col-sm-4 col-xl-3">Dernière adresse</dt>
+            <dt class="col-sm-4 col-xl-3">@L.T("Dernière adresse")</dt>
             <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
         }
-        <dt class="col-sm-4 col-xl-3">Nombre d'adresses</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Nombre d'adresses")</dt>
         <dd class="col-sm-8 col-xl-9">@Ip.AddressCount(network).ToString("N0")</dd>
-        <dt class="col-sm-4 col-xl-3">Utilisation</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Utilisation")</dt>
         <dd class="col-sm-8 col-xl-9"><div style="max-width: 24rem"><partial name="_UsageBar" model="(Model.AddressCount, Ip.UsableCount(network))" /></div></dd>
-        <dt class="col-sm-4 col-xl-3">Scan</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Scan")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (!Model.Subnet.PingCheck && !Model.Subnet.Discover)
             {
-                <text>Désactivé pour ce sous-réseau</text>
+                <text>@L.T("Désactivé pour ce sous-réseau")</text>
             }
             else
             {
                 @string.Join(" + ", new[] { Model.Subnet.PingCheck ? "état des hôtes" : null, Model.Subnet.Discover ? "découverte" : null }.Where(s => s is not null))
-                <span class="text-body-secondary">— dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
+                <span class="text-body-secondary">— @(Model.Subnet.ScanAgent is null ? "agent intégré" : $"agent « {Model.Subnet.ScanAgent.Name} »"), dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
                 @if (!Model.ScanEnabled)
                 {
-                    <span class="badge text-bg-warning">agent désactivé</span>
+                    <span class="badge text-bg-warning">@L.T("agent désactivé")</span>
                 }
             }
         </dd>
@@ -85,7 +85,7 @@
         <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vlan is null ? "—" : $"{Model.Subnet.Vlan.Number} – {Model.Subnet.Vlan.Name}")</dd>
         <dt class="col-sm-4 col-xl-3">VRF</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vrf?.Name ?? "—")</dd>
-        <dt class="col-sm-4 col-xl-3">Serveurs de noms</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Serveurs de noms")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (Model.Subnet.Nameserver is null)
             {
@@ -96,23 +96,23 @@
                 @Model.Subnet.Nameserver.Name <span class="font-monospace text-body-secondary">(@Model.Subnet.Nameserver.Servers.Replace(";", ", "))</span>
             }
         </dd>
-        <dt class="col-sm-4 col-xl-3">Emplacement</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Emplacement")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (Model.Subnet.Location is null) { <text>—</text> }
             else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@Model.Subnet.Location.Id">@Model.Subnet.Location.Name</a> }
         </dd>
-        <dt class="col-sm-4 col-xl-3">Demandes d'adresses</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Demandes d'adresses")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (Model.Subnet.AllowRequests && IPAMdotNet.Maintenance.SettingsStore.Server.EnableIpRequests)
             {
-                <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>Demander une adresse</a>
+                <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>@L.T("Demander une adresse")</a>
             }
             else
             {
-                <text>Fermé</text>
+                <text>@L.T("Fermé")</text>
             }
         </dd>
-        <dt class="col-sm-4 col-xl-3">Client</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Client")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (Model.Subnet.Customer is null) { <text>—</text> }
             else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@Model.Subnet.Customer.Id">@Model.Subnet.Customer.Name</a> }
@@ -124,7 +124,7 @@
 @if (Model.Grid.Count > 0)
 {
     <div class="ipam-panel mb-3">
-        <div class="ipam-panel-title"><i class="bi bi-grid-3x3"></i> Affichage visuel</div>
+        <div class="ipam-panel-title"><i class="bi bi-grid-3x3"></i> @L.T("Affichage visuel")</div>
         <div class="ipam-ipgrid">
             @foreach (GridCell cell in Model.Grid)
             {
@@ -150,13 +150,13 @@
             }
         </div>
         <div class="d-flex flex-wrap gap-3 small text-body-secondary mt-2">
-            <span><span class="ipam-swatch ipam-ip-free"></span>Libre</span>
-            <span><span class="ipam-swatch ipam-ip-reserved"></span>Non attribuable</span>
+            <span><span class="ipam-swatch ipam-ip-free"></span>@L.T("Libre")</span>
+            <span><span class="ipam-swatch ipam-ip-reserved"></span>@L.T("Non attribuable")</span>
             @foreach (Tag? tag in Model.GridTags)
             {
                 if (tag is null)
                 {
-                    <span><span class="ipam-swatch ipam-ip-used"></span>Sans étiquette</span>
+                    <span><span class="ipam-swatch ipam-ip-used"></span>@L.T("Sans étiquette")</span>
                 }
                 else
                 {
@@ -169,37 +169,41 @@
 
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center gap-2">
-        <span><i class="bi bi-list-ul"></i> Adresses (@Model.AddressCount)</span>
+        <span><i class="bi bi-list-ul"></i> @(L.T("Adresses ({0})", Model.AddressCount))</span>
         @if (Model.CanWrite && Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover))
         {
             <form method="post" asp-page-handler="Scan" asp-route-id="@Model.Subnet.Id" class="ms-auto">
-                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-broadcast-pin"></i>Scanner maintenant</button>
+                <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-broadcast-pin"></i>@L.T("Scanner maintenant")</button>
             </form>
         }
         @if (Model.CanWrite)
         {
-            <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> Ajouter une adresse</a>
-            <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-square-dotted"></i>Ajouter une plage</a>
+            <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-primary btn-sm @(Model.ScanEnabled && (Model.Subnet.PingCheck || Model.Subnet.Discover) ? "" : "ms-auto")"><i class="bi bi-plus-lg"></i> @L.T("Ajouter une adresse")</a>
+            <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" data-ipam-modal class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-square-dotted"></i>@L.T("Ajouter une plage")</a>
         }
     </div>
     @if (Model.FirstFree is not null)
     {
-        <p class="small text-body-secondary mb-2">Première adresse libre : <span class="font-monospace">@Model.FirstFree</span></p>
+        <p class="small text-body-secondary mb-2">@L.T("Première adresse libre :") <span class="font-monospace">@Model.FirstFree</span></p>
     }
     @if (Model.Rows.Count == 0)
     {
-        <p class="ipam-empty">Aucune adresse.</p>
+        <p class="ipam-empty">@L.T("Aucune adresse.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Adresse</th><th>Étiquette</th><th>Nom d'hôte</th><th>Description</th><th>MAC</th><th>Propriétaire</th><th>Équipement</th>@foreach (CustomField field in Model.AddressFields) { <th>@field.Name</th> }<th>Vue le</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
+            <thead><tr>@if (Model.CanWrite) { <th class="text-center"><input type="checkbox" class="form-check-input" title="@L.T("Tout sélectionner")" onclick="document.querySelectorAll('input[form=address-bulk]').forEach(c => c.checked = this.checked)" /></th> }<th>@L.T("Adresse")</th><th>@L.T("Étiquette")</th><th>@L.T("Nom d'hôte")</th><th>@L.T("Description")</th><th>MAC</th><th>@L.T("Propriétaire")</th><th>@L.T("Équipement")</th>@foreach (CustomField field in Model.AddressFields) { <th>@field.Name</th> }<th>@L.T("Vue le")</th>@if (Model.CanWrite) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (object item in Model.Rows)
                 {
                     if (item is FreeRange free)
                     {
                         <tr>
+                            @if (Model.CanWrite)
+                            {
+                                <td></td>
+                            }
                             <td class="font-monospace text-nowrap text-body-secondary">
                                 @free.First
                                 @if (free.Count > 1)
@@ -214,7 +218,7 @@
                                     <a asp-page="/Network/Addresses/Edit" asp-route-subnetId="@Model.Subnet.Id" asp-route-ip="@free.First" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Ajouter @free.First"><i class="bi bi-plus-lg"></i></a>
                                     @if (free.Count > 1)
                                     {
-                                        <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" asp-route-first="@free.First" asp-route-last="@(free.Count <= RangeModelLimit ? free.Last.ToString() : null)" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Ajouter la plage"><i class="bi bi-plus-square-dotted"></i></a>
+                                        <a asp-page="/Network/Addresses/Range" asp-route-subnetId="@Model.Subnet.Id" asp-route-first="@free.First" asp-route-last="@(free.Count <= RangeModelLimit ? free.Last.ToString() : null)" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="@L.T("Ajouter la plage")"><i class="bi bi-plus-square-dotted"></i></a>
                                     }
                                 </td>
                             }
@@ -224,6 +228,10 @@
                     AddressRow row = (AddressRow)item;
                     IpAddress address = row.First;
                     <tr id="address-@address.Id">
+                        @if (Model.CanWrite)
+                        {
+                            <td class="text-center"><input type="checkbox" class="form-check-input" form="address-bulk" name="Ids" value="@string.Join(",", row.Ids)" aria-label="@L.T("Sélectionner")" /></td>
+                        }
                         <td class="font-monospace text-nowrap">
                             @if (row.Count > 1)
                             {
@@ -237,13 +245,13 @@
                         <td>@if (address.Tag is not null && address.Tag.ShowTag) { <partial name="_TagBadge" model="address.Tag" /> }</td>
                         @if (row.Count > 1)
                         {
-                            <td colspan="@(5 + Model.AddressFields.Count)" class="text-body-secondary">Plage regroupée</td>
+                            <td colspan="@(5 + Model.AddressFields.Count)" class="text-body-secondary">@L.T("Plage regroupée")</td>
                         }
                         else
                         {
                             <td>@address.Hostname</td>
                             <td>@address.Description</td>
-                            <td class="font-monospace small">@address.MacAddress</td>
+                            <td class="font-monospace small">@User.FormatMac(address.MacAddress)</td>
                             <td>@address.Owner</td>
                             <td>@address.Device?.Hostname</td>
                             @foreach (CustomField field in Model.AddressFields)
@@ -257,7 +265,7 @@
                             <td class="text-end">
                                 @if (row.Count == 1)
                                 {
-                                    <a asp-page="/Network/Addresses/Edit" asp-route-id="@address.Id" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                    <a asp-page="/Network/Addresses/Edit" asp-route-id="@address.Id" data-ipam-modal class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a>
                                 }
                             </td>
                         }
@@ -265,14 +273,22 @@
                 }
             </tbody>
         </table>
+        @if (Model.CanWrite && Model.AddressCount > 0)
+        {
+            <form method="post" id="address-bulk" asp-page="/Network/Addresses/Bulk" asp-route-subnetId="@Model.Subnet.Id" class="d-flex gap-2 mt-2">
+                <span class="small text-body-secondary align-self-center">@L.T("Sélection :")</span>
+                <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i>@L.T("Modifier")</button>
+                <button type="submit" asp-page-handler="Delete" class="btn btn-outline-danger btn-sm" onclick="return confirm('Supprimer les adresses sélectionnées ?')"><i class="bi bi-trash"></i>@L.T("Supprimer")</button>
+            </form>
+        }
     }
 </div>
 
 <div class="ipam-panel">
-    <div class="ipam-panel-title"><i class="bi bi-diagram-2"></i> Sous-réseaux contenus</div>
+    <div class="ipam-panel-title"><i class="bi bi-diagram-2"></i> @L.T("Sous-réseaux contenus")</div>
     @if (Model.Descendants.Count == 0)
     {
-        <p class="ipam-empty">Aucun sous-réseau contenu.</p>
+        <p class="ipam-empty">@L.T("Aucun sous-réseau contenu.")</p>
     }
     else
     {

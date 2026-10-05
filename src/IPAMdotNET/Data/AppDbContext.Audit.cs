@@ -25,19 +25,40 @@ public abstract partial class AppDbContext
 
     private sealed record PendingChange(EntityEntry Entry, ChangeAction Action, Dictionary<string, string?[]> Changes);
 
-    public AppDbContext WithAuditUser(ClaimsPrincipal? user)
+    private Func<ClaimsPrincipal?>? auditUser;
+
+    /// <summary>
+    /// L'utilisateur est lu à l'enregistrement, pas à la création du contexte : celui-ci peut être résolu
+    /// par un middleware avant l'authentification, l'utilisateur serait alors encore anonyme (« Système »).
+    /// </summary>
+    public AppDbContext WithAuditUser(Func<ClaimsPrincipal?> user)
     {
+        auditUser = user;
+        return this;
+    }
+
+    private void ResolveAuditUser()
+    {
+        ClaimsPrincipal? user = auditUser?.Invoke();
         if (user?.Identity?.IsAuthenticated == true)
         {
             AuditUserId = int.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : null;
             AuditUserName = user.Identity.Name ?? "";
         }
-        return this;
     }
+
+    /// <summary>Import en masse (phpIPAM) : pas de journal des modifications, un résumé va dans le journal système.</summary>
+    public bool SuppressAudit { get; set; }
 
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        if (SuppressAudit)
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
         List<PendingChange> pending = await CollectChangesAsync(cancellationToken);
+        // Avant l'enregistrement : un sous-réseau supprimé en même temps est encore lisible.
+        Dictionary<int, int> subnetSections = await SubnetSectionsAsync(pending, cancellationToken);
         int result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         if (pending.Count == 0)
         {
@@ -63,15 +84,18 @@ public abstract partial class AppDbContext
         // Après l'enregistrement : les identifiants des objets créés sont connus.
         // ponytail: deux SaveChanges sans transaction, une panne entre les deux perd l'entrée du journal (pas la donnée).
         DateTime now = DateTime.UtcNow;
+        ResolveAuditUser();
         foreach (PendingChange change in pending)
         {
+            int entityId = change.Entry.Metadata.FindProperty("Id") is null ? 0 : (int)(change.Entry.Property("Id").CurrentValue ?? 0);
             ChangeLogs.Add(new ChangeLog
             {
+                SectionId = SectionOf(change, entityId, subnetSections),
                 Date = now,
                 UserId = AuditUserId,
                 UserName = AuditUserName,
                 EntityType = change.Entry.Metadata.ClrType.Name,
-                EntityId = change.Entry.Metadata.FindProperty("Id") is null ? 0 : (int)(change.Entry.Property("Id").CurrentValue ?? 0),
+                EntityId = entityId,
                 EntityLabel = Label(change.Entry, change.Action == ChangeAction.Deleted),
                 Action = change.Action,
                 Changes = change.Changes.Count == 0 ? null : JsonSerializer.Serialize(change.Changes, JsonOptions),
@@ -79,6 +103,29 @@ public abstract partial class AppDbContext
         }
         await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         return result;
+    }
+
+    /// <summary>Section des sous-réseaux auxquels appartiennent les adresses et demandes modifiées.</summary>
+    private async Task<Dictionary<int, int>> SubnetSectionsAsync(List<PendingChange> pending, CancellationToken cancellationToken)
+    {
+        List<int> subnetIds = pending.Where(p => p.Entry.Entity is IpAddress or IpRequest)
+            .Select(p => (int)(p.Entry.Property("SubnetId").CurrentValue ?? p.Entry.Property("SubnetId").OriginalValue ?? 0))
+            .Distinct().ToList();
+        return subnetIds.Count == 0 ? [] : await Subnets.AsNoTracking().Where(s => subnetIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.SectionId, cancellationToken);
+    }
+
+    private static int? SectionOf(PendingChange change, int entityId, Dictionary<int, int> subnetSections)
+    {
+        EntityEntry entry = change.Entry;
+        object? Value(string name) => change.Action == ChangeAction.Deleted ? entry.Property(name).OriginalValue : entry.Property(name).CurrentValue;
+        return entry.Entity switch
+        {
+            Section => entityId,
+            Subnet => (int?)Value(nameof(Subnet.SectionId)),
+            IpAddress or IpRequest => Value("SubnetId") is int subnetId && subnetSections.TryGetValue(subnetId, out int sectionId) ? sectionId : null,
+            _ => null,
+        };
     }
 
     private async Task<List<PendingChange>> CollectChangesAsync(CancellationToken cancellationToken)

@@ -14,7 +14,7 @@
             <div class="col-md-4">
                 <label asp-for="Number.Number" class="form-label"></label>
                 <input asp-for="Number.Number" class="form-control font-monospace" min="@Model.Prefix.Start" max="@Model.Prefix.Stop" />
-                <div class="form-text">Plage : @Model.Prefix.Start – @Model.Prefix.Stop</div>
+                <div class="form-text">@(L.T("Plage : {0} – {1}", Model.Prefix.Start, Model.Prefix.Stop))</div>
                 <span asp-validation-for="Number.Number" class="text-danger"></span>
             </div>
             <div class="col-md-4">
@@ -23,7 +23,7 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Number.DeviceId" class="form-label"></label>
-                <select asp-for="Number.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Number.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Number.Name" class="form-label"></label>
@@ -39,8 +39,8 @@
                 <span asp-validation-for="Number.Description" class="text-danger"></span>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="../Details" asp-route-id="@Model.Number.PrefixId" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="../Details" asp-route-id="@Model.Number.PrefixId" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Number.Id, "ce numéro"))" />
 </div>

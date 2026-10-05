@@ -40,16 +40,16 @@
             </div>
             <div class="col-12">
                 <label asp-for="Field.Options" class="form-label"></label>
-                <textarea asp-for="Field.Options" class="form-control" rows="4" placeholder="Un choix par ligne (type « Liste de choix » uniquement)"></textarea>
+                <textarea asp-for="Field.Options" class="form-control" rows="4" placeholder="@L.T("Un choix par ligne (type « Liste de choix » uniquement)")"></textarea>
                 <span asp-validation-for="Field.Options" class="text-danger"></span>
             </div>
             <div class="col-12">
                 <label asp-for="Field.Description" class="form-label"></label>
-                <input asp-for="Field.Description" class="form-control" placeholder="Texte d'aide affiché sous le champ" />
+                <input asp-for="Field.Description" class="form-control" placeholder="@L.T("Texte d'aide affiché sous le champ")" />
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Field.Id, "ce champ et toutes ses valeurs"))" />
 </div>

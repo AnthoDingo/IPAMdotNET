@@ -3,7 +3,7 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Administration.ScanAgents.IndexModel
 @{
-    ViewData["Title"] = "Agents de scan";
+    ViewData["Title"] = L.T("Agents de scan");
 }
 
 @if (Model.Message is not null)
@@ -15,17 +15,17 @@
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
             <div class="ipam-panel-title d-flex align-items-center">
-                <span><i class="bi bi-broadcast-pin"></i> Agent intégré</span>
+                <span><i class="bi bi-broadcast-pin"></i> @L.T("Agent intégré")</span>
                 @if (Model.Settings.Enabled)
                 {
-                    <span class="badge text-bg-success ms-auto">Actif</span>
+                    <span class="badge text-bg-success ms-auto">@L.T("Actif")</span>
                 }
                 else
                 {
-                    <span class="badge text-bg-secondary ms-auto">Désactivé</span>
+                    <span class="badge text-bg-secondary ms-auto">@L.T("Désactivé")</span>
                 }
             </div>
-            <p class="text-body-secondary">Ping des adresses (puis ports TCP si configurés) et découverte des hôtes, depuis le serveur IPAMdotNet, pour les sous-réseaux où le scan est activé (fiche du sous-réseau).</p>
+            <p class="text-body-secondary">@L.T("Ping des adresses (puis ports TCP si configurés) et découverte des hôtes, depuis le serveur IPAM.Net, pour les sous-réseaux où le scan est activé (fiche du sous-réseau).")</p>
             <form method="post">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                 <div class="form-check form-switch mb-3">
@@ -61,42 +61,43 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
             </form>
         </div>
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
             <div class="ipam-panel-title d-flex align-items-center">
-                <span><i class="bi bi-activity"></i> État</span>
+                <span><i class="bi bi-activity"></i> @L.T("État")</span>
                 @if (Model.Settings.Enabled)
                 {
                     <form method="post" asp-page-handler="Run" class="ms-auto">
-                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-play"></i>Lancer un cycle maintenant</button>
+                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-play"></i>@L.T("Lancer un cycle maintenant")</button>
                     </form>
                 }
             </div>
             <dl class="row ipam-details">
-                <dt class="col-sm-5">Dernier cycle</dt>
+                <dt class="col-sm-5">@L.T("Dernier cycle")</dt>
                 <dd class="col-sm-7">@(ScanAgent.LastCycleAt?.ToLocalTime().ToString("g") ?? "aucun depuis le démarrage")</dd>
-                <dt class="col-sm-5">Résultat</dt>
+                <dt class="col-sm-5">@L.T("Résultat")</dt>
                 <dd class="col-sm-7">@(ScanAgent.LastCycleSummary ?? "—")</dd>
             </dl>
-            <div class="fw-semibold mb-1">Sous-réseaux scannés (@Model.ScannedSubnets.Count)</div>
+            <div class="fw-semibold mb-1">@(L.T("Sous-réseaux scannés ({0})", Model.ScannedSubnets.Count))</div>
             @if (Model.ScannedSubnets.Count == 0)
             {
-                <p class="ipam-empty">Aucun : activez « Vérifier l'état des hôtes » ou « Découvrir les nouveaux hôtes » dans la fiche d'un sous-réseau.</p>
+                <p class="ipam-empty">@L.T("Aucun : activez « Vérifier l'état des hôtes » ou « Découvrir les nouveaux hôtes » dans la fiche d'un sous-réseau.")</p>
             }
             else
             {
                 <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>Sous-réseau</th><th>Section</th><th>Scan</th><th>Dernier scan</th></tr></thead>
+                    <thead><tr><th>@L.T("Sous-réseau")</th><th>@L.T("Section")</th><th>@L.T("Agent")</th><th>@L.T("Scan")</th><th>@L.T("Dernier scan")</th></tr></thead>
                     <tbody>
                         @foreach (Subnet subnet in Model.ScannedSubnets)
                         {
                             <tr>
                                 <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a></td>
                                 <td>@subnet.Section?.Name</td>
+                                <td class="small">@(subnet.ScanAgent?.Name ?? "intégré")</td>
                                 <td class="small">
                                     @(subnet.PingCheck ? "état" : "")@(subnet.PingCheck && subnet.Discover ? " + " : "")@(subnet.Discover ? (SubnetScanner.CanDiscover(subnet) ? "découverte" : "découverte (trop grand)") : "")
                                 </td>
@@ -108,4 +109,67 @@
             }
         </div>
     </div>
+</div>
+
+<div class="ipam-panel mt-3">
+    <div class="ipam-panel-title"><i class="bi bi-hdd-network"></i> @(L.T("Agents distants ({0})", Model.Agents.Count))</div>
+    <p class="text-body-secondary">
+        @L.T("Pour scanner des réseaux que le serveur ne peut pas joindre : installez") <strong>@L.T("IPAMdotNet.ScanAgent")</strong> @L.T("sur une machine de ce réseau, puis confiez-lui les sous-réseaux (champ « Agent de scan » du sous-réseau). L'agent interroge le serveur chaque minute ; les réglages ci-dessus (intervalle, délai, ports TCP…) s'appliquent aussi aux agents distants.")
+    </p>
+    @if (Model.CreatedKey is not null)
+    {
+        string serverUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        <div class="alert alert-success">
+            <div class="fw-semibold mb-1">@L.T("Clé de l'agent (affichée une seule fois) :")</div>
+            <code class="user-select-all fs-6">@Model.CreatedKey</code>
+            <div class="mt-2">@L.T("Configuration de l'agent (")<span class="font-monospace">@L.T("appsettings.json")</span> @L.T("à côté de l'exécutable) :")</div>
+            <pre class="bg-body-tertiary p-2 rounded mb-0 mt-1"><code>{
+  "Agent": {
+    "ServerUrl": "@serverUrl",
+    "Key": "@Model.CreatedKey"
+  }
+}</code></pre>
+        </div>
+    }
+    @if (Model.Agents.Count > 0)
+    {
+        <table class="table table-sm align-middle">
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Clé")</th><th>@L.T("Dernier contact")</th><th>@L.T("Adresse")</th><th>@L.T("Version")</th><th>@L.T("État")</th><th></th></tr></thead>
+            <tbody>
+                @foreach (RemoteAgent agent in Model.Agents)
+                {
+                    <tr>
+                        <td>@agent.Name <div class="small text-body-secondary">@agent.Description</div></td>
+                        <td class="font-monospace small">@agent.KeyPrefix…</td>
+                        <td class="small">@(agent.LastContactAt?.ToLocalTime().ToString("g") ?? "jamais")</td>
+                        <td class="small font-monospace">@agent.LastContactAddress</td>
+                        <td class="small">@agent.Version</td>
+                        <td>@if (agent.Enabled) { <span class="badge text-bg-success">@L.T("Actif")</span> } else { <span class="badge text-bg-secondary">@L.T("Désactivé")</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <form method="post" asp-page-handler="ToggleAgent" asp-route-id="@agent.Id" class="d-inline">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">@(agent.Enabled ? "Désactiver" : "Activer")</button>
+                            </form>
+                            <form method="post" asp-page-handler="DeleteAgent" asp-route-id="@agent.Id" class="d-inline" onsubmit="return confirm('Supprimer cet agent ? Ses sous-réseaux reviendront à l'agent intégré.')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="@L.T("Supprimer")"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    <form method="post" asp-page-handler="CreateAgent" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label asp-for="AgentName" class="form-label"></label>
+            <input asp-for="AgentName" class="form-control" />
+            <span asp-validation-for="AgentName" class="text-danger"></span>
+        </div>
+        <div class="col-md-5">
+            <label asp-for="AgentDescription" class="form-label"></label>
+            <input asp-for="AgentDescription" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i>@L.T("Créer un agent")</button>
+        </div>
+    </form>
 </div>

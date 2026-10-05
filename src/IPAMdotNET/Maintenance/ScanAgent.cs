@@ -1,10 +1,11 @@
+using System.Threading.Channels;
 using IPAMdotNet.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Maintenance;
 
 /// <summary>
-/// Agent de scan intégré : chaque minute, scanne les sous-réseaux dont le scan est activé et dont le dernier scan
+/// Agent de scan intégré : chaque minute, scanne les sous-réseaux dont le scan est activé (hors ceux confiés à un agent distant) et dont le dernier scan
 /// est plus ancien que l'intervalle configuré. Inactif tant que l'installation n'est pas faite, que des migrations
 /// sont en attente ou qu'il est désactivé (Administration › Agents de scan).
 /// </summary>
@@ -14,17 +15,23 @@ public sealed class ScanAgent(IServiceScopeFactory scopes, ILogger<ScanAgent> lo
     public static DateTime? LastCycleAt { get; private set; }
     public static string? LastCycleSummary { get; private set; }
 
+    // Réveils demandés par les pages (« Scanner maintenant ») : le scan tourne ici, pas dans la requête HTTP. true = cycle forcé.
+    private static readonly Channel<bool> Wakeups = Channel.CreateUnbounded<bool>();
+
+    /// <summary>Déclenche un cycle sans attendre la minute suivante (ou dès la fin du cycle en cours).</summary>
+    public static void Wake(bool force) => Wakeups.Writer.TryWrite(force);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using PeriodicTimer timer = new(TimeSpan.FromMinutes(1));
-        do
+        bool force = false;
+        while (true)
         {
             try
             {
                 using IServiceScope scope = scopes.CreateScope();
                 if (scope.ServiceProvider.GetService<AppDbContext>() is { } db && !(await db.Database.GetPendingMigrationsAsync(stoppingToken)).Any())
                 {
-                    await RunAsync(db, force: false, stoppingToken);
+                    await RunAsync(db, force, stoppingToken);
                 }
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
@@ -32,8 +39,28 @@ public sealed class ScanAgent(IServiceScopeFactory scopes, ILogger<ScanAgent> lo
                 // L'agent ne doit jamais s'arrêter sur une erreur ponctuelle (base injoignable, réseau…).
                 logger.LogError(exception, "Cycle de l'agent de scan en échec.");
             }
+            force = await WaitAsync(stoppingToken);
         }
-        while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+
+    /// <summary>Attend une minute ou un réveil ; renvoie true si un cycle forcé a été demandé.</summary>
+    private static async Task<bool> WaitAsync(CancellationToken stoppingToken)
+    {
+        using CancellationTokenSource delay = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        delay.CancelAfter(TimeSpan.FromMinutes(1));
+        try
+        {
+            bool force = await Wakeups.Reader.ReadAsync(delay.Token);
+            while (Wakeups.Reader.TryRead(out bool more))
+            {
+                force |= more;
+            }
+            return force;
+        }
+        catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+        {
+            return false;
+        }
     }
 
     /// <summary>Un cycle : sous-réseaux dus (ou tous ceux dont le scan est activé si <paramref name="force"/>).</summary>
@@ -47,7 +74,7 @@ public sealed class ScanAgent(IServiceScopeFactory scopes, ILogger<ScanAgent> lo
         }
         DateTime due = DateTime.UtcNow.AddMinutes(-settings.IntervalMinutes);
         List<int> subnetIds = await db.Subnets
-            .Where(s => (s.PingCheck || s.Discover) && (force || s.LastScanAt == null || s.LastScanAt < due))
+            .Where(s => s.ScanAgentId == null && (s.PingCheck || s.Discover) && (force || s.LastScanAt == null || s.LastScanAt < due))
             .OrderBy(s => s.LastScanAt).Select(s => s.Id).ToListAsync(cancellationToken);
         int discovered = 0;
         int tagChanges = 0;

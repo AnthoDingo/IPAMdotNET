@@ -15,8 +15,8 @@
         </div>
         <div class="mb-3">
             <label asp-for="Nameserver.Servers" class="form-label"></label>
-            <textarea asp-for="Nameserver.Servers" class="form-control font-monospace" rows="3" placeholder="192.0.2.53; 2001:db8::53"></textarea>
-            <div class="form-text">Adresses IP séparées par « ; », une virgule ou un retour à la ligne.</div>
+            <textarea asp-for="Nameserver.Servers" class="form-control font-monospace" rows="3" placeholder="@L.T("192.0.2.53; 2001:db8::53")"></textarea>
+            <div class="form-text">@L.T("Adresses IP séparées par « ; », une virgule ou un retour à la ligne.")</div>
             <span asp-validation-for="Nameserver.Servers" class="text-danger"></span>
         </div>
         <div class="mb-3">
@@ -24,8 +24,8 @@
             <textarea asp-for="Nameserver.Description" class="form-control" rows="2"></textarea>
             <span asp-validation-for="Nameserver.Description" class="text-danger"></span>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Nameserver.Id, "ces serveurs de noms"))" />
 </div>

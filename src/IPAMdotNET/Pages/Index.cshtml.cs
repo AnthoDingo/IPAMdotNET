@@ -26,15 +26,16 @@ public class IndexModel(AppDbContext db) : PageModel
     public async Task OnGetAsync()
     {
         Widgets = await SettingsStore.LoadAsync<WidgetSettings>(db, SettingsStore.WidgetsPrefix);
-        SectionCount = await db.Sections.CountAsync();
-        SubnetCount = await db.Subnets.CountAsync();
+        // Statistiques limitées aux sections lisibles.
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        SectionCount = access.ReadableIds?.Count ?? await db.Sections.CountAsync();
+        SubnetCount = await access.Readable(db.Subnets).CountAsync();
         VlanCount = await db.Vlans.CountAsync();
         VrfCount = await db.Vrfs.CountAsync();
         DeviceCount = await db.Devices.CountAsync();
         UserCount = await db.Users.CountAsync();
 
         int userId = User.UserId();
-        SectionAccess access = await SectionAccess.ForAsync(db, User);
         Favorites = await access.Readable(db.Subnets)
             .Where(s => db.FavoriteSubnets.Any(f => f.UserId == userId && f.SubnetId == s.Id))
             .OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).Take(10).ToListAsync();
@@ -48,10 +49,10 @@ public class IndexModel(AppDbContext db) : PageModel
         PendingRequestCount = await pending.CountAsync();
         PendingRequests = await pending.OrderBy(r => r.RequestedAt).Take(5).ToListAsync();
 
-        LastChanges = await db.ChangeLogs.OrderByDescending(c => c.Date).ThenByDescending(c => c.Id).Take(8).ToListAsync();
+        LastChanges = await access.Visible(db.ChangeLogs).OrderByDescending(c => c.Date).ThenByDescending(c => c.Id).Take(8).ToListAsync();
 
         // Top 10 : IPv4 par taux d'occupation, IPv6 par nombre d'adresses (un pourcentage n'y a pas de sens).
-        AddressCount = await db.IpAddresses.CountAsync();
+        AddressCount = await db.IpAddresses.CountAsync(a => access.Readable(db.Subnets).Any(s => s.Id == a.SubnetId));
         Dictionary<int, int> usage = await SubnetTree.UsageAsync(db.IpAddresses);
         List<Subnet> readable = await access.Readable(db.Subnets).ToListAsync();
         List<SubnetNode> used = readable.Where(s => usage.ContainsKey(s.Id)).Select(s => new SubnetNode(s, 0, null, usage[s.Id])).ToList();

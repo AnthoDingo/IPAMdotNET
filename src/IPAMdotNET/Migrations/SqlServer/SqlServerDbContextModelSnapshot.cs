@@ -196,6 +196,9 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("SectionId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
@@ -923,6 +926,55 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.ToTable("Racks");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.RemoteAgent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("LastContactAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<DateTime?>("LastContactAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("RemoteAgents");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
                 {
                     b.Property<int>("Id")
@@ -1010,6 +1062,9 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Property<int>("PrefixLength")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ScanAgentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
@@ -1026,6 +1081,8 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.HasIndex("LocationId");
 
                     b.HasIndex("NameserverId");
+
+                    b.HasIndex("ScanAgentId");
 
                     b.HasIndex("VlanId");
 
@@ -1112,6 +1169,13 @@ namespace IPAMdotNet.Migrations.SqlServer
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("MacFormat")
+                        .HasColumnType("int");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1426,6 +1490,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasForeignKey("NameserverId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("IPAMdotNet.Data.RemoteAgent", "ScanAgent")
+                        .WithMany()
+                        .HasForeignKey("ScanAgentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("IPAMdotNet.Data.Section", "Section")
                         .WithMany("Subnets")
                         .HasForeignKey("SectionId")
@@ -1447,6 +1516,8 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Location");
 
                     b.Navigation("Nameserver");
+
+                    b.Navigation("ScanAgent");
 
                     b.Navigation("Section");
 

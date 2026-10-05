@@ -6,7 +6,7 @@
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
     <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section?.Name</a></li>
     <li class="breadcrumb-item"><a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id">@Model.Subnet.Network</a></li>
     <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
@@ -25,7 +25,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Entry.TagId" class="form-label"></label>
-                <select asp-for="Entry.TagId" asp-items="Model.Tags" class="form-select"><option value="">Aucune</option></select>
+                <select asp-for="Entry.TagId" asp-items="Model.Tags" class="form-select"><option value="">@L.T("Aucune")</option></select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Entry.Hostname" class="form-label"></label>
@@ -34,7 +34,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Entry.MacAddress" class="form-label"></label>
-                <input asp-for="Entry.MacAddress" class="form-control font-monospace" placeholder="00:11:22:aa:bb:cc" />
+                <input asp-for="Entry.MacAddress" class="form-control font-monospace" placeholder="@L.T("00:11:22:aa:bb:cc")" />
                 <span asp-validation-for="Entry.MacAddress" class="text-danger"></span>
             </div>
             <div class="col-md-6">
@@ -43,7 +43,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Entry.DeviceId" class="form-label"></label>
-                <select asp-for="Entry.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Entry.DeviceId" asp-items="Model.Devices" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-12">
                 <label asp-for="Entry.Description" class="form-label"></label>
@@ -58,8 +58,8 @@
             </div>
         </div>
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Entry.Id, "cette adresse"))" />
 </div>

@@ -12,10 +12,12 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
+        // Nombre de sous-réseaux limité aux sections lisibles.
+        IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
         Locations = await db.Locations
             .OrderBy(l => l.Name)
             .Select(l => new LocationRow(l,
-                db.Subnets.Count(s => s.LocationId == l.Id),
+                readable.Count(s => s.LocationId == l.Id),
                 db.Devices.Count(d => d.LocationId == l.Id),
                 db.Racks.Count(r => r.LocationId == l.Id)))
             .ToListAsync();

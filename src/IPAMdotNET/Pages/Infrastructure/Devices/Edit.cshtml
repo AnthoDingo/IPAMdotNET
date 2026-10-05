@@ -21,19 +21,19 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.DeviceTypeId" class="form-label"></label>
-                <select asp-for="Device.DeviceTypeId" asp-items="Model.Types" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.DeviceTypeId" asp-items="Model.Types" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.LocationId" class="form-label"></label>
-                <select asp-for="Device.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.LocationId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.CustomerId" class="form-label"></label>
-                <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Device.RackId" class="form-label"></label>
-                <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 <span asp-validation-for="Device.RackId" class="text-danger"></span>
             </div>
             <div class="col-md-3">
@@ -54,8 +54,8 @@
         </div>
         <p class="form-text">Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).</p>
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Device.Id, "cet équipement"))" />
 </div>

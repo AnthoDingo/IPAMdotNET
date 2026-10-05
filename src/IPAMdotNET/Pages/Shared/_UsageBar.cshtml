@@ -11,7 +11,7 @@
     string usable = Model.Usable > 1_000_000 ? "∞" : Model.Usable.ToString("N0");
 }
 <div class="d-flex align-items-center gap-2" title="@Model.Used adresse(s) sur @Model.Usable.ToString("N0") utilisables">
-    <div class="progress flex-grow-1" style="height: .5rem; min-width: 4rem" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="Occupation">
+    <div class="progress flex-grow-1" style="height: .5rem; min-width: 4rem" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="@L.T("Occupation")">
         <div class="progress-bar @color" style="width: @percent%"></div>
     </div>
     <span class="small text-body-secondary text-nowrap">@Model.Used / @usable</span>

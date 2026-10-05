@@ -9,7 +9,7 @@
         <span>@ViewData["Title"]</span>
         @if (Model.Tag.Locked)
         {
-            <span class="ms-auto text-body-secondary small"><i class="bi bi-lock"></i>Étiquette système</span>
+            <span class="ms-auto text-body-secondary small"><i class="bi bi-lock"></i>@L.T("Étiquette système")</span>
         }
     </div>
     <form method="post">
@@ -36,7 +36,7 @@
             </div>
             <div class="col-md-6 d-flex align-items-end">
                 <div>
-                    <div class="form-label">Aperçu</div>
+                    <div class="form-label">@L.T("Aperçu")</div>
                     <span class="badge fs-6" id="tag-preview" style="background-color: @Model.Tag.BackgroundColor; color: @Model.Tag.TextColor">@(string.IsNullOrEmpty(Model.Tag.Name) ? "Étiquette" : Model.Tag.Name)</span>
                 </div>
             </div>
@@ -55,8 +55,8 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     @if (!Model.Tag.Locked)
     {

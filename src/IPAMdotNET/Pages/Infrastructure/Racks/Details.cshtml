@@ -13,30 +13,30 @@
                 <span><i class="bi bi-hdd-stack"></i> @Model.Rack.Name</span>
                 @if (admin)
                 {
-                    <a asp-page="Edit" asp-route-id="@Model.Rack.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> Modifier</a>
+                    <a asp-page="Edit" asp-route-id="@Model.Rack.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> @L.T("Modifier")</a>
                 }
             </div>
             <dl class="row mb-0 ipam-details">
-                <dt class="col-sm-5">Hauteur</dt>
+                <dt class="col-sm-5">@L.T("Hauteur")</dt>
                 <dd class="col-sm-7">@Model.Rack.Size U</dd>
-                <dt class="col-sm-5">Emplacement</dt>
+                <dt class="col-sm-5">@L.T("Emplacement")</dt>
                 <dd class="col-sm-7">
                     @if (Model.Rack.Location is null) { <text>—</text> }
                     else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@Model.Rack.Location.Id">@Model.Rack.Location.Name</a> }
                 </dd>
-                <dt class="col-sm-5">Client</dt>
+                <dt class="col-sm-5">@L.T("Client")</dt>
                 <dd class="col-sm-7">
                     @if (Model.Rack.Customer is null) { <text>—</text> }
                     else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@Model.Rack.Customer.Id">@Model.Rack.Customer.Name</a> }
                 </dd>
-                <dt class="col-sm-5">Description</dt>
+                <dt class="col-sm-5">@L.T("Description")</dt>
                 <dd class="col-sm-7">@(Model.Rack.Description ?? "—")</dd>
                 <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
             </dl>
             @if (Model.Unplaced.Count > 0)
             {
                 <div class="mt-3">
-                    <div class="fw-semibold mb-1">Sans position</div>
+                    <div class="fw-semibold mb-1">@L.T("Sans position")</div>
                     <ul class="mb-0">
                         @foreach (Device device in Model.Unplaced)
                         {
@@ -49,7 +49,7 @@
     </div>
     <div class="col-xl-7">
         <div class="ipam-panel">
-            <div class="ipam-panel-title"><i class="bi bi-layout-three-columns"></i> Face avant</div>
+            <div class="ipam-panel-title"><i class="bi bi-layout-three-columns"></i> @L.T("Face avant")</div>
             <table class="ipam-rack">
                 <tbody>
                     @for (int unit = Model.Rack.Size; unit >= 1; unit--)

@@ -12,9 +12,11 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
+        // Nombre de sous-réseaux limité aux sections lisibles.
+        IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
         Nameservers = await db.Nameservers
             .OrderBy(n => n.Name)
-            .Select(n => new NameserverRow(n, db.Subnets.Count(s => s.NameserverId == n.Id)))
+            .Select(n => new NameserverRow(n, readable.Count(s => s.NameserverId == n.Id)))
             .ToListAsync();
     }
 }

@@ -16,7 +16,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Method.Host" class="form-label"></label>
-                <input asp-for="Method.Host" class="form-control font-monospace" placeholder="dc01.corp.local" />
+                <input asp-for="Method.Host" class="form-control font-monospace" placeholder="@L.T("dc01.corp.local")" />
                 <span asp-validation-for="Method.Host" class="text-danger"></span>
             </div>
             <div class="col-md-3">
@@ -38,7 +38,7 @@
             <div class="col-12">
                 <label asp-for="Method.BindTemplate" class="form-label"></label>
                 <input asp-for="Method.BindTemplate" class="form-control font-monospace" />
-                <div class="form-text">« {0} » est remplacé par le nom d'utilisateur. Active Directory : <code>{0}@@corp.local</code> ; OpenLDAP : <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
+                <div class="form-text">« {0} » est remplacé par le nom d'utilisateur. Active Directory : <code>{0}@@corp.local</code> @L.T("; OpenLDAP :") <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
                 <span asp-validation-for="Method.BindTemplate" class="text-danger"></span>
             </div>
             <div class="col-12">
@@ -46,11 +46,11 @@
                 <input asp-for="Method.Description" class="form-control" />
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
 
         <fieldset class="mt-4 pt-3 border-top">
-            <legend class="fs-6 fw-semibold">Tester la configuration</legend>
+            <legend class="fs-6 fw-semibold">@L.T("Tester la configuration")</legend>
             @if (Model.TestResult is not null)
             {
                 <div class="alert @(Model.TestSucceeded ? "alert-success" : "alert-warning")">@Model.TestResult</div>
@@ -65,10 +65,10 @@
                     <input asp-for="TestPassword" class="form-control" autocomplete="off" />
                 </div>
                 <div class="col-md-2 d-grid">
-                    <button type="submit" asp-page-handler="Test" asp-route-id="@(Model.Method.Id == 0 ? null : Model.Method.Id)" class="btn btn-outline-primary">Tester</button>
+                    <button type="submit" asp-page-handler="Test" asp-route-id="@(Model.Method.Id == 0 ? null : Model.Method.Id)" class="btn btn-outline-primary">@L.T("Tester")</button>
                 </div>
             </div>
-            <div class="form-text">Le test utilise les valeurs saisies ci-dessus, même non enregistrées. Rien n'est conservé.</div>
+            <div class="form-text">@L.T("Le test utilise les valeurs saisies ci-dessus, même non enregistrées. Rien n'est conservé.")</div>
         </fieldset>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, "cet annuaire"))" />

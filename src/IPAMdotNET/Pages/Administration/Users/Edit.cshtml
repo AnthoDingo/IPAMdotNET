@@ -22,13 +22,13 @@
             <div class="col-md-6">
                 <label asp-for="Input.Email" class="form-label"></label>
                 <input asp-for="Input.Email" class="form-control" />
-                <div class="form-text">Utilisée pour les notifications.</div>
+                <div class="form-text">@L.T("Utilisée pour les notifications.")</div>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.AuthMethodId" class="form-label"></label>
                 <select asp-for="Input.AuthMethodId" asp-items="Model.AuthMethods" class="form-select">
-                    <option value="">Locale (mot de passe IPAMdotNet)</option>
+                    <option value="">@L.T("Locale (mot de passe IPAM.Net)")</option>
                 </select>
                 <span asp-validation-for="Input.AuthMethodId" class="text-danger"></span>
             </div>
@@ -54,10 +54,10 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="form-label">Groupes</div>
+                <div class="form-label">@L.T("Groupes")</div>
                 @if (Model.Groups.Count == 0)
                 {
-                    <p class="ipam-empty small">Aucun groupe. <a asp-page="/Administration/Groups/Edit">Créer un groupe</a></p>
+                    <p class="ipam-empty small">@L.T("Aucun groupe.") <a asp-page="/Administration/Groups/Edit">@L.T("Créer un groupe")</a></p>
                 }
                 @foreach (Group group in Model.Groups)
                 {
@@ -68,8 +68,8 @@
                 }
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     @if (!Model.IsSelf)
     {

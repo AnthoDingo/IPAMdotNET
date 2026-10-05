@@ -46,6 +46,19 @@ document.querySelectorAll(".ipam-panel > .ipam-panel-title").forEach(title => {
 // une redirection signifie le succès, sinon la page renvoyée (erreurs de validation) remplace le contenu.
 let ipamModal = null; // élément .modal, créé au premier usage
 
+// Message reporté par submitModal (contenu produit par le serveur).
+try {
+    const flash = sessionStorage.getItem("ipam-flash");
+    sessionStorage.removeItem("ipam-flash");
+    const main = document.querySelector("main");
+    if (flash && main) {
+        // Les alertes permanentes de la page (déjà présentes après rechargement) ne sont pas doublées.
+        const present = new Set([...main.querySelectorAll(":scope > .alert")].map(a => a.textContent.trim()));
+        const alerts = new DOMParser().parseFromString(flash, "text/html").body.children;
+        main.prepend(...[...alerts].filter(a => !present.has(a.textContent.trim())));
+    }
+} catch { }
+
 function fillModal(html) {
     const panel = new DOMParser().parseFromString(html, "text/html").querySelector("main .ipam-panel");
     if (!panel) {
@@ -87,6 +100,9 @@ async function submitModal(e) {
     }
     // Succès (ou erreur) : la page de destination ; rechargée sur place si c'est la page courante (position conservée).
     if (new URL(response.url).pathname === location.pathname) {
+        // Le fetch a déjà affiché la page redirigée et consommé son message (TempData) : on le reporte sur le rechargement.
+        const alerts = [...new DOMParser().parseFromString(await response.text(), "text/html").querySelectorAll("main > .alert")];
+        try { sessionStorage.setItem("ipam-flash", alerts.map(a => a.outerHTML).join("")); } catch { }
         location.reload();
     } else {
         location.href = response.url;

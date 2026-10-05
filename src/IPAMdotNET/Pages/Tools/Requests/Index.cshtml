@@ -2,23 +2,23 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Tools.Requests.IndexModel
 @{
-    ViewData["Title"] = "Demandes d'adresses";
+    ViewData["Title"] = L.T("Demandes d'adresses");
     bool admin = User.IsInRole("Admin");
 }
 
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center">
         <span><i class="bi bi-inbox"></i> @(admin ? "Demandes en attente" : "Mes demandes en attente")</span>
-        <a asp-page="New" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Nouvelle demande</a>
+        <a asp-page="New" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Nouvelle demande")</a>
     </div>
     @if (Model.Pending.Count == 0)
     {
-        <p class="ipam-empty">Aucune demande en attente.</p>
+        <p class="ipam-empty">@L.T("Aucune demande en attente.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Date</th><th>Demandeur</th><th>Sous-réseau</th><th>Adresse souhaitée</th><th>Nom d'hôte</th><th>Motif</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Date")</th><th>@L.T("Demandeur")</th><th>@L.T("Sous-réseau")</th><th>@L.T("Adresse souhaitée")</th><th>@L.T("Nom d'hôte")</th><th>@L.T("Motif")</th>@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (IpRequest request in Model.Pending)
                 {
@@ -31,7 +31,7 @@
                         <td>@request.Description</td>
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Process" asp-route-id="@request.Id" class="btn btn-outline-primary btn-sm">Traiter</a></td>
+                            <td class="text-end"><a asp-page="Process" asp-route-id="@request.Id" class="btn btn-outline-primary btn-sm">@L.T("Traiter")</a></td>
                         }
                     </tr>
                 }
@@ -41,15 +41,15 @@
 </div>
 
 <div class="ipam-panel">
-    <div class="ipam-panel-title"><i class="bi bi-archive"></i> Demandes traitées</div>
+    <div class="ipam-panel-title"><i class="bi bi-archive"></i> @L.T("Demandes traitées")</div>
     @if (Model.Processed.Count == 0)
     {
-        <p class="ipam-empty">Aucune demande traitée.</p>
+        <p class="ipam-empty">@L.T("Aucune demande traitée.")</p>
     }
     else
     {
         <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>Traitée le</th><th>Demandeur</th><th>Sous-réseau</th><th>État</th><th>Adresse attribuée</th><th>Par</th><th>Commentaire</th></tr></thead>
+            <thead><tr><th>@L.T("Traitée le")</th><th>@L.T("Demandeur")</th><th>@L.T("Sous-réseau")</th><th>@L.T("État")</th><th>@L.T("Adresse attribuée")</th><th>@L.T("Par")</th><th>@L.T("Commentaire")</th></tr></thead>
             <tbody>
                 @foreach (IpRequest request in Model.Processed)
                 {

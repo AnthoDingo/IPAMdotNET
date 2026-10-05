@@ -10,7 +10,11 @@ using Microsoft.EntityFrameworkCore;
 namespace IPAMdotNet.Pages.Network.Subnets;
 
 /// <summary>Ligne de la liste des adresses : une adresse, ou une plage regroupée (<see cref="Count"/> &gt; 1).</summary>
-public sealed record AddressRow(IpAddress First, IpAddress Last, int Count);
+public sealed record AddressRow(IpAddress First, IpAddress Last, int Count)
+{
+    /// <summary>Adresses de la ligne (sélection pour les actions en masse).</summary>
+    public List<int> Ids { get; init; } = [First.Id];
+}
 
 /// <summary>Plage d'adresses attribuables libres, intercalée dans la liste comme dans phpIPAM.</summary>
 public sealed record FreeRange(System.Net.IPAddress First, System.Net.IPAddress Last, BigInteger Count);
@@ -36,7 +40,7 @@ public class DetailsModel(AppDbContext db) : PageModel
     {
         Subnet? subnet = await db.Subnets
             .Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf).Include(s => s.Nameserver)
-            .Include(s => s.Location).Include(s => s.Customer)
+            .Include(s => s.Location).Include(s => s.Customer).Include(s => s.ScanAgent)
             .SingleOrDefaultAsync(s => s.Id == id);
         if (subnet is null)
         {
@@ -84,7 +88,7 @@ public class DetailsModel(AppDbContext db) : PageModel
             Grid = BuildGrid(subnet.Network, addresses);
         }
         FirstFree = Ip.FirstFree(subnet.Network, addresses.Select(a => Ip.ToNumber(a.Value)).ToHashSet());
-        ScanEnabled = (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
+        ScanEnabled = subnet.ScanAgent?.Enabled ?? (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
         return Page();
     }
 
@@ -112,8 +116,8 @@ public class DetailsModel(AppDbContext db) : PageModel
     [TempData]
     public string? Message { get; set; }
 
-    /// <summary>« Scanner maintenant » : scan immédiat de ce sous-réseau par l'agent intégré.</summary>
-    public async Task<IActionResult> OnPostScanAsync(int id, CancellationToken cancellationToken)
+    /// <summary>« Scanner maintenant » : rend le sous-réseau dû et réveille l'agent intégré (scan en arrière-plan).</summary>
+    public async Task<IActionResult> OnPostScanAsync(int id)
     {
         Subnet? subnet = await db.Subnets.FindAsync(id);
         if (subnet is null)
@@ -124,14 +128,22 @@ public class DetailsModel(AppDbContext db) : PageModel
         {
             return Forbid();
         }
+        if (subnet.ScanAgentId is not null)
+        {
+            // Agent distant : on ne peut pas le joindre, mais on rend le sous-réseau dû pour son prochain passage (chaque minute).
+            await db.Subnets.Where(s => s.Id == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.LastScanAt, (DateTime?)null));
+            Message = "Sous-réseau confié à un agent distant : il sera scanné à son prochain passage (dans la minute s'il est actif).";
+            return RedirectToPage(new { id });
+        }
         ScanSettings settings = await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix);
         if (!settings.Enabled)
         {
             Message = "L'agent de scan est désactivé (Administration › Agents de scan).";
             return RedirectToPage(new { id });
         }
-        ScanReport report = await SubnetScanner.ScanAsync(db, id, settings, cancellationToken);
-        Message = $"Scan terminé : {report}.";
+        await db.Subnets.Where(s => s.Id == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.LastScanAt, (DateTime?)null));
+        ScanAgent.Wake(force: false);
+        Message = "Scan lancé en arrière-plan : rechargez la page dans quelques instants pour voir le résultat.";
         return RedirectToPage(new { id });
     }
 
@@ -145,6 +157,7 @@ public class DetailsModel(AppDbContext db) : PageModel
             if (previous is not null && address.Tag?.Compress == true && previous.First.TagId == address.TagId
                 && Ip.ToNumber(address.Value) == Ip.ToNumber(previous.Last.Value) + 1)
             {
+                previous.Ids.Add(address.Id);
                 rows[^1] = previous with { Last = address, Count = previous.Count + 1 };
             }
             else

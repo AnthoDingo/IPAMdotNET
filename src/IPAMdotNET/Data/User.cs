@@ -33,6 +33,14 @@ public class User
 
     public AuthMethod? AuthMethod { get; set; }
 
+    /// <summary>Langue de l'interface (code de <see cref="Localization.L.Languages"/>) ; null = langue par défaut du serveur.</summary>
+    [MaxLength(10), Display(Name = "Langue")]
+    public string? Language { get; set; }
+
+    /// <summary>Préférence d'affichage des MAC ; null = format par défaut du serveur.</summary>
+    [Display(Name = "Format des adresses MAC")]
+    public MacFormat? MacFormat { get; set; }
+
     public List<Group> Groups { get; set; } = [];
 
     public string Label => DisplayName ?? UserName;

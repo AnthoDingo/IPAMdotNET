@@ -36,6 +36,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
+    public DbSet<RemoteAgent> RemoteAgents => Set<RemoteAgent>();
 
     /// <summary>Ajoute une entrée au journal système.</summary>
     public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
@@ -236,6 +237,9 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
         modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<RemoteAgent>().HasIndex(a => a.KeyHash).IsUnique();
+        // Agent supprimé : ses sous-réseaux reviennent à l'agent intégré (chemin unique, SET NULL accepté par SQL Server).
+        modelBuilder.Entity<Subnet>().HasOne(s => s.ScanAgent).WithMany().OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<IpAddress>(entity =>
         {
             entity.Property(a => a.Address).HasMaxLength(16);

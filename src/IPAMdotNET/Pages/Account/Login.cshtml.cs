@@ -74,7 +74,7 @@ public class LoginModel(AppDbContext db) : PageModel
         {
             // Compte local sans mot de passe (ancien compte LDAP) : refusé, avec le même coût de calcul.
             bool hasPassword = !string.IsNullOrEmpty(user?.PasswordHash);
-            PasswordVerificationResult result = Hasher.VerifyHashedPassword(user!, hasPassword ? user!.PasswordHash : DummyHash, Password);
+            PasswordVerificationResult result = Passwords.Verify(user!, hasPassword ? user!.PasswordHash : DummyHash, Password);
             authenticated = user is not null && hasPassword && result != PasswordVerificationResult.Failed;
             rehash = result == PasswordVerificationResult.SuccessRehashNeeded;
         }

@@ -2,23 +2,23 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.CustomFields.IndexModel
 @{
-    ViewData["Title"] = "Champs personnalisés";
+    ViewData["Title"] = L.T("Champs personnalisés");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-input-cursor-text"></i> Champs personnalisés</span>
-        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        <span><i class="bi bi-input-cursor-text"></i> @L.T("Champs personnalisés")</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
     </div>
-    <p class="text-body-secondary">Champs supplémentaires affichés dans les formulaires, les fiches et les listes du type d'objet choisi.</p>
+    <p class="text-body-secondary">@L.T("Champs supplémentaires affichés dans les formulaires, les fiches et les listes du type d'objet choisi.")</p>
     @if (Model.Fields.Count == 0)
     {
-        <p class="ipam-empty">Aucun champ personnalisé.</p>
+        <p class="ipam-empty">@L.T("Aucun champ personnalisé.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Objet</th><th>Nom</th><th>Type</th><th>Obligatoire</th><th class="text-end">Ordre</th><th class="text-end">Valeurs</th><th></th></tr></thead>
+            <thead><tr><th>@L.T("Objet")</th><th>@L.T("Nom")</th><th>@L.T("Type")</th><th>@L.T("Obligatoire")</th><th class="text-end">@L.T("Ordre")</th><th class="text-end">@L.T("Valeurs")</th><th></th></tr></thead>
             <tbody>
                 @foreach (CustomFieldRow row in Model.Fields)
                 {
@@ -29,7 +29,7 @@
                         <td>@(row.Field.Required ? "Oui" : "Non")</td>
                         <td class="text-end">@row.Field.Order</td>
                         <td class="text-end">@row.ValueCount</td>
-                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Field.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Field.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                     </tr>
                 }
             </tbody>

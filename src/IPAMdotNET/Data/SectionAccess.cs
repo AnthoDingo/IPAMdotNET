@@ -50,6 +50,24 @@ public sealed class SectionAccess
     public IQueryable<Subnet> Readable(IQueryable<Subnet> subnets) =>
         ReadableIds is { } ids ? subnets.Where(s => ids.Contains(s.SectionId)) : subnets;
 
+    /// <summary>
+    /// Journal des modifications visible : tout pour un admin ; sinon ni les objets d'administration, ni les objets
+    /// rattachés à une section non lisible (ou inconnue).
+    /// </summary>
+    public IQueryable<ChangeLog> Visible(IQueryable<ChangeLog> logs)
+    {
+        if (ReadableIds is not { } ids)
+        {
+            return logs;
+        }
+        string[] adminOnly = ChangeLog.AdminOnlyTypes;
+        string[] scoped = ChangeLog.SectionScopedTypes;
+        return logs.Where(c => !adminOnly.Contains(c.EntityType)
+            && (!scoped.Contains(c.EntityType) || (c.SectionId != null && ids.Contains(c.SectionId.Value))));
+    }
+
+    public bool IsAdmin => isAdmin;
+
     /// <summary>Identifiants des sections lisibles ; null = toutes (admin).</summary>
     public IReadOnlyCollection<int>? ReadableIds => isAdmin ? null : levels.Where(l => l.Value >= SectionAccessLevel.Read).Select(l => l.Key).ToList();
 }

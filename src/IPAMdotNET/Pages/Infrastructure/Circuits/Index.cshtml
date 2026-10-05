@@ -3,27 +3,27 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Infrastructure.Circuits.IndexModel
 @{
-    ViewData["Title"] = "Circuits";
+    ViewData["Title"] = L.T("Circuits");
     bool admin = User.IsInRole("Admin");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center gap-2">
-        <span><i class="bi bi-plug"></i> Circuits</span>
-        <a asp-page="Providers/Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-building"></i> Fournisseurs</a>
+        <span><i class="bi bi-plug"></i> @L.T("Circuits")</span>
+        <a asp-page="Providers/Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-building"></i> @L.T("Fournisseurs")</a>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Ajouter</a>
+            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
     @if (Model.Circuits.Count == 0)
     {
-        <p class="ipam-empty">Aucun circuit.</p>
+        <p class="ipam-empty">@L.T("Aucun circuit.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Identifiant</th><th>Fournisseur</th><th>Type</th><th>Capacité</th><th>Statut</th><th>Extrémité A</th><th>Extrémité B</th><th>Client</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Identifiant")</th><th>@L.T("Fournisseur")</th><th>@L.T("Type")</th><th>@L.T("Capacité")</th><th>@L.T("Statut")</th><th>@L.T("Extrémité A")</th><th>@L.T("Extrémité B")</th><th>@L.T("Client")</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (Circuit circuit in Model.Circuits)
                 {
@@ -63,7 +63,7 @@
                         }
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Edit" asp-route-id="@circuit.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@circuit.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                         }
                     </tr>
                 }

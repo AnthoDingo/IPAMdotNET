@@ -185,6 +185,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<int?>("SectionId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
@@ -876,6 +879,53 @@ namespace IPAMdotNet.Migrations.MySql
                     b.ToTable("Racks");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.RemoteAgent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
+                    b.Property<string>("LastContactAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<DateTime?>("LastContactAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("RemoteAgents");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Section", b =>
                 {
                     b.Property<int>("Id")
@@ -959,6 +1009,9 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Property<int>("PrefixLength")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ScanAgentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
@@ -975,6 +1028,8 @@ namespace IPAMdotNet.Migrations.MySql
                     b.HasIndex("LocationId");
 
                     b.HasIndex("NameserverId");
+
+                    b.HasIndex("ScanAgentId");
 
                     b.HasIndex("VlanId");
 
@@ -1057,6 +1112,13 @@ namespace IPAMdotNet.Migrations.MySql
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int?>("MacFormat")
+                        .HasColumnType("int");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1367,6 +1429,11 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasForeignKey("NameserverId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("IPAMdotNet.Data.RemoteAgent", "ScanAgent")
+                        .WithMany()
+                        .HasForeignKey("ScanAgentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("IPAMdotNet.Data.Section", "Section")
                         .WithMany("Subnets")
                         .HasForeignKey("SectionId")
@@ -1388,6 +1455,8 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Navigation("Location");
 
                     b.Navigation("Nameserver");
+
+                    b.Navigation("ScanAgent");
 
                     b.Navigation("Section");
 

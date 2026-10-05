@@ -5,14 +5,22 @@ using System.Reflection;
 using System.Text;
 using IPAMdotNet.Data;
 using IPAMdotNet.Networking;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Maintenance;
 
-public sealed record CsvFormat(string Key, string Label, string[] Columns);
+/// <param name="EntityType">Type porteur des champs personnalisés (clé de <see cref="CustomField.SupportedTypes"/>).</param>
+public sealed record CsvFormat(string Key, string Label, string EntityType, string[] Columns);
 
-/// <summary>Résultat de la préparation d'un import : objets prêts à insérer, ou erreurs (l'import est tout ou rien).</summary>
-public sealed record CsvImportResult(List<object> Entities, List<string> Errors, int RowCount);
+/// <summary>
+/// Résultat de la préparation d'un import : objets prêts à insérer, ou erreurs (l'import est tout ou rien).
+/// <see cref="CustomValues"/> : valeurs de champs personnalisés par objet, à enregistrer une fois l'identifiant connu.
+/// </summary>
+public sealed record CsvImportResult(List<object> Entities, List<string> Errors, int RowCount)
+{
+    public Dictionary<object, Dictionary<int, string?>> CustomValues { get; } = new(ReferenceEqualityComparer.Instance);
+}
 
 /// <summary>
 /// Import / export CSV. Les en-têtes d'export sont ceux attendus à l'import (aller-retour possible).
@@ -22,51 +30,42 @@ public static class CsvTransfer
 {
     public static readonly IReadOnlyList<CsvFormat> Formats =
     [
-        new("vlans", "VLAN", ["numero", "nom", "description"]),
-        new("vrfs", "VRF", ["nom", "rd", "description"]),
-        new("sous-reseaux", "Sous-réseaux", ["section", "sous_reseau", "description", "vlan", "vrf"]),
-        new("adresses", "Adresses IP", ["section", "sous_reseau", "adresse", "nom_hote", "description", "mac", "proprietaire", "etiquette"]),
-        new("equipements", "Équipements", ["nom", "ip", "type", "emplacement", "description"]),
-        new("emplacements", "Emplacements", ["nom", "adresse", "latitude", "longitude", "description"]),
-        new("clients", "Clients", ["nom", "adresse", "code_postal", "ville", "contact", "telephone", "email", "notes"]),
+        new("vlans", "VLAN", nameof(Vlan), ["numero", "nom", "description"]),
+        new("vrfs", "VRF", nameof(Vrf), ["nom", "rd", "description"]),
+        new("sous-reseaux", "Sous-réseaux", nameof(Subnet), ["section", "sous_reseau", "description", "vlan", "vrf"]),
+        new("adresses", "Adresses IP", nameof(IpAddress), ["section", "sous_reseau", "adresse", "nom_hote", "description", "mac", "proprietaire", "etiquette"]),
+        new("equipements", "Équipements", nameof(Device), ["nom", "ip", "type", "emplacement", "description"]),
+        new("emplacements", "Emplacements", nameof(Location), ["nom", "adresse", "latitude", "longitude", "description"]),
+        new("clients", "Clients", nameof(Customer), ["nom", "adresse", "code_postal", "ville", "contact", "telephone", "email", "notes"]),
     ];
 
+    /// <summary>Export : colonnes du format, puis une colonne par champ personnalisé (valeurs sous leur forme invariante).</summary>
     public static async Task<string> ExportAsync(AppDbContext db, CsvFormat format)
     {
-        List<string?[]> rows = [format.Columns];
-        switch (format.Key)
+        List<(int Id, string?[] Cells)> data = format.Key switch
         {
-            case "vlans":
-                rows.AddRange((await db.Vlans.OrderBy(v => v.Number).ToListAsync())
-                    .Select(v => new[] { v.Number.ToString(CultureInfo.InvariantCulture), v.Name, v.Description }));
-                break;
-            case "vrfs":
-                rows.AddRange((await db.Vrfs.OrderBy(v => v.Name).ToListAsync())
-                    .Select(v => new[] { v.Name, v.RouteDistinguisher, v.Description }));
-                break;
-            case "sous-reseaux":
-                rows.AddRange((await db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf)
-                        .OrderBy(s => s.SectionId).ThenBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync())
-                    .Select(s => new[] { s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number.ToString(CultureInfo.InvariantCulture), s.Vrf?.Name }));
-                break;
-            case "adresses":
-                rows.AddRange((await db.IpAddresses.Include(a => a.Subnet).ThenInclude(s => s!.Section).Include(a => a.Tag)
-                        .OrderBy(a => a.Subnet!.SectionId).ThenBy(a => a.Address).ToListAsync())
-                    .Select(a => new[] { a.Subnet?.Section?.Name, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner, a.Tag?.Name }));
-                break;
-            case "equipements":
-                rows.AddRange((await db.Devices.Include(d => d.DeviceType).Include(d => d.Location).OrderBy(d => d.Hostname).ToListAsync())
-                    .Select(d => new[] { d.Hostname, d.IpAddress, d.DeviceType?.Name, d.Location?.Name, d.Description }));
-                break;
-            case "emplacements":
-                rows.AddRange((await db.Locations.OrderBy(l => l.Name).ToListAsync())
-                    .Select(l => new[] { l.Name, l.Address, l.Latitude, l.Longitude, l.Description }));
-                break;
-            case "clients":
-                rows.AddRange((await db.Customers.OrderBy(c => c.Name).ToListAsync())
-                    .Select(c => new[] { c.Name, c.Address, c.PostCode, c.City, c.ContactPerson, c.ContactPhone, c.ContactMail, c.Note }));
-                break;
-        }
+            "vlans" => (await db.Vlans.OrderBy(v => v.Number).ToListAsync())
+                .Select(v => (v.Id, new[] { v.Number.ToString(CultureInfo.InvariantCulture), v.Name, v.Description })).ToList(),
+            "vrfs" => (await db.Vrfs.OrderBy(v => v.Name).ToListAsync())
+                .Select(v => (v.Id, new[] { v.Name, v.RouteDistinguisher, v.Description })).ToList(),
+            "sous-reseaux" => (await db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf)
+                    .OrderBy(s => s.SectionId).ThenBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync())
+                .Select(s => (s.Id, new[] { s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number.ToString(CultureInfo.InvariantCulture), s.Vrf?.Name })).ToList(),
+            "adresses" => (await db.IpAddresses.Include(a => a.Subnet).ThenInclude(s => s!.Section).Include(a => a.Tag)
+                    .OrderBy(a => a.Subnet!.SectionId).ThenBy(a => a.Address).ToListAsync())
+                .Select(a => (a.Id, new[] { a.Subnet?.Section?.Name, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner, a.Tag?.Name })).ToList(),
+            "equipements" => (await db.Devices.Include(d => d.DeviceType).Include(d => d.Location).OrderBy(d => d.Hostname).ToListAsync())
+                .Select(d => (d.Id, new[] { d.Hostname, d.IpAddress, d.DeviceType?.Name, d.Location?.Name, d.Description })).ToList(),
+            "emplacements" => (await db.Locations.OrderBy(l => l.Name).ToListAsync())
+                .Select(l => (l.Id, new[] { l.Name, l.Address, l.Latitude, l.Longitude, l.Description })).ToList(),
+            "clients" => (await db.Customers.OrderBy(c => c.Name).ToListAsync())
+                .Select(c => (c.Id, new[] { c.Name, c.Address, c.PostCode, c.City, c.ContactPerson, c.ContactPhone, c.ContactMail, c.Note })).ToList(),
+            _ => [],
+        };
+        List<CustomField> fields = await CustomFieldForm.DefinitionsAsync(db, format.EntityType);
+        Dictionary<int, Dictionary<int, string>> values = fields.Count == 0 ? [] : await CustomFieldForm.ValuesForAsync(db, format.EntityType);
+        List<string?[]> rows = [[.. format.Columns, .. fields.Select(f => f.Name)]];
+        rows.AddRange(data.Select(row => (string?[])[.. row.Cells, .. fields.Select(f => values.GetValueOrDefault(row.Id)?.GetValueOrDefault(f.Id))]));
         return Csv.Write(rows);
     }
 
@@ -90,6 +89,11 @@ public static class CsvTransfer
             return new CsvImportResult(entities, errors, rows.Count - 1);
         }
 
+        // Champs personnalisés : colonne facultative portant le nom du champ (un champ obligatoire absent est une erreur par ligne).
+        List<CustomField> fields = (await CustomFieldForm.DefinitionsAsync(db, format.EntityType))
+            .Where(f => !format.Columns.Contains(Key(f.Name))).ToList();
+        CsvImportResult result = new(entities, errors, rows.Count - 1);
+
         for (int index = 1; index < rows.Count; index++)
         {
             string[] row = rows[index];
@@ -111,13 +115,22 @@ public static class CsvTransfer
             {
                 CheckLengths(entity, rowErrors);
             }
+            Dictionary<int, string?> posted = fields.Where(f => columns.ContainsKey(Key(f.Name)))
+                .ToDictionary(f => f.Id, f => Cell(Key(f.Name)));
+            ModelStateDictionary state = new();
+            Dictionary<int, string?> custom = CustomFieldForm.Validate(fields, posted, state);
+            rowErrors.AddRange(state.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             if (rowErrors.Count == 0 && entity is not null)
             {
                 entities.Add(entity);
+                if (custom.Count > 0)
+                {
+                    result.CustomValues[entity] = custom;
+                }
             }
             errors.AddRange(rowErrors.Select(e => $"Ligne {line} : {e}"));
         }
-        return new CsvImportResult(entities, errors, rows.Count - 1);
+        return result;
     }
 
     private static async Task<Vlan?> VlanAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)

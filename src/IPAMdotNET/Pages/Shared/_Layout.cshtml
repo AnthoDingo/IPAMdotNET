@@ -22,6 +22,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @settings.SiteTitle</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/logo.svg" />
     @* Appliqué avant le rendu pour éviter un flash du mauvais thème. *@
     <script>
         (() => {
@@ -41,18 +42,19 @@
     <header class="ipam-header">
         <div class="container-fluid d-flex align-items-center gap-3">
             <a class="ipam-brand" asp-page="/Index">
+                <img src="~/img/logo.svg" alt="" class="ipam-brand-logo" />
                 <span class="ipam-brand-name">@settings.SiteTitle</span>
-                <span class="ipam-brand-sub d-none d-sm-inline">Gestion d'adresses IP</span>
+                <span class="ipam-brand-sub d-none d-sm-inline">@L.T("Gestion d'adresses IP")</span>
             </a>
             <div class="ms-auto d-flex align-items-center gap-2">
                 @if (authenticated)
                 {
                     <form class="ipam-search d-none d-md-flex" role="search" method="get" asp-page="/Tools/Search/Index">
-                        <input class="form-control form-control-sm" type="search" name="q" value="@(path.StartsWithSegments("/Tools/Search") ? Context.Request.Query["q"].ToString() : "")" placeholder="Rechercher une adresse, un sous-réseau…" aria-label="Rechercher" />
-                        <button class="btn btn-sm ipam-header-btn" type="submit" aria-label="Rechercher"><i class="bi bi-search"></i></button>
+                        <input class="form-control form-control-sm" type="search" name="q" value="@(path.StartsWithSegments("/Tools/Search") ? Context.Request.Query["q"].ToString() : "")" placeholder="@L.T("Rechercher une adresse, un sous-réseau…")" aria-label="@L.T("Rechercher")" />
+                        <button class="btn btn-sm ipam-header-btn" type="submit" aria-label="@L.T("Rechercher")"><i class="bi bi-search"></i></button>
                     </form>
                 }
-                <button type="button" class="btn btn-sm ipam-header-btn" id="theme-toggle" title="Changer de thème" aria-label="Changer de thème">
+                <button type="button" class="btn btn-sm ipam-header-btn" id="theme-toggle" title="@L.T("Changer de thème")" aria-label="@L.T("Changer de thème")">
                     <i class="bi bi-moon-stars theme-icon-dark" aria-hidden="true"></i>
                     <i class="bi bi-sun theme-icon-light" aria-hidden="true"></i>
                 </button>
@@ -63,11 +65,11 @@
                             <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline">@User.Identity!.Name</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" asp-page="/Profile/Index"><i class="bi bi-person"></i> Mon compte</a></li>
+                            <li><a class="dropdown-item" asp-page="/Profile/Index"><i class="bi bi-person"></i> @L.T("Mon compte")</a></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li>
                                 <form method="post" asp-page="/Account/Logout" class="m-0">
-                                    <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
+                                    <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> @L.T("Déconnexion")</button>
                                 </form>
                             </li>
                         </ul>
@@ -81,16 +83,16 @@
     {
         <nav class="ipam-menubar navbar navbar-expand-md py-0">
             <div class="container-fluid">
-                <button class="navbar-toggler my-1" type="button" data-bs-toggle="collapse" data-bs-target="#ipam-menu" aria-controls="ipam-menu" aria-expanded="false" aria-label="Menu">
+                <button class="navbar-toggler my-1" type="button" data-bs-toggle="collapse" data-bs-target="#ipam-menu" aria-controls="ipam-menu" aria-expanded="false" aria-label="@L.T("Menu")">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="ipam-menu">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link @(path == "/" || path.StartsWithSegments("/Index") ? "active" : "")" asp-page="/Index"><i class="bi bi-house"></i> Tableau de bord</a>
+                            <a class="nav-link @(path == "/" || path.StartsWithSegments("/Index") ? "active" : "")" asp-page="/Index"><i class="bi bi-house"></i> @L.T("Tableau de bord")</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Sections") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-collection"></i> Sections</a>
+                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Sections") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-collection"></i> @L.T("Sections")</a>
                             <ul class="dropdown-menu">
                                 @foreach (Section menuSection in sections)
                                 {
@@ -98,21 +100,21 @@
                                 }
                                 @if (sections.Count == 0)
                                 {
-                                    <li><span class="dropdown-item-text text-body-secondary">Aucune section</span></li>
+                                    <li><span class="dropdown-item-text text-body-secondary">@L.T("Aucune section")</span></li>
                                 }
                                 @if (isAdmin)
                                 {
                                     <li><hr class="dropdown-divider" /></li>
-                                    <li><a class="dropdown-item" asp-page="/Administration/Sections/Index"><i class="bi bi-gear"></i> Gérer les sections</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Administration/Sections/Index"><i class="bi bi-gear"></i> @L.T("Gérer les sections")</a></li>
                                 }
                             </ul>
                         </li>
                     </ul>
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") || path.StartsWithSegments("/Network") || path.StartsWithSegments("/Infrastructure") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> Outils</a>
+                            <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Tools") || path.StartsWithSegments("/Network") || path.StartsWithSegments("/Infrastructure") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-tools"></i> @L.T("Outils")</a>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item fw-semibold" asp-page="/Tools/Index"><i class="bi bi-grid-1x2"></i> Tous les outils</a>
+                                <a class="dropdown-item fw-semibold" asp-page="/Tools/Index"><i class="bi bi-grid-1x2"></i> @L.T("Tous les outils")</a>
                                 <hr class="dropdown-divider" />
                                 <partial name="_MenuDropdown" model="Menus.Tools" />
                             </div>
@@ -120,9 +122,9 @@
                         @if (isAdmin)
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Administration") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear-fill"></i> Administration</a>
+                                <a class="nav-link dropdown-toggle @(path.StartsWithSegments("/Administration") ? "active" : "")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear-fill"></i> @L.T("Administration")</a>
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item fw-semibold" asp-page="/Administration/Index"><i class="bi bi-grid-1x2"></i> Toute l'administration</a>
+                                    <a class="dropdown-item fw-semibold" asp-page="/Administration/Index"><i class="bi bi-grid-1x2"></i> @L.T("Toute l'administration")</a>
                                     <hr class="dropdown-divider" />
                                     <partial name="_MenuDropdown" model="Menus.Administration" />
                                 </div>
@@ -137,7 +139,7 @@
     <div class="container-fluid ipam-body">
         @if (IsSectionDefined("Breadcrumb"))
         {
-            <nav aria-label="Fil d'Ariane" class="ipam-breadcrumb">
+            <nav aria-label="@L.T("Fil d'Ariane")" class="ipam-breadcrumb">
                 <ol class="breadcrumb mb-0">@await RenderSectionAsync("Breadcrumb")</ol>
             </nav>
         }
@@ -156,10 +158,10 @@
 
     <footer class="ipam-footer">
         <div class="container-fluid">
-            IPAMdotNet @(version is null ? "" : $"v{version}") &middot; <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0-or-later</a>
+            IPAM.Net @(version is null ? "" : $"v{version}") &middot; <a href="https://www.gnu.org/licenses/agpl-3.0.html">@L.T("AGPL-3.0-or-later")</a>
             @if (settings.AdminEmail is not null)
             {
-                <text>&middot; En cas de problème, contactez <a href="mailto:@settings.AdminEmail">@(settings.AdminName ?? settings.AdminEmail)</a></text>
+                <text>@L.T("· En cas de problème, contactez") <a href="mailto:@settings.AdminEmail">@(settings.AdminName ?? settings.AdminEmail)</a></text>
             }
         </div>
     </footer>

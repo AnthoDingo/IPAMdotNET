@@ -30,6 +30,14 @@ jobs:
             else
               tar -czf "$(basename "$out").tar.gz" -C publish "$(basename "$out")"
             fi
+            # Agent de scan distant, mêmes plateformes.
+            agent="publish/IPAMdotNet-ScanAgent-$GITHUB_REF_NAME-$rid"
+            dotnet publish src/IPAMdotNet.ScanAgent -c Release -r "$rid" --self-contained -p:Version="$version" -p:PublishSingleFile=true -o "$agent"
+            if [ "$rid" = win-x64 ]; then
+              (cd publish && zip -qr "../$(basename "$agent").zip" "$(basename "$agent")")
+            else
+              tar -czf "$(basename "$agent").tar.gz" -C publish "$(basename "$agent")"
+            fi
           done
 
       - name: Create release

@@ -28,6 +28,7 @@ public class EditModel(AppDbContext db) : PageModel
     public List<SelectListItem> Nameservers { get; private set; } = [];
     public List<SelectListItem> Locations { get; private set; } = [];
     public List<SelectListItem> Customers { get; private set; } = [];
+    public List<SelectListItem> Agents { get; private set; } = [];
 
     // Nom explicite : sans lui, si aucun champ « Custom[…] » n'est posté, ASP.NET retombe sur le préfixe vide et lit les autres champs comme clés.
     [BindProperty(Name = CustomFieldForm.Prefix)]
@@ -106,6 +107,10 @@ public class EditModel(AppDbContext db) : PageModel
                 {
                     ModelState.AddModelError(nameof(Cidr), $"{outside} adresse(s) de ce sous-réseau seraient en dehors de {network}.");
                 }
+                if (Subnet.ScanAgentId is not null && !await db.RemoteAgents.AnyAsync(a => a.Id == Subnet.ScanAgentId))
+                {
+                    ModelState.AddModelError("Subnet.ScanAgentId", "Agent de scan inconnu.");
+                }
                 // Le dernier scan est géré par l'agent, pas par le formulaire.
                 Subnet.LastScanAt = Subnet.Id == 0 ? null : await db.Subnets.Where(s => s.Id == Subnet.Id).Select(s => s.LastScanAt).SingleOrDefaultAsync();
             }
@@ -171,5 +176,7 @@ public class EditModel(AppDbContext db) : PageModel
             .Select(l => new SelectListItem(l.Name, l.Id.ToString())).ToListAsync();
         Customers = await db.Customers.OrderBy(c => c.Name)
             .Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
+        Agents = await db.RemoteAgents.OrderBy(a => a.Name)
+            .Select(a => new SelectListItem(a.Name, a.Id.ToString())).ToListAsync();
     }
 }

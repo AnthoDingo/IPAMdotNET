@@ -66,6 +66,12 @@ public class Subnet
     [Display(Name = "Découvrir les nouveaux hôtes")]
     public bool Discover { get; set; }
 
+    /// <summary>Agent distant chargé du scan ; null = agent intégré au serveur.</summary>
+    [Display(Name = "Agent de scan")]
+    public int? ScanAgentId { get; set; }
+
+    public RemoteAgent? ScanAgent { get; set; }
+
     [Display(Name = "Dernier scan")]
     public DateTime? LastScanAt { get; set; }
 

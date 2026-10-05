@@ -9,7 +9,7 @@
     <div class="ipam-panel-title">@ViewData["Title"]</div>
     @if (Model.Providers.Count == 0)
     {
-        <p class="ipam-empty">Aucun fournisseur. <a asp-page="Providers/Edit">Créez un fournisseur</a> avant d'ajouter des circuits.</p>
+        <p class="ipam-empty">@L.T("Aucun fournisseur.") <a asp-page="Providers/Edit">@L.T("Créez un fournisseur")</a> @L.T("avant d'ajouter des circuits.")</p>
     }
     else
     {
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.Type" class="form-label"></label>
-                    <input asp-for="Circuit.Type" class="form-control" list="circuit-types" placeholder="Fibre, MPLS, Internet…" />
+                    <input asp-for="Circuit.Type" class="form-control" list="circuit-types" placeholder="@L.T("Fibre, MPLS, Internet…")" />
                     <datalist id="circuit-types">
                         <option value="Fibre noire"></option>
                         <option value="Lien Ethernet"></option>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.Capacity" class="form-label"></label>
-                    <input asp-for="Circuit.Capacity" class="form-control" placeholder="1 Gbit/s" />
+                    <input asp-for="Circuit.Capacity" class="form-control" placeholder="@L.T("1 Gbit/s")" />
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.Status" class="form-label"></label>
@@ -47,15 +47,15 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.LocationAId" class="form-label"></label>
-                    <select asp-for="Circuit.LocationAId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Circuit.LocationAId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.LocationBId" class="form-label"></label>
-                    <select asp-for="Circuit.LocationBId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Circuit.LocationBId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.CustomerId" class="form-label"></label>
-                    <select asp-for="Circuit.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                    <select asp-for="Circuit.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 </div>
                 <div class="col-12">
                     <label asp-for="Circuit.Comment" class="form-label"></label>
@@ -64,8 +64,8 @@
                 </div>
             </div>
             <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-            <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+            <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
         <partial name="_DeleteForm" model="@(new DeleteForm(Model.Circuit.Id, "ce circuit"))" />
     }

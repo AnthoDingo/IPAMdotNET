@@ -1,22 +1,22 @@
 @page
 @model IPAMdotNet.Pages.Administration.Sections.IndexModel
 @{
-    ViewData["Title"] = "Sections";
+    ViewData["Title"] = L.T("Sections");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-collection"></i> Sections</span>
-        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        <span><i class="bi bi-collection"></i> @L.T("Sections")</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
     </div>
     @if (Model.Sections.Count == 0)
     {
-        <p class="ipam-empty">Aucune section. Créez-en une pour commencer à ajouter des sous-réseaux.</p>
+        <p class="ipam-empty">@L.T("Aucune section. Créez-en une pour commencer à ajouter des sous-réseaux.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom</th><th>Description</th><th class="text-end">Sous-réseaux</th><th></th></tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th><th></th></tr></thead>
             <tbody>
                 @foreach (SectionRow row in Model.Sections)
                 {
@@ -24,7 +24,7 @@
                         <td><a asp-page="/Sections/Index" asp-route-id="@row.Section.Id">@row.Section.Name</a></td>
                         <td>@row.Section.Description</td>
                         <td class="text-end">@row.SubnetCount</td>
-                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Section.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Section.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                     </tr>
                 }
             </tbody>

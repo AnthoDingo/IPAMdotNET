@@ -65,4 +65,22 @@ public class IpAddress
         }
         return string.Join(':', Enumerable.Range(0, 6).Select(i => hex.Substring(i * 2, 2))).ToLowerInvariant();
     }
+
+    /// <summary>MAC stockée mise au format d'affichage choisi ; renvoyée telle quelle si elle n'est pas une MAC valide.</summary>
+    public static string? FormatMac(string? mac, MacFormat format)
+    {
+        if (NormalizeMac(mac) is not { } normalized)
+        {
+            return mac;
+        }
+        string hex = normalized.Replace(":", "");
+        return format switch
+        {
+            MacFormat.Windows => normalized.Replace(':', '-').ToUpperInvariant(),
+            MacFormat.Cisco => $"{hex[..4]}.{hex[4..8]}.{hex[8..]}",
+            MacFormat.Hp => $"{hex[..6]}-{hex[6..]}",
+            MacFormat.Bare => hex,
+            _ => normalized,
+        };
+    }
 }

@@ -1,7 +1,7 @@
 @page
 @model IPAMdotNet.Pages.Tools.Instructions.EditModel
 @{
-    ViewData["Title"] = "Modifier les instructions";
+    ViewData["Title"] = L.T("Modifier les instructions");
 }
 
 <div class="ipam-panel">
@@ -10,10 +10,10 @@
         <div class="mb-3">
             <label asp-for="Text" class="form-label"></label>
             <textarea asp-for="Text" class="form-control" rows="16"></textarea>
-            <div class="form-text">Texte brut, affiché à tous les utilisateurs ; les retours à la ligne sont conservés.</div>
+            <div class="form-text">@L.T("Texte brut, affiché à tous les utilisateurs ; les retours à la ligne sont conservés.")</div>
             <span asp-validation-for="Text" class="text-danger"></span>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
 </div>

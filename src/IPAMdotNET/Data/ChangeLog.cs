@@ -35,6 +35,19 @@ public class ChangeLog
     /// <summary>JSON : { "Libellé du champ": ["ancienne valeur", "nouvelle valeur"] }.</summary>
     public string? Changes { get; set; }
 
+    /// <summary>
+    /// Section de l'objet au moment du changement (types de <see cref="SectionScopedTypes"/>) : filtre les entrées selon les droits,
+    /// y compris pour un objet supprimé depuis. Pas de clé étrangère : la section peut avoir disparu.
+    /// </summary>
+    public int? SectionId { get; set; }
+
+    /// <summary>Types visibles seulement si la section est lisible (une entrée sans section n'est montrée qu'aux admins).</summary>
+    public static readonly string[] SectionScopedTypes = [nameof(Section), nameof(Subnet), nameof(IpAddress), nameof(IpRequest)];
+
+    /// <summary>Types d'administration : leurs entrées ne sont montrées qu'aux admins.</summary>
+    public static readonly string[] AdminOnlyTypes =
+        [nameof(User), nameof(Group), nameof(AuthMethod), nameof(ApiKey), nameof(RemoteAgent), nameof(AppSetting), nameof(CustomField), nameof(Tag)];
+
     /// <summary>Libellé français et page de détail (ou de liste) de chaque type journalisé.</summary>
     public static readonly IReadOnlyDictionary<string, (string Label, string Page, bool HasDetails)> Types =
         new Dictionary<string, (string, string, bool)>
@@ -62,6 +75,7 @@ public class ChangeLog
             [nameof(Group)] = ("Groupe", "/Administration/Groups/Edit", true),
             [nameof(AuthMethod)] = ("Méthode d'authentification", "/Administration/AuthMethods/Edit", true),
             [nameof(ApiKey)] = ("Clé d'API", "/Administration/ApiKeys/Index", false),
+            [nameof(RemoteAgent)] = ("Agent de scan distant", "/Administration/ScanAgents/Index", false),
             [nameof(Tag)] = ("Étiquette", "/Administration/Tags/Edit", true),
             [nameof(IpAddress)] = ("Adresse IP", "/Network/Addresses/Edit", true),
         };
