@@ -30,7 +30,8 @@ builder.Services.AddFileBasedSetup<IpamSetupInitializer>(options =>
 builder.Services.AddSetupStep<LicenseSetupStep>();
 
 string? connectionString = builder.Configuration.GetConnectionString("Default");
-if (Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provider) && connectionString is not null)
+bool databaseConfigured = Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provider) && connectionString is not null;
+if (databaseConfigured)
 {
     // L'utilisateur courant signe les entrées du journal des modifications.
     builder.Services.AddHttpContextAccessor();
@@ -160,8 +161,12 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
-app.MapIpamApi();
-app.MapAgentApi();
+// Les API injectent AppDbContext, enregistré seulement une fois la base configurée (avant /setup, il n'existe pas).
+if (databaseConfigured)
+{
+    app.MapIpamApi();
+    app.MapAgentApi();
+}
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode()
    .AddAdditionalAssemblies(ServiceCollectionExtensions.UpdateAssembly);
