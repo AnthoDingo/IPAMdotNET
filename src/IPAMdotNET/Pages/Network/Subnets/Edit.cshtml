@@ -33,7 +33,29 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Subnet.VlanId" class="form-label"></label>
-                    <select asp-for="Subnet.VlanId" asp-items="Model.Vlans" class="form-select"><option value="">@L.T("Aucun")</option></select>
+                    <select asp-for="Subnet.VlanId" class="form-select">
+                        <option value="">@L.T("Aucun")</option>
+                        @foreach ((string? domain, string open, List<SelectListItem> vlans) in Model.VlanGroups)
+                        {
+                            @if (domain is null)
+                            {
+                                @foreach (SelectListItem vlan in vlans)
+                                {
+                                    <option value="@vlan.Value" data-sections="@open">@vlan.Text</option>
+                                }
+                            }
+                            else
+                            {
+                                <optgroup label="@domain">
+                                    @foreach (SelectListItem vlan in vlans)
+                                    {
+                                        <option value="@vlan.Value" data-sections="@open">@vlan.Text</option>
+                                    }
+                                </optgroup>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Subnet.VlanId" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Subnet.VrfId" class="form-label"></label>
@@ -77,5 +99,27 @@
             <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
         <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau et ses adresses"))" />
+        <script>
+            // VLAN proposés selon la section : domaines L2 sans restriction ou ouverts à la section choisie.
+            (() => {
+                const section = document.getElementById("Subnet_SectionId");
+                const vlan = document.getElementById("Subnet_VlanId");
+                const initial = { section: section.value, vlan: vlan.value };
+                const update = () => {
+                    vlan.querySelectorAll("option[data-sections]").forEach(o => {
+                        const open = o.dataset.sections.split(" ").filter(s => s);
+                        // Le rattachement d'origine reste proposé dans sa section (il reste valable tant que rien ne change).
+                        const kept = section.value === initial.section && o.value === initial.vlan;
+                        o.hidden = o.disabled = open.length > 0 && !open.includes(section.value) && !kept;
+                    });
+                    vlan.querySelectorAll("optgroup").forEach(g => g.hidden = [...g.children].every(o => o.hidden));
+                    if (vlan.selectedOptions[0]?.hidden) {
+                        vlan.value = "";
+                    }
+                };
+                section.addEventListener("change", update);
+                update();
+            })();
+        </script>
     }
 </div>

@@ -200,12 +200,14 @@ public static class CsvTransfer
         if (cell("vlan") is { } vlanText)
         {
             // Un même numéro peut exister dans plusieurs domaines L2 : « domaine_vlan » lève l'ambiguïté.
+            // Seuls les VLAN des domaines ouverts à la section sont candidats (comme le formulaire).
             int? number = int.TryParse(vlanText, out int parsed) ? parsed : null;
             string? domainName = cell("domaine_vlan");
-            List<Vlan> matches = number is null ? [] : await db.Vlans.Where(v => v.Number == number && (domainName == null || v.Domain!.Name == domainName)).Take(2).ToListAsync();
+            IQueryable<Vlan> candidates = section is null ? db.Vlans : Vlan.AvailableIn(db.Vlans, section.Id);
+            List<Vlan> matches = number is null ? [] : await candidates.Where(v => v.Number == number && (domainName == null || v.Domain!.Name == domainName)).Take(2).ToListAsync();
             if (matches.Count == 0)
             {
-                errors.Add($"VLAN « {vlanText} »{(domainName is null ? "" : $" du domaine « {domainName} »")} inconnu.");
+                errors.Add($"VLAN « {vlanText} »{(domainName is null ? "" : $" du domaine « {domainName} »")} inconnu ou non proposé dans cette section.");
             }
             else if (matches.Count > 1)
             {

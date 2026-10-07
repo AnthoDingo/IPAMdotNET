@@ -12,18 +12,25 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public VlanDomain Domain { get; set; } = new();
 
+    [BindProperty]
+    public List<int> SectionIds { get; set; } = [];
+
+    public List<Section> AllSections { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync(int? id)
     {
+        AllSections = await db.Sections.OrderBy(s => s.Name).ToListAsync();
         if (id is null)
         {
             return Page();
         }
-        VlanDomain? domain = await db.VlanDomains.FindAsync(id);
+        VlanDomain? domain = await db.VlanDomains.Include(d => d.Sections).SingleOrDefaultAsync(d => d.Id == id);
         if (domain is null)
         {
             return NotFound();
         }
         Domain = domain;
+        SectionIds = domain.Sections.Select(s => s.Id).ToList();
         return Page();
     }
 
@@ -37,9 +44,15 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (!ModelState.IsValid)
         {
+            AllSections = await db.Sections.OrderBy(s => s.Name).ToListAsync();
             return Page();
         }
         db.Update(Domain);
+        await db.SaveChangesAsync();
+        VlanDomain tracked = await db.VlanDomains.Include(d => d.Sections).SingleAsync(d => d.Id == Domain.Id);
+        List<Section> sections = await db.Sections.Where(s => SectionIds.Contains(s.Id)).ToListAsync();
+        tracked.Sections.Clear();
+        tracked.Sections.AddRange(sections);
         await db.SaveChangesAsync();
         return RedirectToPage("Index");
     }
@@ -54,6 +67,8 @@ public class EditModel(AppDbContext db) : PageModel
         if (await DeleteRefusalAsync(db, id) is { } refusal)
         {
             Domain = domain;
+            AllSections = await db.Sections.OrderBy(s => s.Name).ToListAsync();
+            SectionIds = await db.VlanDomains.Where(d => d.Id == id).SelectMany(d => d.Sections).Select(s => s.Id).ToListAsync();
             ModelState.AddModelError(string.Empty, refusal);
             return Page();
         }

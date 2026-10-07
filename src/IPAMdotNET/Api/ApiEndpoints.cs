@@ -625,6 +625,11 @@ public static partial class ApiEndpoints
         if (input.VlanId is int vlanId)
         {
             subnet.VlanId = vlanId == 0 ? null : await db.Vlans.AnyAsync(v => v.Id == vlanId) ? vlanId : -1;
+            // Comme le formulaire : seulement les VLAN des domaines L2 ouverts à la section (-2).
+            if (subnet.VlanId > 0 && !await Vlan.AvailableIn(db.Vlans, subnet.SectionId).AnyAsync(v => v.Id == vlanId))
+            {
+                subnet.VlanId = -2;
+            }
         }
         if (input.VrfId is int vrfId)
         {
@@ -644,6 +649,7 @@ public static partial class ApiEndpoints
         Dictionary<string, string[]> errors = Validate(subnet);
         // -1 : référence demandée mais inexistante.
         AddIf(errors, subnet.VlanId == -1, "vlanId", "VLAN inexistant.");
+        AddIf(errors, subnet.VlanId == -2, "vlanId", "Ce VLAN n'est pas proposé dans cette section (domaine L2 limité à d'autres sections).");
         AddIf(errors, subnet.VrfId == -1, "vrfId", "VRF inexistante.");
         AddIf(errors, subnet.LocationId == -1, "locationId", "Emplacement inexistant.");
         AddIf(errors, subnet.CustomerId == -1, "customerId", "Client inexistant.");

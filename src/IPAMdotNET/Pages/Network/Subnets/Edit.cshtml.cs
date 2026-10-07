@@ -23,7 +23,8 @@ public class EditModel(AppDbContext db) : PageModel
     public string Cidr { get; set; } = "";
 
     public List<SelectListItem> Sections { get; private set; } = [];
-    public List<SelectListItem> Vlans { get; private set; } = [];
+    /// <summary>VLAN groupés par domaine L2 ; <c>Sections</c> = sections ouvertes (vide = toutes), pour le filtre côté navigateur.</summary>
+    public List<(string? Domain, string Sections, List<SelectListItem> Vlans)> VlanGroups { get; private set; } = [];
     public List<SelectListItem> Vrfs { get; private set; } = [];
     public List<SelectListItem> Nameservers { get; private set; } = [];
     public List<SelectListItem> Locations { get; private set; } = [];
@@ -127,6 +128,14 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Subnet.SectionId", "Section inconnue.");
         }
+        // VLAN limité aux domaines L2 ouverts à la section ; un rattachement existant reste valable tant que ni le VLAN ni la section ne changent.
+        (int? VlanId, int SectionId)? stored = Subnet.Id == 0 ? null
+            : await db.Subnets.Where(s => s.Id == Subnet.Id).Select(s => new ValueTuple<int?, int>(s.VlanId, s.SectionId)).SingleAsync();
+        if (Subnet.VlanId is int vlanId && stored != (Subnet.VlanId, Subnet.SectionId)
+            && !await Vlan.AvailableIn(db.Vlans, Subnet.SectionId).AnyAsync(v => v.Id == vlanId))
+        {
+            ModelState.AddModelError("Subnet.VlanId", "Ce VLAN n'est pas proposé dans cette section (domaine L2 limité à d'autres sections).");
+        }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Subnet));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
@@ -167,9 +176,11 @@ public class EditModel(AppDbContext db) : PageModel
             .Where(s => access.CanWrite(s.Id))
             .Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList();
         // Groupés par domaine L2 dès qu'il y en a plusieurs (un même numéro peut exister dans chacun).
-        List<Vlan> vlans = await db.Vlans.Include(v => v.Domain).OrderBy(v => v.Domain!.Name).ThenBy(v => v.Number).ToListAsync();
-        Dictionary<int, SelectListGroup> groups = vlans.Select(v => v.Domain!).DistinctBy(d => d.Id).ToDictionary(d => d.Id, d => new SelectListGroup { Name = d.Name });
-        Vlans = vlans.Select(v => new SelectListItem(v.Number + " – " + v.Name, v.Id.ToString()) { Group = groups.Count > 1 ? groups[v.DomainId] : null }).ToList();
+        List<VlanDomain> domains = await db.VlanDomains.Include(d => d.Sections).OrderBy(d => d.Name).ToListAsync();
+        List<Vlan> vlans = await db.Vlans.OrderBy(v => v.Number).ToListAsync();
+        VlanGroups = domains.Select(d => (domains.Count > 1 ? d.Name : null, string.Join(' ', d.Sections.Select(s => s.Id)),
+            vlans.Where(v => v.DomainId == d.Id).Select(v => new SelectListItem(v.Number + " – " + v.Name, v.Id.ToString())).ToList()))
+            .Where(g => g.Item3.Count > 0).ToList();
         Vrfs = await db.Vrfs.OrderBy(v => v.Name)
             .Select(v => new SelectListItem(v.Name, v.Id.ToString())).ToListAsync();
         Nameservers = await db.Nameservers.OrderBy(n => n.Name)

@@ -142,7 +142,11 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(s => s.Nameserver).WithMany().OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<VlanDomain>().HasIndex(d => d.Name).IsUnique();
+        modelBuilder.Entity<VlanDomain>(entity =>
+        {
+            entity.HasIndex(d => d.Name).IsUnique();
+            entity.HasMany(d => d.Sections).WithMany().UsingEntity("VlanDomainSections");
+        });
         modelBuilder.Entity<Vlan>(entity =>
         {
             entity.HasIndex(v => new { v.DomainId, v.Number }).IsUnique();

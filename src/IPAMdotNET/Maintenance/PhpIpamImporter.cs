@@ -38,6 +38,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
     private readonly Dictionary<int, int> racks = [];
     private readonly Dictionary<int, int> devices = [];
     private readonly Dictionary<int, int> nameservers = [];
+    private readonly Dictionary<int, int> vlanDomains = [];
     private readonly Dictionary<int, int> vlans = [];
     private readonly Dictionary<int, int> vrfs = [];
     private readonly Dictionary<int, int> sections = [];
@@ -72,6 +73,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         await VrfsAsync();
         await SectionsAsync();
         await DeviceSectionsAsync();
+        await VlanDomainSectionsAsync();
         await SubnetsAsync();
         await AddressesAsync();
         await CircuitsAsync();
@@ -357,7 +359,6 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
     {
         // Domaines L2 : « default » (créé par la migration) est réutilisé par nom, comme les autres domaines de même nom.
         Dictionary<string, int> existing = await db.VlanDomains.ToDictionaryAsync(d => d.Name, d => d.Id, StringComparer.OrdinalIgnoreCase, cancellationToken);
-        Dictionary<int, int> domains = [];
         List<(int, VlanDomain)> newDomains = [];
         foreach (Dictionary<string, string?> row in data.Rows("vlanDomains"))
         {
@@ -365,13 +366,13 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             string name = S(row, "name", 100) ?? $"Domaine {old}";
             if (existing.TryGetValue(name, out int id))
             {
-                domains[old] = id;
+                vlanDomains[old] = id;
                 continue;
             }
             existing[name] = 0;
             newDomains.Add((old, new VlanDomain { Name = name, Description = S(row, "description", 500) }));
         }
-        Merge(domains, await SaveAsync(newDomains, d => d.Id));
+        Merge(vlanDomains, await SaveAsync(newDomains, d => d.Id));
         int defaultDomain = await Vlan.DefaultDomainIdAsync(db);
 
         // Un numéro est unique dans son domaine ; un doublon (base incohérente) est ignoré.
@@ -385,7 +386,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 report.Warnings.Add($"VLAN « {S(row, "name")} » : numéro {S(row, "number")} invalide, non importé.");
                 continue;
             }
-            int domain = Map(row, "domainId", domains) ?? defaultDomain;
+            int domain = Map(row, "domainId", vlanDomains) ?? defaultDomain;
             if (!seen.Add((domain, number)))
             {
                 report.Warnings.Add($"VLAN {number} en double dans un même domaine L2, non importé.");
@@ -484,6 +485,28 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         await db.SaveChangesAsync(cancellationToken);
         db.ChangeTracker.Clear();
         report.Counts.Add(("équipement(s) limité(s) à des sections", count));
+    }
+
+    /// <summary>Sections où chaque domaine L2 est proposé (colonne phpIPAM « permissions » : « 1;2;3 »).</summary>
+    private async Task VlanDomainSectionsAsync()
+    {
+        List<Section> allSections = await db.Sections.ToListAsync(cancellationToken);
+        int count = 0;
+        foreach (Dictionary<string, string?> row in data.Rows("vlanDomains"))
+        {
+            HashSet<int> wanted = (S(row, "permissions") ?? "").Split([';', ','], StringSplitOptions.RemoveEmptyEntries)
+                .Select(v => int.TryParse(v, out int old) && sections.TryGetValue(old, out int id) ? id : 0).Where(id => id != 0).ToHashSet();
+            if (wanted.Count == 0 || !vlanDomains.TryGetValue(I(row, "id") ?? 0, out int domainId))
+            {
+                continue;
+            }
+            VlanDomain domain = await db.VlanDomains.Include(d => d.Sections).SingleAsync(d => d.Id == domainId, cancellationToken);
+            domain.Sections.AddRange(allSections.Where(s => wanted.Contains(s.Id) && !domain.Sections.Contains(s)));
+            count++;
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
+        report.Counts.Add(("domaine(s) L2 limité(s) à des sections", count));
     }
 
     private async Task SubnetsAsync()

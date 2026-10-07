@@ -23,5 +23,9 @@ public class Vlan
     public string? Description { get; set; }
 
     /// <summary>Domaine par défaut : le premier créé (« default », créé par la migration).</summary>
+    /// <summary>VLAN utilisables par un sous-réseau de la section : domaine sans restriction, ou ouvert à la section.</summary>
+    public static IQueryable<Vlan> AvailableIn(IQueryable<Vlan> vlans, int sectionId) =>
+        vlans.Where(v => !v.Domain!.Sections.Any() || v.Domain.Sections.Any(s => s.Id == sectionId));
+
     public static Task<int> DefaultDomainIdAsync(AppDbContext db) => db.VlanDomains.OrderBy(d => d.Id).Select(d => d.Id).FirstAsync();
 }

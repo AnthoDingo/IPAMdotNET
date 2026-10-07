@@ -18,6 +18,20 @@
             <textarea asp-for="Domain.Description" class="form-control" rows="2"></textarea>
             <span asp-validation-for="Domain.Description" class="text-danger"></span>
         </div>
+        @if (Model.AllSections.Count > 0)
+        {
+            <fieldset class="mb-3">
+                <legend class="fs-6 fw-semibold border-bottom pb-1 mb-2">@L.T("Sections")</legend>
+                @foreach (IPAMdotNet.Data.Section item in Model.AllSections)
+                {
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="section-@item.Id" name="SectionIds" value="@item.Id" checked="@Model.SectionIds.Contains(item.Id)" />
+                        <label class="form-check-label" for="section-@item.Id">@item.Name</label>
+                    </div>
+                }
+                <div class="form-text">@L.T("Les VLAN du domaine ne sont proposés qu'aux sous-réseaux de ces sections. Aucune : toutes les sections.")</div>
+            </fieldset>
+        }
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>

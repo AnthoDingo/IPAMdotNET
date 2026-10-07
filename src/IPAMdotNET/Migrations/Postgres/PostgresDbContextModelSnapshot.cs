@@ -1334,6 +1334,21 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.ToTable("UserGroups");
                 });
 
+            modelBuilder.Entity("VlanDomainSections", b =>
+                {
+                    b.Property<int>("SectionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VlanDomainId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("SectionsId", "VlanDomainId");
+
+                    b.HasIndex("VlanDomainId");
+
+                    b.ToTable("VlanDomainSections");
+                });
+
             modelBuilder.Entity("DeviceSections", b =>
                 {
                     b.HasOne("IPAMdotNet.Data.Device", null)
@@ -1648,6 +1663,21 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.HasOne("IPAMdotNet.Data.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("VlanDomainSections", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Section", null)
+                        .WithMany()
+                        .HasForeignKey("SectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.VlanDomain", null)
+                        .WithMany()
+                        .HasForeignKey("VlanDomainId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -35,7 +35,7 @@
 - [ ] Import phpIPAM : tester contre une vraie API phpIPAM (testé contre une base phpIPAM réelle, et l'API contre un serveur simulé) ; dossiers, sous-réseaux en double par VRF (aujourd'hui fusionnés).
 - [x] Permissions par section (groupes + accès par défaut, voir partie Serveur).
 - [x] Domaines L2 pour les VLAN : numéro unique par domaine, domaine « default » créé par la migration, pages, API (`/api/vlan-domains`, `domainId`), CSV (colonnes facultatives `domaine` / `domaine_vlan`), import phpIPAM.
-- [ ] Domaines L2 : restriction aux sections (champ « permissions » de phpIPAM, liste des VLAN proposés dans un sous-réseau).
+- [x] Domaines L2 : restriction aux sections (aucune = toutes) ; VLAN proposés et acceptés selon la section du sous-réseau (formulaire, API, CSV) ; « permissions » reprises de phpIPAM.
 - [ ] MySQL : sur MariaDB (12.3), `dotnet ef database update` échoue dans `MySQLHistoryRepository.AcquireDatabaseLock` (provider Oracle) ; vérifier la page `/update` sur MariaDB.
 - [ ] NAT : lier source/destination aux objets sous-réseaux/adresses et à un équipement (aujourd'hui saisie d'une adresse ou d'un réseau).
 - [ ] BGP : association des sous-réseaux annoncés à un pair.

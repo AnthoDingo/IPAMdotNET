@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Network.VlanDomains;
 
-public sealed record VlanDomainRow(VlanDomain Domain, int VlanCount);
+public sealed record VlanDomainRow(VlanDomain Domain, int VlanCount, List<string> Sections);
 
 public class IndexModel(AppDbContext db) : PageModel
 {
@@ -14,7 +14,7 @@ public class IndexModel(AppDbContext db) : PageModel
     {
         Domains = await db.VlanDomains
             .OrderBy(d => d.Name)
-            .Select(d => new VlanDomainRow(d, db.Vlans.Count(v => v.DomainId == d.Id)))
+            .Select(d => new VlanDomainRow(d, db.Vlans.Count(v => v.DomainId == d.Id), d.Sections.OrderBy(s => s.Name).Select(s => s.Name).ToList()))
             .ToListAsync();
     }
 }

@@ -133,8 +133,27 @@ public static partial class ApiEndpoints
         MapResource(api, new ApiResource<VlanDomain>
         {
             Path = "vlan-domains", Label = "Domaine L2", Fields = [nameof(VlanDomain.Name), nameof(VlanDomain.Description)],
+            ExtraFields = ["sectionIds"],
             Validate = async (db, d, errors) =>
                 AddIf(errors, await db.VlanDomains.AnyAsync(x => x.Name == d.Name && x.Id != d.Id), "name", "Un domaine L2 porte déjà ce nom."),
+            // Sections ouvertes, remplacées en bloc (comme le formulaire) ; [] = toutes les sections.
+            Check = async call =>
+            {
+                if (call.TryGet("sectionIds", out JsonElement json)
+                    && await IdsAsync(call.Db.Sections, json, "sectionIds", "Section inexistante.", call.Errors) is { } sections)
+                {
+                    if (!call.Creating)
+                    {
+                        await call.Db.Entry(call.Item).Collection(d => d.Sections).LoadAsync();
+                    }
+                    call.Item.Sections.Clear();
+                    call.Item.Sections.AddRange(sections);
+                }
+            },
+            ExtraJson = async (db, d) => new Dictionary<string, object?>
+            {
+                ["sectionIds"] = await db.VlanDomains.Where(x => x.Id == d.Id).SelectMany(x => x.Sections).Select(s => s.Id).OrderBy(id => id).ToListAsync(),
+            },
             BeforeDelete = (db, id, key) => Pages.Network.VlanDomains.EditModel.DeleteRefusalAsync(db, id),
         });
         MapResource(api, new ApiResource<DeviceType>

@@ -15,4 +15,7 @@ public class VlanDomain
 
     [MaxLength(500), Display(Name = "Description")]
     public string? Description { get; set; }
+
+    /// <summary>Sections où les VLAN du domaine sont proposés aux sous-réseaux (« permissions » de phpIPAM) ; aucune = toutes.</summary>
+    public List<Section> Sections { get; set; } = [];
 }
