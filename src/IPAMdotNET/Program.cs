@@ -90,6 +90,9 @@ builder.Services.AddRateLimiter(options =>
 // Agent de scan intégré (désactivable dans Administration › Agents de scan).
 builder.Services.AddHostedService<ScanAgent>();
 
+// Reprise unique des libellés des entrées du journal antérieures à leur résolution à l'écriture.
+builder.Services.AddHostedService<ChangeLogBackfill>();
+
 // Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 

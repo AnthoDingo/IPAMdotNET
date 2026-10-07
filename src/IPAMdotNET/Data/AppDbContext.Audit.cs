@@ -190,8 +190,10 @@ public abstract partial class AppDbContext
         return pending;
     }
 
-    private static string FieldLabel(PropertyEntry property) =>
-        property.Metadata.PropertyInfo?.GetCustomAttribute<DisplayAttribute>()?.Name ?? property.Metadata.Name;
+    private static string FieldLabel(IProperty property) =>
+        property.PropertyInfo?.GetCustomAttribute<DisplayAttribute>()?.Name ?? property.Name;
+
+    private static string FieldLabel(PropertyEntry property) => FieldLabel(property.Metadata);
 
     /// <summary>
     /// Comme <see cref="Format"/>, mais une clé étrangère est écrite avec le libellé de l'objet référencé au moment du changement
@@ -206,8 +208,16 @@ public abstract partial class AppDbContext
         {
             return text;
         }
+        string? label = await ReferenceLabelAsync(foreignKey, value!, labels, cancellationToken);
+        return label is null ? text : $"{label} (n°{text})";
+    }
+
+    /// <summary>Libellé de l'objet visé par une clé étrangère (null s'il n'existe pas), mis en cache pour l'opération en cours.</summary>
+    private async Task<string?> ReferenceLabelAsync(IForeignKey foreignKey, object value, Dictionary<(Type, object), string?> labels,
+        CancellationToken cancellationToken)
+    {
         Type principalType = foreignKey.PrincipalEntityType.ClrType;
-        if (!labels.TryGetValue((principalType, value!), out string? label))
+        if (!labels.TryGetValue((principalType, value), out string? label))
         {
             IProperty keyProperty = foreignKey.PrincipalKey.Properties[0];
             EntityEntry? local = ChangeTracker.Entries()
@@ -218,9 +228,69 @@ public abstract partial class AppDbContext
                 .MakeGenericMethod(principalType, keyProperty.ClrType)
                 .Invoke(this, [keyProperty.Name, value, cancellationToken])!;
             label = principal is null ? null : Label(Entry(principal), original: false);
-            labels[(principalType, value!)] = label;
+            labels[(principalType, value)] = label;
         }
-        return label is null ? text : $"{label} (n°{text})";
+        return label;
+    }
+
+    /// <summary>
+    /// Reprise des entrées écrites avant la résolution des libellés : une clé étrangère notée par son seul identifiant
+    /// (« 3 ») devient « Serveurs (n°3) ». Un objet supprimé depuis garde son identifiant. Renvoie le nombre d'entrées modifiées.
+    /// </summary>
+    public async Task<int> BackfillChangeLogLabelsAsync(CancellationToken cancellationToken)
+    {
+        // Par type journalisé : libellé du champ (comme dans les entrées) → clé étrangère.
+        Dictionary<string, Dictionary<string, IForeignKey>> foreignKeys = Model.GetEntityTypes()
+            .Where(e => ChangeLog.Types.ContainsKey(e.ClrType.Name))
+            .ToDictionary(e => e.ClrType.Name, e => e.GetForeignKeys()
+                .Where(k => k.Properties.Count == 1 && k.PrincipalKey.Properties.Count == 1 && (Nullable.GetUnderlyingType(k.Properties[0].ClrType) ?? k.Properties[0].ClrType) == typeof(int))
+                .GroupBy(k => FieldLabel(k.Properties[0])).ToDictionary(g => g.Key, g => g.First()));
+        Dictionary<(Type, object), string?> labels = [];
+        int updated = 0;
+        int lastId = 0;
+        while (true)
+        {
+            List<ChangeLog> batch = await ChangeLogs.Where(c => c.Id > lastId && c.Changes != null).OrderBy(c => c.Id).Take(500).ToListAsync(cancellationToken);
+            if (batch.Count == 0)
+            {
+                break;
+            }
+            foreach (ChangeLog log in batch)
+            {
+                if (!foreignKeys.TryGetValue(log.EntityType, out Dictionary<string, IForeignKey>? fields) || fields.Count == 0)
+                {
+                    continue;
+                }
+                Dictionary<string, string?[]>? changes = JsonSerializer.Deserialize<Dictionary<string, string?[]>>(log.Changes!);
+                bool changed = false;
+                foreach (KeyValuePair<string, string?[]> change in changes ?? [])
+                {
+                    if (!fields.TryGetValue(change.Key, out IForeignKey? foreignKey))
+                    {
+                        continue;
+                    }
+                    for (int i = 0; i < change.Value.Length; i++)
+                    {
+                        // Seules les valeurs purement numériques sont d'anciennes entrées ; « Nom (n°3) » est déjà résolu.
+                        if (change.Value[i] is { Length: > 0 } text && text.All(char.IsAsciiDigit) && int.TryParse(text, out int id)
+                            && await ReferenceLabelAsync(foreignKey, id, labels, cancellationToken) is { } label)
+                        {
+                            change.Value[i] = $"{label} (n°{text})";
+                            changed = true;
+                        }
+                    }
+                }
+                if (changed)
+                {
+                    log.Changes = JsonSerializer.Serialize(changes, JsonOptions);
+                    updated++;
+                }
+            }
+            await base.SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
+            lastId = batch[^1].Id;
+            ChangeTracker.Clear();
+        }
+        return updated;
     }
 
     /// <summary>Objet par sa clé, sans suivi (libellé du journal).</summary>

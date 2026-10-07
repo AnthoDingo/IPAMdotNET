@@ -45,7 +45,7 @@
 
 - [x] Demandes d'adresses : adresse demandée si elle est libre, sinon première adresse libre proposée au traitement.
 - [x] Journal : libellé des objets référencés (« Serveurs (n°3) »), historique sur la fiche de chaque objet et filtre par objet.
-- [ ] Journal : les entrées antérieures gardent les identifiants seuls (libellés résolus à l'écriture).
+- [x] Journal : reprise unique des entrées antérieures (identifiants seuls → « Libellé (n°id) », libellé actuel de l'objet ; objets supprimés inchangés).
 - [x] Instructions : Markdown (Markdig, HTML désactivé, liens filtrés), avec aperçu.
 - [x] Recherche : adresses IP individuelles (IP exacte, nom d'hôte, MAC, propriétaire).
 
