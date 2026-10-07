@@ -37,8 +37,7 @@
 - [x] Domaines L2 pour les VLAN : numéro unique par domaine, domaine « default » créé par la migration, pages, API (`/api/vlan-domains`, `domainId`), CSV (colonnes facultatives `domaine` / `domaine_vlan`), import phpIPAM.
 - [x] Domaines L2 : restriction aux sections (aucune = toutes) ; VLAN proposés et acceptés selon la section du sous-réseau (formulaire, API, CSV) ; « permissions » reprises de phpIPAM.
 - [ ] MySQL : sur MariaDB (12.3), `dotnet ef database update` échoue dans `MySQLHistoryRepository.AcquireDatabaseLock` (provider Oracle) ; vérifier la page `/update` sur MariaDB.
-- [x] NAT : source/destination liées à un sous-réseau ou une adresse (liaison automatique si un seul objet correspond, choix sinon ; texte libre pour une adresse externe), équipement ; règles affichées sur la fiche du sous-réseau ; API et import phpIPAM.
-- [ ] NAT : plusieurs objets par côté (phpIPAM en accepte plusieurs ; l'import ne garde que le premier).
+- [x] NAT : plusieurs objets par côté, chacun lié à un sous-réseau ou une adresse (liaison automatique si un seul objet correspond, choix sinon ; texte libre pour une adresse externe), équipement ; règles affichées sur la fiche du sous-réseau ; API et import phpIPAM.
 - [ ] BGP : association des sous-réseaux annoncés à un pair.
 - [ ] DNS : intégration PowerDNS (aujourd'hui seuls les jeux de serveurs de noms existent).
 

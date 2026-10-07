@@ -816,18 +816,7 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Destination")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("DestinationAddressId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("DestinationPort")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("DestinationSubnetId")
                         .HasColumnType("int");
 
                     b.Property<int?>("DeviceId")
@@ -838,18 +827,7 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Source")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("SourceAddressId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("SourcePort")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SourceSubnetId")
                         .HasColumnType("int");
 
                     b.Property<int>("Type")
@@ -857,17 +835,45 @@ namespace IPAMdotNet.Migrations.SqlServer
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DestinationAddressId");
-
-                    b.HasIndex("DestinationSubnetId");
-
                     b.HasIndex("DeviceId");
 
-                    b.HasIndex("SourceAddressId");
-
-                    b.HasIndex("SourceSubnetId");
-
                     b.ToTable("NatRules");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.NatRuleObject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AddressId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NatRuleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Side")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubnetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex("NatRuleId");
+
+                    b.HasIndex("SubnetId");
+
+                    b.ToTable("NatRuleObjects");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
@@ -1547,35 +1553,34 @@ namespace IPAMdotNet.Migrations.SqlServer
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
                 {
-                    b.HasOne("IPAMdotNet.Data.IpAddress", "DestinationAddress")
-                        .WithMany()
-                        .HasForeignKey("DestinationAddressId");
-
-                    b.HasOne("IPAMdotNet.Data.Subnet", "DestinationSubnet")
-                        .WithMany()
-                        .HasForeignKey("DestinationSubnetId");
-
                     b.HasOne("IPAMdotNet.Data.Device", "Device")
                         .WithMany()
                         .HasForeignKey("DeviceId");
 
-                    b.HasOne("IPAMdotNet.Data.IpAddress", "SourceAddress")
-                        .WithMany()
-                        .HasForeignKey("SourceAddressId");
-
-                    b.HasOne("IPAMdotNet.Data.Subnet", "SourceSubnet")
-                        .WithMany()
-                        .HasForeignKey("SourceSubnetId");
-
-                    b.Navigation("DestinationAddress");
-
-                    b.Navigation("DestinationSubnet");
-
                     b.Navigation("Device");
+                });
 
-                    b.Navigation("SourceAddress");
+            modelBuilder.Entity("IPAMdotNet.Data.NatRuleObject", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.IpAddress", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId");
 
-                    b.Navigation("SourceSubnet");
+                    b.HasOne("IPAMdotNet.Data.NatRule", "NatRule")
+                        .WithMany("Objects")
+                        .HasForeignKey("NatRuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Subnet", "Subnet")
+                        .WithMany()
+                        .HasForeignKey("SubnetId");
+
+                    b.Navigation("Address");
+
+                    b.Navigation("NatRule");
+
+                    b.Navigation("Subnet");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>
@@ -1738,6 +1743,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasForeignKey("VlanDomainId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
+                {
+                    b.Navigation("Objects");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnPrefix", b =>

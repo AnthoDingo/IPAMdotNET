@@ -89,10 +89,8 @@ public class DetailsModel(AppDbContext db) : PageModel
         }
         FirstFree = Ip.FirstFree(subnet.Network, addresses.Select(a => Ip.ToNumber(a.Value)).ToHashSet());
         ScanEnabled = subnet.ScanAgent?.Enabled ?? (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
-        NatRules = await db.NatRules
-            .Include(n => n.SourceSubnet).Include(n => n.SourceAddress).Include(n => n.DestinationSubnet).Include(n => n.DestinationAddress)
-            .Where(n => n.SourceSubnetId == id || n.DestinationSubnetId == id
-                || (n.SourceAddress != null && n.SourceAddress.SubnetId == id) || (n.DestinationAddress != null && n.DestinationAddress.SubnetId == id))
+        NatRules = await db.NatRules.Include(n => n.Objects).ThenInclude(o => o.Subnet).Include(n => n.Objects).ThenInclude(o => o.Address)
+            .Where(n => n.Objects.Any(o => o.SubnetId == id || (o.Address != null && o.Address.SubnetId == id)))
             .OrderBy(n => n.Name).ToListAsync();
         return Page();
     }

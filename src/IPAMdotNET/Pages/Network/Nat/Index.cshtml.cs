@@ -10,7 +10,7 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
-        Rules = await db.NatRules.Include(n => n.SourceSubnet).Include(n => n.SourceAddress).Include(n => n.DestinationSubnet)
-            .Include(n => n.DestinationAddress).Include(n => n.Device).OrderBy(n => n.Name).ToListAsync();
+        Rules = await db.NatRules.Include(n => n.Objects).ThenInclude(o => o.Subnet).Include(n => n.Objects).ThenInclude(o => o.Address)
+            .Include(n => n.Device).OrderBy(n => n.Name).ToListAsync();
     }
 }

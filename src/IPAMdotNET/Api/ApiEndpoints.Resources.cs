@@ -184,17 +184,37 @@ public static partial class ApiEndpoints
         MapResource(api, new ApiResource<NatRule>
         {
             Path = "nat", Label = "Règle NAT",
-            Fields = [nameof(NatRule.Name), nameof(NatRule.Type), nameof(NatRule.Source), nameof(NatRule.SourceSubnetId), nameof(NatRule.SourceAddressId),
-                nameof(NatRule.SourcePort), nameof(NatRule.Destination), nameof(NatRule.DestinationSubnetId), nameof(NatRule.DestinationAddressId),
-                nameof(NatRule.DestinationPort), nameof(NatRule.DeviceId), nameof(NatRule.Description)],
-            // Comme le formulaire : objet imposé par son identifiant, sinon texte lié automatiquement à l'objet correspondant s'il est seul.
+            Fields = [nameof(NatRule.Name), nameof(NatRule.Type), nameof(NatRule.SourcePort), nameof(NatRule.DestinationPort),
+                nameof(NatRule.DeviceId), nameof(NatRule.Description)],
+            ExtraFields = ["source", "destination"],
             Check = async call =>
             {
-                NatRule r = call.Item;
-                (r.Source, r.SourceSubnetId, r.SourceAddressId) =
-                    await NatSideAsync(call, "source", r.Source, r.SourceSubnetId, r.SourceAddressId);
-                (r.Destination, r.DestinationSubnetId, r.DestinationAddressId) =
-                    await NatSideAsync(call, "destination", r.Destination, r.DestinationSubnetId, r.DestinationAddressId);
+                List<NatRuleObject>? sources = await NatObjectsAsync(call, "source", NatSideKind.Source);
+                List<NatRuleObject>? destinations = await NatObjectsAsync(call, "destination", NatSideKind.Destination);
+                if (sources is null && destinations is null)
+                {
+                    return;
+                }
+                if (!call.Creating)
+                {
+                    await call.Db.Entry(call.Item).Collection(n => n.Objects).LoadAsync();
+                }
+                // Côté envoyé : remplacé en bloc ; côté absent : inchangé.
+                foreach ((NatSideKind side, List<NatRuleObject>? replacement) in new[] { (NatSideKind.Source, sources), (NatSideKind.Destination, destinations) })
+                {
+                    if (replacement is not null)
+                    {
+                        call.Db.NatRuleObjects.RemoveRange(call.Item.Objects.Where(o => o.Side == side).ToList());
+                        call.Item.Objects.RemoveAll(o => o.Side == side);
+                        call.Item.Objects.AddRange(replacement);
+                    }
+                }
+            },
+            ExtraJson = async (db, n) =>
+            {
+                List<NatRuleObject> objects = await db.NatRuleObjects.Where(o => o.NatRuleId == n.Id).OrderBy(o => o.Id).ToListAsync();
+                object Json(NatSideKind side) => objects.Where(o => o.Side == side).Select(o => new { text = o.Text, subnetId = o.SubnetId, addressId = o.AddressId });
+                return new Dictionary<string, object?> { ["source"] = Json(NatSideKind.Source), ["destination"] = Json(NatSideKind.Destination) };
             },
         });
         MapResource(api, new ApiResource<BgpPeer>
@@ -458,31 +478,46 @@ public static partial class ApiEndpoints
 
     /// <summary>Liste JSON d'identifiants → objets existants ; null (et erreur) si invalide ou si un identifiant n'existe pas.</summary>
     /// <summary>
-    /// Un côté d'une règle NAT : identifiant envoyé = objet imposé (0 = aucun, texte libre) ; texte seul envoyé = liaison automatique ;
-    /// rien d'envoyé = inchangé.
+    /// Un côté d'une règle NAT (null s'il n'est pas envoyé) : liste d'éléments, chacun une chaîne (adresse ou réseau, liée
+    /// automatiquement à l'objet correspondant s'il est seul), ou un objet { "subnetId" } / { "addressId" } (objet imposé)
+    /// ou { "text" } (adresse externe, sans lien).
     /// </summary>
-    private static async Task<(string Text, int? SubnetId, int? AddressId)> NatSideAsync(ApiCall<NatRule> call, string side,
-        string text, int? subnetId, int? addressId)
+    private static async Task<List<NatRuleObject>?> NatObjectsAsync(ApiCall<NatRule> call, string field, NatSideKind side)
     {
-        bool subnetSent = call.TryGet(side + "SubnetId", out _);
-        bool addressSent = call.TryGet(side + "AddressId", out _);
-        bool idSent = subnetSent || addressSent;
-        if (!idSent && !call.TryGet(side, out _) && !call.Creating)
+        if (!call.TryGet(field, out JsonElement json))
         {
-            return (text, subnetId, addressId);
+            AddIf(call.Errors, call.Creating, field, "Liste requise, ex. [\"10.0.0.1\"].");
+            return null;
         }
-        // Un identifiant envoyé seul remplace l'objet de l'autre type.
-        subnetId = addressSent && !subnetSent ? null : subnetId;
-        addressId = subnetSent && !addressSent ? null : addressId;
-        AddIf(call.Errors, subnetId is not null && addressId is not null, side, "Un seul objet par côté : sous-réseau ou adresse.");
-        NatSide resolved = await NatLinks.ResolveAsync(call.Db, text, idSent ? NatLinks.Key(subnetId, addressId) ?? NatLinks.None : null);
-        if (resolved.Error is not null)
+        if (json.ValueKind != JsonValueKind.Array || json.GetArrayLength() == 0)
         {
-            string candidates = resolved.Candidates is null ? ""
-                : " " + string.Join(" ; ", resolved.Candidates.Select(c => $"{(c.Key[0] == 'a' ? side + "AddressId" : side + "SubnetId")}={c.Key[2..]} : {c.Label}"));
-            AddIf(call.Errors, true, side, resolved.Error + candidates);
+            AddIf(call.Errors, true, field, "Liste d'au moins une adresse ou un réseau attendue, ex. [\"10.0.0.1\", {\"subnetId\": 3}].");
+            return null;
         }
-        return (resolved.Text, resolved.SubnetId, resolved.AddressId);
+        List<NatRuleObject> objects = [];
+        int index = 0;
+        foreach (JsonElement element in json.EnumerateArray())
+        {
+            string key = $"{field}[{index++}]";
+            (string? text, string? choice) = element.ValueKind switch
+            {
+                JsonValueKind.String => (element.GetString(), null),
+                JsonValueKind.Object when element.TryGetProperty("addressId", out JsonElement a) && a.TryGetInt32(out int addressId) => (null, $"a:{addressId}"),
+                JsonValueKind.Object when element.TryGetProperty("subnetId", out JsonElement s) && s.TryGetInt32(out int subnetId) => (null, $"s:{subnetId}"),
+                JsonValueKind.Object when element.TryGetProperty("text", out JsonElement t) => (t.GetString(), NatLinks.None),
+                _ => ((string?)null, (string?)null),
+            };
+            NatSide resolved = await NatLinks.ResolveAsync(call.Db, text, choice);
+            if (resolved.Error is not null)
+            {
+                string candidates = resolved.Candidates is null ? ""
+                    : " " + string.Join(" ; ", resolved.Candidates.Select(c => $"{{\"{(c.Key[0] == 'a' ? "addressId" : "subnetId")}\": {c.Key[2..]}}} : {c.Label}"));
+                AddIf(call.Errors, true, key, resolved.Error + candidates);
+                continue;
+            }
+            objects.Add(new NatRuleObject { Side = side, Text = resolved.Text, SubnetId = resolved.SubnetId, AddressId = resolved.AddressId });
+        }
+        return objects;
     }
 
     private static async Task<List<TEntity>?> IdsAsync<TEntity>(DbSet<TEntity> set, JsonElement json, string field, string missing,

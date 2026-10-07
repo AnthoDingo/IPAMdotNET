@@ -166,7 +166,7 @@
                     <ul class="list-unstyled mb-0">
                         @foreach (NatRule rule in Model.NatRules)
                         {
-                            <li><a asp-page="/Network/Nat/Index">@rule.Name</a> <span class="font-monospace text-body-secondary">@rule.Source → @rule.Destination</span></li>
+                            <li><a asp-page="/Network/Nat/Index">@rule.Name</a> <span class="font-monospace text-body-secondary">@string.Join(", ", rule.Sources.Select(o => o.Text)) → @string.Join(", ", rule.Destinations.Select(o => o.Text))</span></li>
                         }
                     </ul>
                 </div>

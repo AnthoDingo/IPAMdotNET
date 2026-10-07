@@ -772,10 +772,10 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         List<NatRule> items = [];
         foreach (Dictionary<string, string?> row in data.Rows("nat"))
         {
-            (string Text, int? SubnetId, int? AddressId)? source = NatObject(S(row, "src"));
-            (string Text, int? SubnetId, int? AddressId)? destination = NatObject(S(row, "dst"));
+            List<NatRuleObject> sources = NatObjects(S(row, "src"), NatSideKind.Source);
+            List<NatRuleObject> destinations = NatObjects(S(row, "dst"), NatSideKind.Destination);
             string name = S(row, "name", 100) ?? $"NAT {I(row, "id")}";
-            if (source is null || destination is null)
+            if (sources.Count == 0 || destinations.Count == 0)
             {
                 report.Warnings.Add($"Règle NAT « {name} » : source ou destination introuvable, non importée.");
                 continue;
@@ -784,12 +784,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             {
                 Name = name,
                 Type = S(row, "type")?.ToLowerInvariant() switch { "source" => NatType.Source, "destination" => NatType.Destination, _ => NatType.Static },
-                Source = source.Value.Text,
-                SourceSubnetId = source.Value.SubnetId,
-                SourceAddressId = source.Value.AddressId,
-                Destination = destination.Value.Text,
-                DestinationSubnetId = destination.Value.SubnetId,
-                DestinationAddressId = destination.Value.AddressId,
+                Objects = [.. sources, .. destinations],
                 DeviceId = Map(row, "device", devices),
                 SourcePort = Port(S(row, "src_port")),
                 DestinationPort = Port(S(row, "dst_port")),
@@ -802,34 +797,39 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         report.Counts.Add(("règle(s) NAT", items.Count));
     }
 
-    /// <summary>
-    /// Objet NAT phpIPAM ({"ipaddresses":["12"],"subnets":["3"]}) → première adresse ou premier réseau, en texte et lié.
-    /// ponytail: un seul objet par côté ici ; les suivants sont ignorés (phpIPAM en accepte plusieurs).
-    /// </summary>
-    private (string Text, int? SubnetId, int? AddressId)? NatObject(string? json)
+    /// <summary>Objets NAT phpIPAM ({"ipaddresses":["12"],"subnets":["3"]}) → adresses puis réseaux, en texte et liés.</summary>
+    private List<NatRuleObject> NatObjects(string? json, NatSideKind side)
     {
+        List<NatRuleObject> objects = [];
         if (json is null)
         {
-            return null;
+            return objects;
         }
         try
         {
             using JsonDocument document = JsonDocument.Parse(json);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return null;
+                return objects;
             }
             foreach ((string kind, Dictionary<int, string> texts, Dictionary<int, int> map) in new[] { ("ipaddresses", addressTexts, addresses), ("subnets", subnetTexts, subnets) })
             {
-                if (document.RootElement.TryGetProperty(kind, out JsonElement ids) && ids.ValueKind == JsonValueKind.Array)
+                if (!document.RootElement.TryGetProperty(kind, out JsonElement ids) || ids.ValueKind != JsonValueKind.Array)
                 {
-                    foreach (JsonElement id in ids.EnumerateArray())
+                    continue;
+                }
+                foreach (JsonElement id in ids.EnumerateArray())
+                {
+                    if (int.TryParse(id.ToString(), out int old) && texts.TryGetValue(old, out string? text))
                     {
-                        if (int.TryParse(id.ToString(), out int old) && texts.TryGetValue(old, out string? text))
+                        int? linked = map.TryGetValue(old, out int newId) ? newId : null;
+                        objects.Add(new NatRuleObject
                         {
-                            int? linked = map.TryGetValue(old, out int newId) ? newId : null;
-                            return (Truncate(text, 50)!, kind == "subnets" ? linked : null, kind == "ipaddresses" ? linked : null);
-                        }
+                            Side = side,
+                            Text = Truncate(text, 50)!,
+                            SubnetId = kind == "subnets" ? linked : null,
+                            AddressId = kind == "ipaddresses" ? linked : null,
+                        });
                     }
                 }
             }
@@ -837,7 +837,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         catch (JsonException)
         {
         }
-        return null;
+        return objects;
     }
 
     private async Task BgpAsync()

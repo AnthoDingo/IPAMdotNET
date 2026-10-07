@@ -28,9 +28,9 @@
                     <tr>
                         <td>@rule.Name</td>
                         <td>@Html.DisplayFor(_ => rule.Type)</td>
-                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Source, rule.SourceSubnet, rule.SourceAddress, rule.SourcePort))" /></td>
+                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Sources, rule.SourcePort))" /></td>
                         <td><i class="bi bi-arrow-right"></i></td>
-                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Destination, rule.DestinationSubnet, rule.DestinationAddress, rule.DestinationPort))" /></td>
+                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Destinations, rule.DestinationPort))" /></td>
                         <td>@rule.Device?.Hostname</td>
                         <td>@rule.Description</td>
                         @if (admin)

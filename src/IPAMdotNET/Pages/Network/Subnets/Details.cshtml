@@ -308,9 +308,9 @@
                     <tr>
                         <td><a asp-page="/Network/Nat/Index">@rule.Name</a></td>
                         <td>@Html.DisplayFor(_ => rule.Type)</td>
-                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Source, rule.SourceSubnet, rule.SourceAddress, rule.SourcePort))" /></td>
+                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Sources, rule.SourcePort))" /></td>
                         <td><i class="bi bi-arrow-right"></i></td>
-                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Destination, rule.DestinationSubnet, rule.DestinationAddress, rule.DestinationPort))" /></td>
+                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Destinations, rule.DestinationPort))" /></td>
                     </tr>
                 }
             </tbody>

@@ -59,6 +59,7 @@ public class ChangeLog
             [nameof(Vrf)] = ("VRF", "/Network/Vrfs/Index", false),
             [nameof(Nameserver)] = ("Serveurs de noms", "/Network/Nameservers/Index", false),
             [nameof(NatRule)] = ("NAT", "/Network/Nat/Index", false),
+            [nameof(NatRuleObject)] = ("Objet NAT", "/Network/Nat/Index", false),
             [nameof(BgpPeer)] = ("Pair BGP", "/Network/Routing/Index", false),
             [nameof(Location)] = ("Emplacement", "/Infrastructure/Locations/Details", true),
             [nameof(Customer)] = ("Client", "/Infrastructure/Customers/Details", true),

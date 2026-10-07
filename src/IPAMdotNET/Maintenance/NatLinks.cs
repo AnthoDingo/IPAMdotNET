@@ -49,6 +49,10 @@ public static class NatLinks
         };
     }
 
+    /// <summary>Entrées d'un côté saisies dans une zone de texte : une par ligne (ou séparées par « ; », « , », espaces).</summary>
+    public static List<string> Lines(string? text) =>
+        (text ?? "").Split([';', ',', ' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries).ToList();
+
     /// <summary>Clé de l'objet lié à un côté (pour réafficher le formulaire), null sans lien.</summary>
     public static string? Key(int? subnetId, int? addressId) =>
         addressId is int a ? $"a:{a}" : subnetId is int s ? $"s:{s}" : null;

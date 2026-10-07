@@ -83,8 +83,8 @@ public class IndexModel(AppDbContext db) : PageModel
         Circuits = await db.Circuits.Include(c => c.Provider)
             .Where(c => c.Cid.ToLower().Contains(text) || (c.Comment != null && c.Comment.ToLower().Contains(text)))
             .OrderBy(c => c.Cid).Take(Limit).ToListAsync();
-        NatRules = await db.NatRules
-            .Where(n => n.Name.ToLower().Contains(text) || n.Source.Contains(text) || n.Destination.Contains(text))
+        NatRules = await db.NatRules.Include(n => n.Objects)
+            .Where(n => n.Name.ToLower().Contains(text) || n.Objects.Any(o => o.Text.Contains(text)))
             .OrderBy(n => n.Name).Take(Limit).ToListAsync();
         BgpPeers = await db.BgpPeers
             .Where(b => b.Name.ToLower().Contains(text) || b.LocalAddress.Contains(text) || b.PeerAddress.Contains(text)

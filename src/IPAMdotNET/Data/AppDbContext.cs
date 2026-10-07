@@ -14,6 +14,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<Vrf> Vrfs => Set<Vrf>();
     public DbSet<Nameserver> Nameservers => Set<Nameserver>();
     public DbSet<NatRule> NatRules => Set<NatRule>();
+    public DbSet<NatRuleObject> NatRuleObjects => Set<NatRuleObject>();
     public DbSet<BgpPeer> BgpPeers => Set<BgpPeer>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -115,22 +116,19 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
 
     /// <summary>
     /// Avant la suppression d'un sous-réseau (et donc de ses adresses, en cascade) : les règles NAT gardent le texte, perdent le lien.
-    /// Clés en NO ACTION : SQL Server refuse deux clés en SET NULL vers la même table, et le chemin sous-réseau → adresse → NAT.
+    /// Clés en NO ACTION : SQL Server refuse le double chemin sous-réseau → NAT et sous-réseau → adresse → NAT.
     /// </summary>
     public async Task DetachSubnetAsync(int id)
     {
-        await NatRules.Where(x => x.SourceSubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.SourceSubnetId, (int?)null));
-        await NatRules.Where(x => x.DestinationSubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DestinationSubnetId, (int?)null));
+        await NatRuleObjects.Where(x => x.SubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.SubnetId, (int?)null));
         await DetachAddressesAsync(IpAddresses.Where(a => a.SubnetId == id).Select(a => a.Id));
     }
 
     /// <summary>Avant la suppression d'adresses : les règles NAT gardent le texte, perdent le lien.</summary>
     public async Task DetachAddressesAsync(IQueryable<int> ids)
     {
-        await NatRules.Where(x => x.SourceAddressId != null && ids.Contains(x.SourceAddressId.Value))
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.SourceAddressId, (int?)null));
-        await NatRules.Where(x => x.DestinationAddressId != null && ids.Contains(x.DestinationAddressId.Value))
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DestinationAddressId, (int?)null));
+        await NatRuleObjects.Where(x => x.AddressId != null && ids.Contains(x.AddressId.Value))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.AddressId, (int?)null));
     }
 
     public static AppDbContext Create(DbProvider provider, string connectionString) => provider switch
@@ -177,13 +175,12 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         modelBuilder.Entity<Vrf>().HasIndex(v => v.Name).IsUnique();
         modelBuilder.Entity<BgpPeer>().HasOne(b => b.Vrf).WithMany().OnDelete(DeleteBehavior.SetNull);
         // NAT : liens en NO ACTION, vidés par DetachSubnetAsync / DetachAddressesAsync / DetachDeviceAsync.
-        modelBuilder.Entity<NatRule>(entity =>
+        modelBuilder.Entity<NatRule>().HasOne(n => n.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        modelBuilder.Entity<NatRuleObject>(entity =>
         {
-            entity.HasOne(n => n.SourceSubnet).WithMany().HasForeignKey(n => n.SourceSubnetId).OnDelete(DeleteBehavior.ClientSetNull);
-            entity.HasOne(n => n.DestinationSubnet).WithMany().HasForeignKey(n => n.DestinationSubnetId).OnDelete(DeleteBehavior.ClientSetNull);
-            entity.HasOne(n => n.SourceAddress).WithMany().HasForeignKey(n => n.SourceAddressId).OnDelete(DeleteBehavior.ClientSetNull);
-            entity.HasOne(n => n.DestinationAddress).WithMany().HasForeignKey(n => n.DestinationAddressId).OnDelete(DeleteBehavior.ClientSetNull);
-            entity.HasOne(n => n.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(o => o.NatRule).WithMany(n => n.Objects).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(o => o.Subnet).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(o => o.Address).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         // Infrastructure : clés étrangères facultatives en NO ACTION, vidées par les méthodes Detach*Async.

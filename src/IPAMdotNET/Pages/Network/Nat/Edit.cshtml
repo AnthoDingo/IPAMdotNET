@@ -21,33 +21,10 @@
                 <select asp-for="Rule.Type" asp-items="Html.GetEnumSelectList<NatType>()" class="form-select"></select>
             </div>
             <div class="col-md-8">
-                <label asp-for="Rule.Source" class="form-label"></label>
-                <input asp-for="Rule.Source" class="form-control font-monospace" placeholder="10.0.0.0/24" />
-                <span asp-validation-for="Rule.Source" class="text-danger"></span>
-                @if (Model.SourceCandidates is { Count: > 0 } sourceCandidates)
-                {
-                    <select name="SourceChoice" class="form-select form-select-sm mt-1">
-                        @foreach (NatCandidate candidate in sourceCandidates)
-                        {
-                            <option value="@candidate.Key">@candidate.Label</option>
-                        }
-                        <option value="@NatLinks.None">@L.T("Aucun objet (adresse externe)")</option>
-                    </select>
-                }
-                else
-                {
-                    <input type="hidden" name="SourceChoice" value="@Model.SourceChoice" />
-                    <div class="form-text">
-                        @if (Model.SourceLinked is not null)
-                        {
-                            <i class="bi bi-link-45deg"></i> @L.T("Lié à") @Model.SourceLinked
-                        }
-                        else
-                        {
-                            @L.T("Lié automatiquement à l'adresse ou au sous-réseau correspondant s'il existe dans l'IPAM.")
-                        }
-                    </div>
-                }
+                <label asp-for="Source.Text" class="form-label">@L.T("Source")</label>
+                <textarea asp-for="Source.Text" class="form-control font-monospace" rows="3" placeholder="10.0.0.0/24"></textarea>
+                <span asp-validation-for="Source.Text" class="text-danger"></span>
+                <partial name="_NatSideChoices" model="@(("Source", Model.Source))" />
             </div>
             <div class="col-md-4">
                 <label asp-for="Rule.SourcePort" class="form-label"></label>
@@ -55,33 +32,10 @@
                 <span asp-validation-for="Rule.SourcePort" class="text-danger"></span>
             </div>
             <div class="col-md-8">
-                <label asp-for="Rule.Destination" class="form-label"></label>
-                <input asp-for="Rule.Destination" class="form-control font-monospace" placeholder="203.0.113.10" />
-                <span asp-validation-for="Rule.Destination" class="text-danger"></span>
-                @if (Model.DestinationCandidates is { Count: > 0 } destinationCandidates)
-                {
-                    <select name="DestinationChoice" class="form-select form-select-sm mt-1">
-                        @foreach (NatCandidate candidate in destinationCandidates)
-                        {
-                            <option value="@candidate.Key">@candidate.Label</option>
-                        }
-                        <option value="@NatLinks.None">@L.T("Aucun objet (adresse externe)")</option>
-                    </select>
-                }
-                else
-                {
-                    <input type="hidden" name="DestinationChoice" value="@Model.DestinationChoice" />
-                    <div class="form-text">
-                        @if (Model.DestinationLinked is not null)
-                        {
-                            <i class="bi bi-link-45deg"></i> @L.T("Lié à") @Model.DestinationLinked
-                        }
-                        else
-                        {
-                            @L.T("Lié automatiquement à l'adresse ou au sous-réseau correspondant s'il existe dans l'IPAM.")
-                        }
-                    </div>
-                }
+                <label asp-for="Destination.Text" class="form-label">@L.T("Destination")</label>
+                <textarea asp-for="Destination.Text" class="form-control font-monospace" rows="3" placeholder="203.0.113.10"></textarea>
+                <span asp-validation-for="Destination.Text" class="text-danger"></span>
+                <partial name="_NatSideChoices" model="@(("Destination", Model.Destination))" />
             </div>
             <div class="col-md-4">
                 <label asp-for="Rule.DestinationPort" class="form-label"></label>
