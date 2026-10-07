@@ -230,6 +230,37 @@ public static partial class ApiEndpoints
                 AddIf(errors, peer is null, "peerAddress", "Adresse IP invalide.");
                 return Task.CompletedTask;
             },
+            ExtraFields = ["advertisedSubnetIds", "receivedSubnetIds"],
+            // Sous-réseaux d'un sens remplacés en bloc quand la liste est envoyée.
+            Check = async call =>
+            {
+                foreach ((string field, BgpDirection direction) in new[] { ("advertisedSubnetIds", BgpDirection.Advertised), ("receivedSubnetIds", BgpDirection.Received) })
+                {
+                    if (!call.TryGet(field, out JsonElement json)
+                        || await IdsAsync(call.Db.Subnets, json, field, "Sous-réseau inexistant.", call.Errors) is not { } subnets)
+                    {
+                        continue;
+                    }
+                    if (!call.Creating && !call.Db.Entry(call.Item).Collection(p => p.Subnets).IsLoaded)
+                    {
+                        await call.Db.Entry(call.Item).Collection(p => p.Subnets).LoadAsync();
+                    }
+                    List<BgpPeerSubnet> removed = call.Item.Subnets.Where(x => x.Direction == direction && !subnets.Any(s => s.Id == x.SubnetId)).ToList();
+                    call.Db.BgpPeerSubnets.RemoveRange(removed);
+                    call.Item.Subnets.RemoveAll(removed.Contains);
+                    call.Item.Subnets.AddRange(subnets.Where(s => !call.Item.Subnets.Any(x => x.Direction == direction && x.SubnetId == s.Id))
+                        .Select(s => new BgpPeerSubnet { SubnetId = s.Id, Direction = direction }));
+                }
+            },
+            ExtraJson = async (db, p) =>
+            {
+                List<BgpPeerSubnet> links = await db.BgpPeerSubnets.Where(x => x.BgpPeerId == p.Id).OrderBy(x => x.SubnetId).ToListAsync();
+                return new Dictionary<string, object?>
+                {
+                    ["advertisedSubnetIds"] = links.Where(x => x.Direction == BgpDirection.Advertised).Select(x => x.SubnetId).ToList(),
+                    ["receivedSubnetIds"] = links.Where(x => x.Direction == BgpDirection.Received).Select(x => x.SubnetId).ToList(),
+                };
+            },
         });
         MapResource(api, new ApiResource<PstnPrefix>
         {

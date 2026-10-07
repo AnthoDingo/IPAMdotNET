@@ -842,7 +842,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
 
     private async Task BgpAsync()
     {
-        List<BgpPeer> items = [];
+        List<(int, BgpPeer)> items = [];
         foreach (Dictionary<string, string?> row in data.Rows("routing_bgp"))
         {
             string name = S(row, "peer_name", 100) ?? $"BGP {I(row, "id")}";
@@ -852,7 +852,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 report.Warnings.Add($"Pair BGP « {name} » : AS ou adresse invalide, non importé.");
                 continue;
             }
-            items.Add(new BgpPeer
+            items.Add((I(row, "id") ?? 0, new BgpPeer
             {
                 Name = name,
                 LocalAs = localAs,
@@ -861,12 +861,26 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 PeerAddress = peer.ToString(),
                 VrfId = Map(row, "vrf_id", vrfs),
                 Description = S(row, "description", 500),
-            });
+            }));
         }
-        db.BgpPeers.AddRange(items);
+        Dictionary<int, int> peers = await SaveAsync(items, p => p.Id);
+        report.Counts.Add(("pair(s) BGP", items.Count));
+
+        // Sous-réseaux annoncés / reçus (« routing_subnets », type « bgp »).
+        HashSet<(int, int, BgpDirection)> seen = [];
+        List<BgpPeerSubnet> links = [];
+        foreach (Dictionary<string, string?> row in data.Rows("routing_subnets").Where(r => S(r, "type") == "bgp"))
+        {
+            BgpDirection direction = S(row, "direction") == "received" ? BgpDirection.Received : BgpDirection.Advertised;
+            if (Map(row, "object_id", peers) is int peerId && Map(row, "subnet_id", subnets) is int subnetId && seen.Add((peerId, subnetId, direction)))
+            {
+                links.Add(new BgpPeerSubnet { BgpPeerId = peerId, SubnetId = subnetId, Direction = direction });
+            }
+        }
+        db.BgpPeerSubnets.AddRange(links);
         await db.SaveChangesAsync(cancellationToken);
         db.ChangeTracker.Clear();
-        report.Counts.Add(("pair(s) BGP", items.Count));
+        report.Counts.Add(("sous-réseau(x) BGP", links.Count));
     }
 
     private async Task PstnAsync()

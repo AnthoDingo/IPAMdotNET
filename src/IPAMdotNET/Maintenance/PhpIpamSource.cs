@@ -36,7 +36,7 @@ public static class PhpIpamSource
     public static readonly string[] Tables =
     [
         "sections", "subnets", "ipaddresses", "vlans", "vlanDomains", "vrf", "nameservers", "devices", "deviceTypes", "locations", "racks",
-        "customers", "circuitProviders", "circuits", "circuitTypes", "nat", "routing_bgp", "pstnPrefixes", "pstnNumbers", "ipTags",
+        "customers", "circuitProviders", "circuits", "circuitTypes", "nat", "routing_bgp", "routing_subnets", "pstnPrefixes", "pstnNumbers", "ipTags",
         "userGroups", "users", "usersAuthMethod", "settings", "settingsMail", "instructions",
     ];
 

@@ -16,6 +16,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<NatRule> NatRules => Set<NatRule>();
     public DbSet<NatRuleObject> NatRuleObjects => Set<NatRuleObject>();
     public DbSet<BgpPeer> BgpPeers => Set<BgpPeer>();
+    public DbSet<BgpPeerSubnet> BgpPeerSubnets => Set<BgpPeerSubnet>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<DeviceType> DeviceTypes => Set<DeviceType>();
@@ -115,12 +116,14 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     }
 
     /// <summary>
-    /// Avant la suppression d'un sous-réseau (et donc de ses adresses, en cascade) : les règles NAT gardent le texte, perdent le lien.
+    /// Avant la suppression d'un sous-réseau (et donc de ses adresses, en cascade) : les règles NAT gardent le texte, perdent le lien ;
+    /// ses associations aux pairs BGP sont supprimées.
     /// Clés en NO ACTION : SQL Server refuse le double chemin sous-réseau → NAT et sous-réseau → adresse → NAT.
     /// </summary>
     public async Task DetachSubnetAsync(int id)
     {
         await NatRuleObjects.Where(x => x.SubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.SubnetId, (int?)null));
+        await BgpPeerSubnets.Where(x => x.SubnetId == id).ExecuteDeleteAsync();
         await DetachAddressesAsync(IpAddresses.Where(a => a.SubnetId == id).Select(a => a.Id));
     }
 
@@ -174,6 +177,13 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<Vrf>().HasIndex(v => v.Name).IsUnique();
         modelBuilder.Entity<BgpPeer>().HasOne(b => b.Vrf).WithMany().OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<BgpPeerSubnet>(entity =>
+        {
+            entity.HasIndex(x => new { x.BgpPeerId, x.SubnetId, x.Direction }).IsUnique();
+            entity.HasOne(x => x.BgpPeer).WithMany(p => p.Subnets).OnDelete(DeleteBehavior.Cascade);
+            // NO ACTION : supprimées par DetachSubnetAsync (chemins multiples refusés par SQL Server, via les VRF).
+            entity.HasOne(x => x.Subnet).WithMany().OnDelete(DeleteBehavior.ClientCascade);
+        });
         // NAT : liens en NO ACTION, vidés par DetachSubnetAsync / DetachAddressesAsync / DetachDeviceAsync.
         modelBuilder.Entity<NatRule>().HasOne(n => n.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
         modelBuilder.Entity<NatRuleObject>(entity =>

@@ -38,7 +38,7 @@
 - [x] Domaines L2 : restriction aux sections (aucune = toutes) ; VLAN proposés et acceptés selon la section du sous-réseau (formulaire, API, CSV) ; « permissions » reprises de phpIPAM.
 - [ ] MySQL : sur MariaDB (12.3), `dotnet ef database update` échoue dans `MySQLHistoryRepository.AcquireDatabaseLock` (provider Oracle) ; vérifier la page `/update` sur MariaDB.
 - [x] NAT : plusieurs objets par côté, chacun lié à un sous-réseau ou une adresse (liaison automatique si un seul objet correspond, choix sinon ; texte libre pour une adresse externe), équipement ; règles affichées sur la fiche du sous-réseau ; API et import phpIPAM.
-- [ ] BGP : association des sous-réseaux annoncés à un pair.
+- [x] BGP : sous-réseaux annoncés et reçus par pair (formulaire, liste des pairs, fiche du sous-réseau, API, import phpIPAM « routing_subnets »).
 - [ ] DNS : intégration PowerDNS (aujourd'hui seuls les jeux de serveurs de noms existent).
 
 ## Outils — écarts restants avec phpIPAM

@@ -1,6 +1,5 @@
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
-using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,18 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Network.Nat;
 
-/// <summary>Un côté du formulaire : une entrée par ligne, avec l'objet lié (ou les objets proposés) de chaque ligne.</summary>
-public sealed class NatSideForm
-{
-    public string? Text { get; set; }
-
-    /// <summary>Par ligne : « a:id », « s:id », « none » (texte libre) ou vide (liaison automatique).</summary>
-    public List<string?> Choices { get; set; } = [];
-
-    public Dictionary<int, List<NatCandidate>> Candidates { get; } = [];
-    public Dictionary<int, string> Linked { get; } = [];
-}
-
 [Authorize(Policy = "Admin")]
 public class EditModel(AppDbContext db) : PageModel
 {
@@ -28,10 +15,10 @@ public class EditModel(AppDbContext db) : PageModel
     public NatRule Rule { get; set; } = new();
 
     [BindProperty]
-    public NatSideForm Source { get; set; } = new();
+    public LinkedLinesForm Source { get; set; } = new();
 
     [BindProperty]
-    public NatSideForm Destination { get; set; } = new();
+    public LinkedLinesForm Destination { get; set; } = new();
 
     public List<SelectListItem> Devices { get; private set; } = [];
 
@@ -45,8 +32,8 @@ public class EditModel(AppDbContext db) : PageModel
                 return NotFound();
             }
             Rule = rule;
-            Source = await FormAsync(rule.Sources);
-            Destination = await FormAsync(rule.Destinations);
+            Source = await LinkedLines.FormAsync(db, rule.Sources.Select(o => (o.Text, o.SubnetId, o.AddressId)));
+            Destination = await LinkedLines.FormAsync(db, rule.Destinations.Select(o => (o.Text, o.SubnetId, o.AddressId)));
         }
         await LoadAsync();
         return Page();
@@ -60,8 +47,8 @@ public class EditModel(AppDbContext db) : PageModel
             return NotFound();
         }
         List<NatRuleObject> objects = [
-            .. await ResolveAsync(Source, NatSideKind.Source, "Source.Text", "source"),
-            .. await ResolveAsync(Destination, NatSideKind.Destination, "Destination.Text", "destination"),
+            .. await ObjectsAsync(Source, NatSideKind.Source, "Source.Text", "Au moins une source est requise."),
+            .. await ObjectsAsync(Destination, NatSideKind.Destination, "Destination.Text", "Au moins une destination est requise."),
         ];
         if (Rule.DeviceId is int deviceId && !await db.Devices.AnyAsync(d => d.Id == deviceId))
         {
@@ -99,76 +86,20 @@ public class EditModel(AppDbContext db) : PageModel
         return RedirectToPage("Index");
     }
 
-    /// <summary>
-    /// Chaque ligne est résolue avec le choix de même rang ; un lien ne vaut plus si le texte de la ligne a changé
-    /// (nouvelle liaison automatique). Les erreurs et les objets proposés sont rangés par ligne pour le réaffichage.
-    /// </summary>
-    private async Task<List<NatRuleObject>> ResolveAsync(NatSideForm form, NatSideKind kind, string field, string label)
+    private async Task<List<NatRuleObject>> ObjectsAsync(LinkedLinesForm form, NatSideKind kind, string field, string required)
     {
-        // Valeur postée oubliée : la zone est réaffichée dans la forme canonique (les erreurs ajoutées ensuite restent).
-        ModelState.Remove(field);
-        List<string> lines = NatLinks.Lines(form.Text);
-        if (lines.Count == 0)
+        List<NatSide> sides = await LinkedLines.ResolveAsync(db, form, ModelState, field, subnetsOnly: false);
+        if (sides.Count == 0)
         {
-            ModelState.AddModelError(field, $"Au moins une {label} est requise.");
+            ModelState.AddModelError(field, required);
         }
-        List<NatRuleObject> objects = [];
-        List<string?> choices = [];
-        for (int i = 0; i < lines.Count; i++)
-        {
-            string? choice = form.Choices.ElementAtOrDefault(i);
-            NatSide side = await NatLinks.ResolveAsync(db, lines[i], choice);
-            if (choice is not null && choice != NatLinks.None && side.Error is null && Ip.TryNormalize(lines[i], out string typed) && typed != side.Text)
-            {
-                side = await NatLinks.ResolveAsync(db, lines[i], null);
-            }
-            if (side.Error is not null)
-            {
-                ModelState.AddModelError(field, $"« {lines[i]} » : {side.Error}");
-                if (side.Candidates is not null)
-                {
-                    form.Candidates[i] = side.Candidates;
-                }
-            }
-            choices.Add(NatLinks.Key(side.SubnetId, side.AddressId) ?? (choice == NatLinks.None ? NatLinks.None : null));
-            objects.Add(new NatRuleObject { Side = kind, Text = side.Text, SubnetId = side.SubnetId, AddressId = side.AddressId });
-        }
-        // Réaffichage : une ligne par entrée, dans la forme canonique.
-        form.Text = string.Join('\n', objects.Select(o => o.Text));
-        form.Choices = choices;
-        return objects;
-    }
-
-    /// <summary>Formulaire d'un côté enregistré (texte actualisé depuis les objets liés).</summary>
-    private async Task<NatSideForm> FormAsync(IEnumerable<NatRuleObject> objects)
-    {
-        NatSideForm form = new();
-        List<string> lines = [];
-        foreach (NatRuleObject item in objects)
-        {
-            string? key = NatLinks.Key(item.SubnetId, item.AddressId);
-            NatSide side = await NatLinks.ResolveAsync(db, item.Text, key ?? NatLinks.None);
-            lines.Add(side.Text);
-            form.Choices.Add(key);
-        }
-        form.Text = string.Join('\n', lines);
-        return form;
+        return sides.Select(s => new NatRuleObject { Side = kind, Text = s.Text, SubnetId = s.SubnetId, AddressId = s.AddressId }).ToList();
     }
 
     private async Task LoadAsync()
     {
         Devices = await db.Devices.OrderBy(d => d.Hostname).Select(d => new SelectListItem(d.Hostname, d.Id.ToString())).ToListAsync();
-        foreach (NatSideForm form in new[] { Source, Destination })
-        {
-            List<string> lines = NatLinks.Lines(form.Text);
-            for (int i = 0; i < lines.Count; i++)
-            {
-                if (form.Choices.ElementAtOrDefault(i) is { } key && key != NatLinks.None && Ip.TryNormalize(lines[i], out string normalized)
-                    && (await NatLinks.CandidatesAsync(db, normalized)).FirstOrDefault(c => c.Key == key) is { } candidate)
-                {
-                    form.Linked[i] = candidate.Label;
-                }
-            }
-        }
+        await LinkedLines.LabelAsync(db, Source);
+        await LinkedLines.LabelAsync(db, Destination);
     }
 }

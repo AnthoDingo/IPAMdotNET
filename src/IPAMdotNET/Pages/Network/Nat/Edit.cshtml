@@ -24,7 +24,7 @@
                 <label asp-for="Source.Text" class="form-label">@L.T("Source")</label>
                 <textarea asp-for="Source.Text" class="form-control font-monospace" rows="3" placeholder="10.0.0.0/24"></textarea>
                 <span asp-validation-for="Source.Text" class="text-danger"></span>
-                <partial name="_NatSideChoices" model="@(("Source", Model.Source))" />
+                <partial name="_LinkedLines" model="@(("Source", Model.Source, false))" />
             </div>
             <div class="col-md-4">
                 <label asp-for="Rule.SourcePort" class="form-label"></label>
@@ -35,7 +35,7 @@
                 <label asp-for="Destination.Text" class="form-label">@L.T("Destination")</label>
                 <textarea asp-for="Destination.Text" class="form-control font-monospace" rows="3" placeholder="203.0.113.10"></textarea>
                 <span asp-validation-for="Destination.Text" class="text-danger"></span>
-                <partial name="_NatSideChoices" model="@(("Destination", Model.Destination))" />
+                <partial name="_LinkedLines" model="@(("Destination", Model.Destination, false))" />
             </div>
             <div class="col-md-4">
                 <label asp-for="Rule.DestinationPort" class="form-label"></label>

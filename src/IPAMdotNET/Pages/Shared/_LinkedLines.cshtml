@@ -1,6 +1,6 @@
 @using IPAMdotNet.Maintenance
-@model (string Name, IPAMdotNet.Pages.Network.Nat.NatSideForm Form)
-@* Objet lié à chaque ligne d'un côté : conservé en champ caché, ou à choisir quand plusieurs objets correspondent. *@
+@model (string Name, LinkedLinesForm Form, bool SubnetsOnly)
+@* Objet lié à chaque ligne : conservé en champ caché, ou à choisir quand plusieurs objets correspondent. *@
 @{
     List<string> lines = NatLinks.Lines(Model.Form.Text);
 }
@@ -16,7 +16,10 @@
                     {
                         <option value="@candidate.Key">@candidate.Label</option>
                     }
-                    <option value="@NatLinks.None">@L.T("Aucun objet (adresse externe)")</option>
+                    @if (!Model.SubnetsOnly)
+                    {
+                        <option value="@NatLinks.None">@L.T("Aucun objet (adresse externe)")</option>
+                    }
                 </select>
             }
             else
@@ -26,7 +29,7 @@
                 {
                     <i class="bi bi-link-45deg"></i> @linked
                 }
-                else
+                else if (!Model.SubnetsOnly)
                 {
                     <span class="font-monospace">@lines[i]</span> <span class="text-body-secondary">— @L.T("adresse externe")</span>
                 }
@@ -34,4 +37,4 @@
         </li>
     }
 </ul>
-<div class="form-text">@L.T("Une adresse ou un réseau par ligne, lié automatiquement à l'objet correspondant s'il existe dans l'IPAM.")</div>
+<div class="form-text">@(Model.SubnetsOnly ? L.T("Un sous-réseau de l'IPAM par ligne (ex. 10.0.0.0/24).") : L.T("Une adresse ou un réseau par ligne, lié automatiquement à l'objet correspondant s'il existe dans l'IPAM."))</div>

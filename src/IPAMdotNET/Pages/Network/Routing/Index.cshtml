@@ -21,7 +21,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Pair")</th><th>@L.T("Type")</th><th>@L.T("AS local")</th><th>@L.T("Adresse locale")</th><th>@L.T("AS du pair")</th><th>@L.T("Adresse du pair")</th><th>VRF</th><th>@L.T("Description")</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Pair")</th><th>@L.T("Type")</th><th>@L.T("AS local")</th><th>@L.T("Adresse locale")</th><th>@L.T("AS du pair")</th><th>@L.T("Adresse du pair")</th><th>VRF</th><th>@L.T("Annoncés")</th><th>@L.T("Reçus")</th><th>@L.T("Description")</th>@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (BgpPeer peer in Model.Peers)
                 {
@@ -33,6 +33,15 @@
                         <td>@peer.PeerAs</td>
                         <td class="font-monospace">@peer.PeerAddress</td>
                         <td>@peer.Vrf?.Name</td>
+                        @foreach (BgpDirection direction in new[] { BgpDirection.Advertised, BgpDirection.Received })
+                        {
+                            <td class="font-monospace small">
+                                @foreach (Subnet subnet in Model.Subnets[(peer.Id, direction)])
+                                {
+                                    <div><a asp-page="/Network/Subnets/Details" asp-route-id="@subnet.Id">@subnet.Network</a></div>
+                                }
+                            </td>
+                        }
                         <td>@peer.Description</td>
                         @if (admin)
                         {

@@ -296,6 +296,27 @@
     }
 </div>
 
+@if (Model.BgpPeers.Count > 0)
+{
+    <div class="ipam-panel mt-3">
+        <div class="ipam-panel-title"><i class="bi bi-signpost-split"></i> BGP</div>
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Pair")</th><th>@L.T("Sens")</th><th>@L.T("AS du pair")</th><th>@L.T("Adresse du pair")</th></tr></thead>
+            <tbody>
+                @foreach (BgpPeerSubnet link in Model.BgpPeers)
+                {
+                    <tr>
+                        <td><a asp-page="/Network/Routing/Index">@link.BgpPeer!.Name</a></td>
+                        <td>@Html.DisplayFor(_ => link.Direction)</td>
+                        <td>@link.BgpPeer.PeerAs</td>
+                        <td class="font-monospace">@link.BgpPeer.PeerAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 @if (Model.NatRules.Count > 0)
 {
     <div class="ipam-panel mt-3">

@@ -61,6 +61,7 @@ public class ChangeLog
             [nameof(NatRule)] = ("NAT", "/Network/Nat/Index", false),
             [nameof(NatRuleObject)] = ("Objet NAT", "/Network/Nat/Index", false),
             [nameof(BgpPeer)] = ("Pair BGP", "/Network/Routing/Index", false),
+            [nameof(BgpPeerSubnet)] = ("Sous-réseau BGP", "/Network/Routing/Index", false),
             [nameof(Location)] = ("Emplacement", "/Infrastructure/Locations/Details", true),
             [nameof(Customer)] = ("Client", "/Infrastructure/Customers/Details", true),
             [nameof(DeviceType)] = ("Type d'équipement", "/Infrastructure/DeviceTypes/Index", false),

@@ -204,6 +204,33 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.ToTable("BgpPeers");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.BgpPeerSubnet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BgpPeerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubnetId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubnetId");
+
+                    b.HasIndex("BgpPeerId", "SubnetId", "Direction")
+                        .IsUnique();
+
+                    b.ToTable("BgpPeerSubnets");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.ChangeLog", b =>
                 {
                     b.Property<int>("Id")
@@ -1415,6 +1442,25 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("Vrf");
                 });
 
+            modelBuilder.Entity("IPAMdotNet.Data.BgpPeerSubnet", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.BgpPeer", "BgpPeer")
+                        .WithMany("Subnets")
+                        .HasForeignKey("BgpPeerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.Subnet", "Subnet")
+                        .WithMany()
+                        .HasForeignKey("SubnetId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+
+                    b.Navigation("BgpPeer");
+
+                    b.Navigation("Subnet");
+                });
+
             modelBuilder.Entity("IPAMdotNet.Data.Circuit", b =>
                 {
                     b.HasOne("IPAMdotNet.Data.Customer", "Customer")
@@ -1743,6 +1789,11 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasForeignKey("VlanDomainId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
+                {
+                    b.Navigation("Subnets");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>

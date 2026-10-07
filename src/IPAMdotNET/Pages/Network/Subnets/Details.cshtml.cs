@@ -92,6 +92,8 @@ public class DetailsModel(AppDbContext db) : PageModel
         NatRules = await db.NatRules.Include(n => n.Objects).ThenInclude(o => o.Subnet).Include(n => n.Objects).ThenInclude(o => o.Address)
             .Where(n => n.Objects.Any(o => o.SubnetId == id || (o.Address != null && o.Address.SubnetId == id)))
             .OrderBy(n => n.Name).ToListAsync();
+        BgpPeers = await db.BgpPeerSubnets.Include(x => x.BgpPeer).Where(x => x.SubnetId == id)
+            .OrderBy(x => x.Direction).ThenBy(x => x.BgpPeer!.Name).ToListAsync();
         return Page();
     }
 
@@ -118,6 +120,9 @@ public class DetailsModel(AppDbContext db) : PageModel
 
     /// <summary>Règles NAT liées au sous-réseau ou à l'une de ses adresses.</summary>
     public List<NatRule> NatRules { get; private set; } = [];
+
+    /// <summary>Pairs BGP auxquels le sous-réseau est annoncé ou dont il est reçu.</summary>
+    public List<BgpPeerSubnet> BgpPeers { get; private set; } = [];
 
     [TempData]
     public string? Message { get; set; }
