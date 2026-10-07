@@ -821,7 +821,16 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("DestinationAddressId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("DestinationPort")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DestinationSubnetId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DeviceId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -834,13 +843,29 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("SourceAddressId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("SourcePort")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SourceSubnetId")
                         .HasColumnType("int");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DestinationAddressId");
+
+                    b.HasIndex("DestinationSubnetId");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("SourceAddressId");
+
+                    b.HasIndex("SourceSubnetId");
 
                     b.ToTable("NatRules");
                 });
@@ -1518,6 +1543,39 @@ namespace IPAMdotNet.Migrations.SqlServer
                     b.Navigation("RequestedBy");
 
                     b.Navigation("Subnet");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.IpAddress", "DestinationAddress")
+                        .WithMany()
+                        .HasForeignKey("DestinationAddressId");
+
+                    b.HasOne("IPAMdotNet.Data.Subnet", "DestinationSubnet")
+                        .WithMany()
+                        .HasForeignKey("DestinationSubnetId");
+
+                    b.HasOne("IPAMdotNet.Data.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId");
+
+                    b.HasOne("IPAMdotNet.Data.IpAddress", "SourceAddress")
+                        .WithMany()
+                        .HasForeignKey("SourceAddressId");
+
+                    b.HasOne("IPAMdotNet.Data.Subnet", "SourceSubnet")
+                        .WithMany()
+                        .HasForeignKey("SourceSubnetId");
+
+                    b.Navigation("DestinationAddress");
+
+                    b.Navigation("DestinationSubnet");
+
+                    b.Navigation("Device");
+
+                    b.Navigation("SourceAddress");
+
+                    b.Navigation("SourceSubnet");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.PstnNumber", b =>

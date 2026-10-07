@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IPAMdotNet.Pages.Network.Subnets;
 
@@ -161,12 +162,15 @@ public class EditModel(AppDbContext db) : PageModel
         {
             return Forbid();
         }
-        // Les adresses partent en cascade côté base : leurs champs personnalisés (sans clé étrangère) d'abord.
+        // Les adresses partent en cascade côté base : leurs champs personnalisés (sans clé étrangère) et liens NAT d'abord.
+        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
         await db.CustomFieldValues
             .Where(v => v.Field!.EntityType == nameof(IpAddress) && db.IpAddresses.Any(a => a.Id == v.EntityId && a.SubnetId == id))
             .ExecuteDeleteAsync();
+        await db.DetachSubnetAsync(id);
         db.Subnets.Remove(subnet);
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         return RedirectToPage("/Sections/Index", new { id = subnet.SectionId });
     }
 

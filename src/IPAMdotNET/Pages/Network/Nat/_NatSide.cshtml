@@ -1,0 +1,18 @@
+@using IPAMdotNet.Data
+@model (string Text, Subnet? Subnet, IpAddress? Address, int? Port)
+@* Côté d'une règle NAT : l'objet lié (valeur actuelle, lien vers sa fiche) ou le texte libre. *@
+@{
+    string port = Model.Port is null ? "" : $":{Model.Port}";
+}
+@if (Model.Address is not null)
+{
+    <a asp-page="/Network/Addresses/Edit" asp-route-id="@Model.Address.Id" title="@L.T("Adresse IP")">@Model.Address.Value</a>@port
+}
+else if (Model.Subnet is not null)
+{
+    <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" title="@L.T("Sous-réseau")">@Model.Subnet.Network</a>@port
+}
+else
+{
+    @Model.Text@port
+}

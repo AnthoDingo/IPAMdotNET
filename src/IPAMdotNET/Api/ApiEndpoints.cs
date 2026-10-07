@@ -305,12 +305,15 @@ public static partial class ApiEndpoints
             {
                 return Forbidden("Pas de droit d'écriture sur cette section.");
             }
-            // Comme la page : les adresses partent en cascade côté base, leurs champs personnalisés d'abord.
+            // Comme la page : les adresses partent en cascade côté base, leurs champs personnalisés et liens NAT d'abord.
+            await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
             await db.CustomFieldValues
                 .Where(v => v.Field!.EntityType == nameof(IpAddress) && db.IpAddresses.Any(a => a.Id == v.EntityId && a.SubnetId == id))
                 .ExecuteDeleteAsync();
+            await db.DetachSubnetAsync(id);
             db.Subnets.Remove(subnet);
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return Results.NoContent();
         });
     }
@@ -413,8 +416,11 @@ public static partial class ApiEndpoints
             {
                 return Forbidden("Pas de droit d'écriture sur cette section.");
             }
+            await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
+            await db.DetachAddressesAsync(db.IpAddresses.Where(a => a.Id == id).Select(a => a.Id));
             db.IpAddresses.Remove(entry);
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return Results.NoContent();
         });
     }

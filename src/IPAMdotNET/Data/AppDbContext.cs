@@ -110,6 +110,27 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         await PstnPrefixes.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await PstnNumbers.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await IpAddresses.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await NatRules.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+    }
+
+    /// <summary>
+    /// Avant la suppression d'un sous-réseau (et donc de ses adresses, en cascade) : les règles NAT gardent le texte, perdent le lien.
+    /// Clés en NO ACTION : SQL Server refuse deux clés en SET NULL vers la même table, et le chemin sous-réseau → adresse → NAT.
+    /// </summary>
+    public async Task DetachSubnetAsync(int id)
+    {
+        await NatRules.Where(x => x.SourceSubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.SourceSubnetId, (int?)null));
+        await NatRules.Where(x => x.DestinationSubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DestinationSubnetId, (int?)null));
+        await DetachAddressesAsync(IpAddresses.Where(a => a.SubnetId == id).Select(a => a.Id));
+    }
+
+    /// <summary>Avant la suppression d'adresses : les règles NAT gardent le texte, perdent le lien.</summary>
+    public async Task DetachAddressesAsync(IQueryable<int> ids)
+    {
+        await NatRules.Where(x => x.SourceAddressId != null && ids.Contains(x.SourceAddressId.Value))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.SourceAddressId, (int?)null));
+        await NatRules.Where(x => x.DestinationAddressId != null && ids.Contains(x.DestinationAddressId.Value))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DestinationAddressId, (int?)null));
     }
 
     public static AppDbContext Create(DbProvider provider, string connectionString) => provider switch
@@ -155,6 +176,15 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
         modelBuilder.Entity<Vrf>().HasIndex(v => v.Name).IsUnique();
         modelBuilder.Entity<BgpPeer>().HasOne(b => b.Vrf).WithMany().OnDelete(DeleteBehavior.SetNull);
+        // NAT : liens en NO ACTION, vidés par DetachSubnetAsync / DetachAddressesAsync / DetachDeviceAsync.
+        modelBuilder.Entity<NatRule>(entity =>
+        {
+            entity.HasOne(n => n.SourceSubnet).WithMany().HasForeignKey(n => n.SourceSubnetId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(n => n.DestinationSubnet).WithMany().HasForeignKey(n => n.DestinationSubnetId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(n => n.SourceAddress).WithMany().HasForeignKey(n => n.SourceAddressId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(n => n.DestinationAddress).WithMany().HasForeignKey(n => n.DestinationAddressId).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(n => n.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
 
         // Infrastructure : clés étrangères facultatives en NO ACTION, vidées par les méthodes Detach*Async.
         modelBuilder.Entity<Subnet>().HasOne(s => s.Location).WithMany().OnDelete(DeleteBehavior.ClientSetNull);

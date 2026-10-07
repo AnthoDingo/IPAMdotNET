@@ -21,16 +21,17 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Type")</th><th>@L.T("Source")</th><th></th><th>@L.T("Destination")</th><th>@L.T("Description")</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Type")</th><th>@L.T("Source")</th><th></th><th>@L.T("Destination")</th><th>@L.T("Équipement")</th><th>@L.T("Description")</th>@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (NatRule rule in Model.Rules)
                 {
                     <tr>
                         <td>@rule.Name</td>
                         <td>@Html.DisplayFor(_ => rule.Type)</td>
-                        <td class="font-monospace">@rule.Source@(rule.SourcePort is null ? "" : $":{rule.SourcePort}")</td>
+                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Source, rule.SourceSubnet, rule.SourceAddress, rule.SourcePort))" /></td>
                         <td><i class="bi bi-arrow-right"></i></td>
-                        <td class="font-monospace">@rule.Destination@(rule.DestinationPort is null ? "" : $":{rule.DestinationPort}")</td>
+                        <td class="font-monospace"><partial name="_NatSide" model="@((rule.Destination, rule.DestinationSubnet, rule.DestinationAddress, rule.DestinationPort))" /></td>
+                        <td>@rule.Device?.Hostname</td>
                         <td>@rule.Description</td>
                         @if (admin)
                         {

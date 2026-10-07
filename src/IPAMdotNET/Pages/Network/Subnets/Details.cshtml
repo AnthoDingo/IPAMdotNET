@@ -296,6 +296,28 @@
     }
 </div>
 
+@if (Model.NatRules.Count > 0)
+{
+    <div class="ipam-panel mt-3">
+        <div class="ipam-panel-title"><i class="bi bi-arrow-left-right"></i> NAT</div>
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Type")</th><th>@L.T("Source")</th><th></th><th>@L.T("Destination")</th></tr></thead>
+            <tbody>
+                @foreach (NatRule rule in Model.NatRules)
+                {
+                    <tr>
+                        <td><a asp-page="/Network/Nat/Index">@rule.Name</a></td>
+                        <td>@Html.DisplayFor(_ => rule.Type)</td>
+                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Source, rule.SourceSubnet, rule.SourceAddress, rule.SourcePort))" /></td>
+                        <td><i class="bi bi-arrow-right"></i></td>
+                        <td class="font-monospace"><partial name="/Pages/Network/Nat/_NatSide.cshtml" model="@((rule.Destination, rule.DestinationSubnet, rule.DestinationAddress, rule.DestinationPort))" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 @if (Model.Subnet.Id != 0)
 {
     <vc:history entity-type="Subnet" entity-id="@Model.Subnet.Id" />

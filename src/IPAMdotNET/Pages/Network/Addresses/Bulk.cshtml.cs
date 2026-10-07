@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IPAMdotNet.Pages.Network.Addresses;
 
@@ -117,8 +118,12 @@ public class BulkModel(AppDbContext db) : PageModel
             return NothingSelected(subnetId);
         }
         // Suppression suivie (pas ExecuteDelete) : journalisée, et les champs personnalisés partent avec.
+        List<int> ids = Addresses.Select(a => a.Id).ToList();
+        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
+        await db.DetachAddressesAsync(db.IpAddresses.Where(a => ids.Contains(a.Id)).Select(a => a.Id));
         db.IpAddresses.RemoveRange(Addresses);
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         Message = $"{Addresses.Count} adresse(s) supprimée(s).";
         return RedirectToPage("/Network/Subnets/Details", new { id = subnetId });
     }

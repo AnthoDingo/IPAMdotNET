@@ -89,6 +89,11 @@ public class DetailsModel(AppDbContext db) : PageModel
         }
         FirstFree = Ip.FirstFree(subnet.Network, addresses.Select(a => Ip.ToNumber(a.Value)).ToHashSet());
         ScanEnabled = subnet.ScanAgent?.Enabled ?? (await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled;
+        NatRules = await db.NatRules
+            .Include(n => n.SourceSubnet).Include(n => n.SourceAddress).Include(n => n.DestinationSubnet).Include(n => n.DestinationAddress)
+            .Where(n => n.SourceSubnetId == id || n.DestinationSubnetId == id
+                || (n.SourceAddress != null && n.SourceAddress.SubnetId == id) || (n.DestinationAddress != null && n.DestinationAddress.SubnetId == id))
+            .OrderBy(n => n.Name).ToListAsync();
         return Page();
     }
 
@@ -112,6 +117,9 @@ public class DetailsModel(AppDbContext db) : PageModel
     public Dictionary<int, Dictionary<int, string>> AddressValues { get; private set; } = [];
     public System.Net.IPAddress? FirstFree { get; private set; }
     public bool ScanEnabled { get; private set; }
+
+    /// <summary>Règles NAT liées au sous-réseau ou à l'une de ses adresses.</summary>
+    public List<NatRule> NatRules { get; private set; } = [];
 
     [TempData]
     public string? Message { get; set; }

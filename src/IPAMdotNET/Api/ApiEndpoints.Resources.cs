@@ -184,15 +184,17 @@ public static partial class ApiEndpoints
         MapResource(api, new ApiResource<NatRule>
         {
             Path = "nat", Label = "Règle NAT",
-            Fields = [nameof(NatRule.Name), nameof(NatRule.Type), nameof(NatRule.Source), nameof(NatRule.SourcePort), nameof(NatRule.Destination),
-                nameof(NatRule.DestinationPort), nameof(NatRule.Description)],
-            Validate = (db, r, errors) =>
+            Fields = [nameof(NatRule.Name), nameof(NatRule.Type), nameof(NatRule.Source), nameof(NatRule.SourceSubnetId), nameof(NatRule.SourceAddressId),
+                nameof(NatRule.SourcePort), nameof(NatRule.Destination), nameof(NatRule.DestinationSubnetId), nameof(NatRule.DestinationAddressId),
+                nameof(NatRule.DestinationPort), nameof(NatRule.DeviceId), nameof(NatRule.Description)],
+            // Comme le formulaire : objet imposé par son identifiant, sinon texte lié automatiquement à l'objet correspondant s'il est seul.
+            Check = async call =>
             {
-                if (Ip.TryNormalize(r.Source, out string source)) { r.Source = source; }
-                else { AddIf(errors, true, "source", "Adresse ou réseau invalide (ex. 10.0.0.1 ou 10.0.0.0/24)."); }
-                if (Ip.TryNormalize(r.Destination, out string destination)) { r.Destination = destination; }
-                else { AddIf(errors, true, "destination", "Adresse ou réseau invalide (ex. 203.0.113.10 ou 203.0.113.0/28)."); }
-                return Task.CompletedTask;
+                NatRule r = call.Item;
+                (r.Source, r.SourceSubnetId, r.SourceAddressId) =
+                    await NatSideAsync(call, "source", r.Source, r.SourceSubnetId, r.SourceAddressId);
+                (r.Destination, r.DestinationSubnetId, r.DestinationAddressId) =
+                    await NatSideAsync(call, "destination", r.Destination, r.DestinationSubnetId, r.DestinationAddressId);
             },
         });
         MapResource(api, new ApiResource<BgpPeer>
@@ -455,6 +457,34 @@ public static partial class ApiEndpoints
     }
 
     /// <summary>Liste JSON d'identifiants → objets existants ; null (et erreur) si invalide ou si un identifiant n'existe pas.</summary>
+    /// <summary>
+    /// Un côté d'une règle NAT : identifiant envoyé = objet imposé (0 = aucun, texte libre) ; texte seul envoyé = liaison automatique ;
+    /// rien d'envoyé = inchangé.
+    /// </summary>
+    private static async Task<(string Text, int? SubnetId, int? AddressId)> NatSideAsync(ApiCall<NatRule> call, string side,
+        string text, int? subnetId, int? addressId)
+    {
+        bool subnetSent = call.TryGet(side + "SubnetId", out _);
+        bool addressSent = call.TryGet(side + "AddressId", out _);
+        bool idSent = subnetSent || addressSent;
+        if (!idSent && !call.TryGet(side, out _) && !call.Creating)
+        {
+            return (text, subnetId, addressId);
+        }
+        // Un identifiant envoyé seul remplace l'objet de l'autre type.
+        subnetId = addressSent && !subnetSent ? null : subnetId;
+        addressId = subnetSent && !addressSent ? null : addressId;
+        AddIf(call.Errors, subnetId is not null && addressId is not null, side, "Un seul objet par côté : sous-réseau ou adresse.");
+        NatSide resolved = await NatLinks.ResolveAsync(call.Db, text, idSent ? NatLinks.Key(subnetId, addressId) ?? NatLinks.None : null);
+        if (resolved.Error is not null)
+        {
+            string candidates = resolved.Candidates is null ? ""
+                : " " + string.Join(" ; ", resolved.Candidates.Select(c => $"{(c.Key[0] == 'a' ? side + "AddressId" : side + "SubnetId")}={c.Key[2..]} : {c.Label}"));
+            AddIf(call.Errors, true, side, resolved.Error + candidates);
+        }
+        return (resolved.Text, resolved.SubnetId, resolved.AddressId);
+    }
+
     private static async Task<List<TEntity>?> IdsAsync<TEntity>(DbSet<TEntity> set, JsonElement json, string field, string missing,
         Dictionary<string, string[]> errors) where TEntity : class
     {

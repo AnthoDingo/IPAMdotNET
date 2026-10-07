@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IPAMdotNet.Pages.Network.Addresses;
 
@@ -145,8 +146,11 @@ public class EditModel(AppDbContext db) : PageModel
         {
             return denied;
         }
+        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync();
+        await db.DetachAddressesAsync(db.IpAddresses.Where(a => a.Id == id).Select(a => a.Id));
         db.IpAddresses.Remove(entry);
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
         return RedirectToPage("/Network/Subnets/Details", new { id = entry.SubnetId });
     }
 

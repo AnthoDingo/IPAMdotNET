@@ -772,8 +772,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         List<NatRule> items = [];
         foreach (Dictionary<string, string?> row in data.Rows("nat"))
         {
-            string? source = NatObject(S(row, "src"));
-            string? destination = NatObject(S(row, "dst"));
+            (string Text, int? SubnetId, int? AddressId)? source = NatObject(S(row, "src"));
+            (string Text, int? SubnetId, int? AddressId)? destination = NatObject(S(row, "dst"));
             string name = S(row, "name", 100) ?? $"NAT {I(row, "id")}";
             if (source is null || destination is null)
             {
@@ -784,8 +784,13 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             {
                 Name = name,
                 Type = S(row, "type")?.ToLowerInvariant() switch { "source" => NatType.Source, "destination" => NatType.Destination, _ => NatType.Static },
-                Source = source,
-                Destination = destination,
+                Source = source.Value.Text,
+                SourceSubnetId = source.Value.SubnetId,
+                SourceAddressId = source.Value.AddressId,
+                Destination = destination.Value.Text,
+                DestinationSubnetId = destination.Value.SubnetId,
+                DestinationAddressId = destination.Value.AddressId,
+                DeviceId = Map(row, "device", devices),
                 SourcePort = Port(S(row, "src_port")),
                 DestinationPort = Port(S(row, "dst_port")),
                 Description = S(row, "description", 500),
@@ -797,8 +802,11 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         report.Counts.Add(("règle(s) NAT", items.Count));
     }
 
-    /// <summary>Objet NAT phpIPAM ({"ipaddresses":["12"],"subnets":["3"]}) → première adresse ou premier réseau, en texte.</summary>
-    private string? NatObject(string? json)
+    /// <summary>
+    /// Objet NAT phpIPAM ({"ipaddresses":["12"],"subnets":["3"]}) → première adresse ou premier réseau, en texte et lié.
+    /// ponytail: un seul objet par côté ici ; les suivants sont ignorés (phpIPAM en accepte plusieurs).
+    /// </summary>
+    private (string Text, int? SubnetId, int? AddressId)? NatObject(string? json)
     {
         if (json is null)
         {
@@ -811,7 +819,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             {
                 return null;
             }
-            foreach ((string kind, Dictionary<int, string> texts) in new[] { ("ipaddresses", addressTexts), ("subnets", subnetTexts) })
+            foreach ((string kind, Dictionary<int, string> texts, Dictionary<int, int> map) in new[] { ("ipaddresses", addressTexts, addresses), ("subnets", subnetTexts, subnets) })
             {
                 if (document.RootElement.TryGetProperty(kind, out JsonElement ids) && ids.ValueKind == JsonValueKind.Array)
                 {
@@ -819,7 +827,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                     {
                         if (int.TryParse(id.ToString(), out int old) && texts.TryGetValue(old, out string? text))
                         {
-                            return Truncate(text, 50);
+                            int? linked = map.TryGetValue(old, out int newId) ? newId : null;
+                            return (Truncate(text, 50)!, kind == "subnets" ? linked : null, kind == "ipaddresses" ? linked : null);
                         }
                     }
                 }
