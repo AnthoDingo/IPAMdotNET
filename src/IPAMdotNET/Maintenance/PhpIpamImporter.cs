@@ -355,9 +355,28 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
 
     private async Task VlansAsync()
     {
-        // Pas de domaines L2 ici : un numéro de VLAN est unique ; les VLAN de même numéro d'autres domaines sont fusionnés.
-        Dictionary<int, (int Old, Vlan Vlan)> byNumber = [];
-        List<(int Old, int Number)> duplicates = [];
+        // Domaines L2 : « default » (créé par la migration) est réutilisé par nom, comme les autres domaines de même nom.
+        Dictionary<string, int> existing = await db.VlanDomains.ToDictionaryAsync(d => d.Name, d => d.Id, StringComparer.OrdinalIgnoreCase, cancellationToken);
+        Dictionary<int, int> domains = [];
+        List<(int, VlanDomain)> newDomains = [];
+        foreach (Dictionary<string, string?> row in data.Rows("vlanDomains"))
+        {
+            int old = I(row, "id") ?? 0;
+            string name = S(row, "name", 100) ?? $"Domaine {old}";
+            if (existing.TryGetValue(name, out int id))
+            {
+                domains[old] = id;
+                continue;
+            }
+            existing[name] = 0;
+            newDomains.Add((old, new VlanDomain { Name = name, Description = S(row, "description", 500) }));
+        }
+        Merge(domains, await SaveAsync(newDomains, d => d.Id));
+        int defaultDomain = await Vlan.DefaultDomainIdAsync(db);
+
+        // Un numéro est unique dans son domaine ; un doublon (base incohérente) est ignoré.
+        HashSet<(int, int)> seen = [];
+        List<(int, Vlan)> items = [];
         foreach (Dictionary<string, string?> row in data.Rows("vlans"))
         {
             int old = I(row, "vlanId") ?? I(row, "id") ?? 0;
@@ -366,23 +385,17 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 report.Warnings.Add($"VLAN « {S(row, "name")} » : numéro {S(row, "number")} invalide, non importé.");
                 continue;
             }
-            if (byNumber.ContainsKey(number))
+            int domain = Map(row, "domainId", domains) ?? defaultDomain;
+            if (!seen.Add((domain, number)))
             {
-                duplicates.Add((old, number));
+                report.Warnings.Add($"VLAN {number} en double dans un même domaine L2, non importé.");
                 continue;
             }
-            byNumber[number] = (old, new Vlan { Number = number, Name = S(row, "name", 100) ?? $"VLAN {number}", Description = S(row, "description", 500) });
+            items.Add((old, new Vlan { DomainId = domain, Number = number, Name = S(row, "name", 100) ?? $"VLAN {number}", Description = S(row, "description", 500) }));
         }
-        Merge(vlans, await SaveAsync(byNumber.Values.ToList(), v => v.Id));
-        foreach ((int old, int number) in duplicates)
-        {
-            vlans[old] = vlans[byNumber[number].Old];
-        }
-        if (duplicates.Count > 0)
-        {
-            report.Warnings.Add($"{duplicates.Count} VLAN de numéro déjà présent (autre domaine L2) fusionné(s) avec le premier : {string.Join(", ", duplicates.Select(d => d.Number).Distinct())}.");
-        }
-        report.Counts.Add(("VLAN", byNumber.Count));
+        Merge(vlans, await SaveAsync(items, v => v.Id));
+        report.Counts.Add(("domaine(s) L2", newDomains.Count));
+        report.Counts.Add(("VLAN", items.Count));
     }
 
     private async Task VrfsAsync()

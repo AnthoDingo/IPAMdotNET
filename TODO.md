@@ -1,6 +1,8 @@
 # TODO
 
 - [x] Afficher la licence **avant** l'initialisation de la base dans l'assistant `/setup` (corrigé dans le package `AnthoDingo.Setup`).
+- [ ] Assistant `/setup` (package 2.1.3) : la licence s'affiche encore en 4ᵉ étape, après la base et l'admin ; après l'avoir acceptée, retour à l'étape 1 sans écrire `Setup:IsComplete` (constaté via l'automatisation du navigateur, à vérifier à la main).
+- [x] Installation neuve : l'app ne démarrait pas sans base configurée (API branchées avant que `AppDbContext` existe).
 
 ## Serveur — écarts restants avec phpIPAM
 
@@ -29,9 +31,12 @@
 - [x] Adresses IP : champs personnalisés, ajout en masse d'une plage, affichage visuel.
 - [x] Adresses IP : champs personnalisés dans l'API et le CSV ; modification / suppression en masse.
 - [x] Import d'une instance phpIPAM (base MySQL ou API).
-- [ ] Import phpIPAM : tester contre une vraie API phpIPAM (testé contre une base phpIPAM réelle, et l'API contre un serveur simulé) ; domaines L2, dossiers, sous-réseaux en double par VRF (aujourd'hui fusionnés).
+- [x] Import phpIPAM : testé depuis une base phpIPAM réelle vers une installation neuve (sections, sous-réseaux IPv4/IPv6, adresses, étiquettes, VLAN, groupes, permissions, compte `$6$` re-haché) ; types d'équipement par défaut renommés comme dans phpIPAM pour ne plus être dupliqués.
+- [ ] Import phpIPAM : tester contre une vraie API phpIPAM (testé contre une base phpIPAM réelle, et l'API contre un serveur simulé) ; dossiers, sous-réseaux en double par VRF (aujourd'hui fusionnés).
 - [x] Permissions par section (groupes + accès par défaut, voir partie Serveur).
-- [ ] Domaines L2 pour les VLAN (aujourd'hui un numéro de VLAN est unique globalement).
+- [x] Domaines L2 pour les VLAN : numéro unique par domaine, domaine « default » créé par la migration, pages, API (`/api/vlan-domains`, `domainId`), CSV (colonnes facultatives `domaine` / `domaine_vlan`), import phpIPAM.
+- [ ] Domaines L2 : restriction aux sections (champ « permissions » de phpIPAM, liste des VLAN proposés dans un sous-réseau).
+- [ ] MySQL : sur MariaDB (12.3), `dotnet ef database update` échoue dans `MySQLHistoryRepository.AcquireDatabaseLock` (provider Oracle) ; vérifier la page `/update` sur MariaDB.
 - [ ] NAT : lier source/destination aux objets sous-réseaux/adresses et à un équipement (aujourd'hui saisie d'une adresse ou d'un réseau).
 - [ ] BGP : association des sous-réseaux annoncés à un pair.
 - [ ] DNS : intégration PowerDNS (aujourd'hui seuls les jeux de serveurs de noms existent).

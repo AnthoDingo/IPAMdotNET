@@ -1,0 +1,70 @@
+using IPAMdotNet.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+
+namespace IPAMdotNet.Pages.Network.VlanDomains;
+
+[Authorize(Policy = "Admin")]
+public class EditModel(AppDbContext db) : PageModel
+{
+    [BindProperty]
+    public VlanDomain Domain { get; set; } = new();
+
+    public async Task<IActionResult> OnGetAsync(int? id)
+    {
+        if (id is null)
+        {
+            return Page();
+        }
+        VlanDomain? domain = await db.VlanDomains.FindAsync(id);
+        if (domain is null)
+        {
+            return NotFound();
+        }
+        Domain = domain;
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync(int? id)
+    {
+        Domain.Id = id ?? 0;
+        Domain.Name = Domain.Name.Trim();
+        if (await db.VlanDomains.AnyAsync(d => d.Name == Domain.Name && d.Id != Domain.Id))
+        {
+            ModelState.AddModelError("Domain.Name", "Un domaine L2 porte déjà ce nom.");
+        }
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+        db.Update(Domain);
+        await db.SaveChangesAsync();
+        return RedirectToPage("Index");
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        VlanDomain? domain = await db.VlanDomains.FindAsync(id);
+        if (domain is null)
+        {
+            return NotFound();
+        }
+        if (await DeleteRefusalAsync(db, id) is { } refusal)
+        {
+            Domain = domain;
+            ModelState.AddModelError(string.Empty, refusal);
+            return Page();
+        }
+        db.VlanDomains.Remove(domain);
+        await db.SaveChangesAsync();
+        return RedirectToPage("Index");
+    }
+
+    /// <summary>Motif de refus de suppression (aussi appliqué par l'API), ou null.</summary>
+    public static async Task<string?> DeleteRefusalAsync(AppDbContext db, int id) =>
+        id == await Vlan.DefaultDomainIdAsync(db) ? "Le domaine par défaut ne peut pas être supprimé."
+        : await db.Vlans.AnyAsync(v => v.DomainId == id) ? "Impossible de supprimer un domaine L2 qui contient des VLAN."
+        : null;
+}

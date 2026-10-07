@@ -130,6 +130,13 @@ public static partial class ApiEndpoints
                 return Task.CompletedTask;
             },
         });
+        MapResource(api, new ApiResource<VlanDomain>
+        {
+            Path = "vlan-domains", Label = "Domaine L2", Fields = [nameof(VlanDomain.Name), nameof(VlanDomain.Description)],
+            Validate = async (db, d, errors) =>
+                AddIf(errors, await db.VlanDomains.AnyAsync(x => x.Name == d.Name && x.Id != d.Id), "name", "Un domaine L2 porte déjà ce nom."),
+            BeforeDelete = (db, id, key) => Pages.Network.VlanDomains.EditModel.DeleteRefusalAsync(db, id),
+        });
         MapResource(api, new ApiResource<DeviceType>
         {
             Path = "device-types", Label = "Type d'équipement", Fields = [nameof(DeviceType.Name), nameof(DeviceType.Description)],

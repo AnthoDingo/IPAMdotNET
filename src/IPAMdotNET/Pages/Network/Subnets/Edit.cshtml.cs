@@ -166,8 +166,10 @@ public class EditModel(AppDbContext db) : PageModel
         Sections = (await db.Sections.OrderBy(s => s.Name).ToListAsync())
             .Where(s => access.CanWrite(s.Id))
             .Select(s => new SelectListItem(s.Name, s.Id.ToString())).ToList();
-        Vlans = await db.Vlans.OrderBy(v => v.Number)
-            .Select(v => new SelectListItem(v.Number + " – " + v.Name, v.Id.ToString())).ToListAsync();
+        // Groupés par domaine L2 dès qu'il y en a plusieurs (un même numéro peut exister dans chacun).
+        List<Vlan> vlans = await db.Vlans.Include(v => v.Domain).OrderBy(v => v.Domain!.Name).ThenBy(v => v.Number).ToListAsync();
+        Dictionary<int, SelectListGroup> groups = vlans.Select(v => v.Domain!).DistinctBy(d => d.Id).ToDictionary(d => d.Id, d => new SelectListGroup { Name = d.Name });
+        Vlans = vlans.Select(v => new SelectListItem(v.Number + " – " + v.Name, v.Id.ToString()) { Group = groups.Count > 1 ? groups[v.DomainId] : null }).ToList();
         Vrfs = await db.Vrfs.OrderBy(v => v.Name)
             .Select(v => new SelectListItem(v.Name, v.Id.ToString())).ToListAsync();
         Nameservers = await db.Nameservers.OrderBy(n => n.Name)

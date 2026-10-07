@@ -14,7 +14,7 @@ public sealed record SubnetDto(int Id, int SectionId, string? Section, string Ne
     string? Location, string? Customer, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record AddressDto(int Id, int SubnetId, string? Subnet, string Address, string? Hostname, string? Description,
     string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen, IReadOnlyDictionary<string, string>? CustomFields = null);
-public sealed record VlanDto(int Id, int Number, string Name, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
+public sealed record VlanDto(int Id, int DomainId, int Number, string Name, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record DeviceDto(int Id, string Hostname, string? IpAddress, string? Type, string? Location, string? Rack, int? RackStart, int? RackSize,
     string? Description, int[] SectionIds, IReadOnlyDictionary<string, string>? CustomFields = null);
@@ -27,7 +27,7 @@ public sealed record SubnetInput(int? SectionId, string? Network, string? Descri
     bool? PingCheck, bool? Discover, bool? AllowRequests, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 public sealed record AddressInput(int? SubnetId, string? Address, string? Hostname, string? Description, string? MacAddress, string? Owner, string? Tag,
     int? DeviceId, bool? ExcludePing, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
-public sealed record VlanInput(int? Number, string? Name, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
+public sealed record VlanInput(int? Number, string? Name, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null, int? DomainId = null);
 public sealed record VrfInput(string? Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 public sealed record DeviceInput(string? Hostname, string? IpAddress, int? DeviceTypeId, int? LocationId, int? CustomerId, string? Description, int[]? SectionIds, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 
@@ -188,7 +188,7 @@ public static partial class ApiEndpoints
         api.MapGet("/vlans", async (AppDbContext db) =>
         {
             Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, nameof(Vlan));
-            return (await db.Vlans.OrderBy(v => v.Number).Select(v => new VlanDto(v.Id, v.Number, v.Name, v.Description, null)).ToListAsync())
+            return (await db.Vlans.OrderBy(v => v.Number).ThenBy(v => v.DomainId).Select(v => new VlanDto(v.Id, v.DomainId, v.Number, v.Name, v.Description, null)).ToListAsync())
                 .Select(v => v with { CustomFields = custom.GetValueOrDefault(v.Id) ?? [] });
         });
 
@@ -441,7 +441,7 @@ public static partial class ApiEndpoints
             db.Vlans.Add(vlan);
             await db.SaveChangesAsync();
             await SaveCustomFieldsAsync(db, vlan.Id, custom);
-            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
+            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
         });
 
         api.MapPatch("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id, VlanInput input) =>
@@ -466,7 +466,7 @@ public static partial class ApiEndpoints
             }
             await db.SaveChangesAsync();
             await SaveCustomFieldsAsync(db, vlan.Id, custom);
-            return Results.Ok(new VlanDto(vlan.Id, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
+            return Results.Ok(new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
         });
 
         api.MapDelete("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
@@ -719,7 +719,12 @@ public static partial class ApiEndpoints
         vlan.Number = input.Number ?? vlan.Number;
         vlan.Name = input.Name is null ? vlan.Name : input.Name.Trim();
         vlan.Description = input.Description is null ? vlan.Description : Clean(input.Description);
-        AddIf(errors, await db.Vlans.AnyAsync(v => v.Number == vlan.Number && v.Id != vlan.Id), "number", "Ce numéro de VLAN existe déjà.");
+        // Sans domaine précisé, un nouveau VLAN va dans le domaine par défaut.
+        vlan.DomainId = input.DomainId ?? (creating ? await Vlan.DefaultDomainIdAsync(db) : vlan.DomainId);
+        bool domainExists = await db.VlanDomains.AnyAsync(d => d.Id == vlan.DomainId);
+        AddIf(errors, !domainExists, "domainId", "Domaine L2 inexistant.");
+        AddIf(errors, domainExists && await db.Vlans.AnyAsync(v => v.DomainId == vlan.DomainId && v.Number == vlan.Number && v.Id != vlan.Id), "number",
+            "Ce numéro de VLAN existe déjà dans ce domaine.");
         return Merge(errors, Validate(vlan));
     }
 

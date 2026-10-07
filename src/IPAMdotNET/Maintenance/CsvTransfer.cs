@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 namespace IPAMdotNet.Maintenance;
 
 /// <param name="EntityType">Type porteur des champs personnalisés (clé de <see cref="CustomField.SupportedTypes"/>).</param>
-public sealed record CsvFormat(string Key, string Label, string EntityType, string[] Columns);
+/// <summary>Format CSV. <paramref name="Optional"/> : colonnes exportées mais facultatives à l'import (fichiers antérieurs).</summary>
+public sealed record CsvFormat(string Key, string Label, string EntityType, string[] Columns, string[]? Optional = null);
 
 /// <summary>
 /// Résultat de la préparation d'un import : objets prêts à insérer, ou erreurs (l'import est tout ou rien).
@@ -30,9 +31,9 @@ public static class CsvTransfer
 {
     public static readonly IReadOnlyList<CsvFormat> Formats =
     [
-        new("vlans", "VLAN", nameof(Vlan), ["numero", "nom", "description"]),
+        new("vlans", "VLAN", nameof(Vlan), ["numero", "nom", "description", "domaine"], ["domaine"]),
         new("vrfs", "VRF", nameof(Vrf), ["nom", "rd", "description"]),
-        new("sous-reseaux", "Sous-réseaux", nameof(Subnet), ["section", "sous_reseau", "description", "vlan", "vrf"]),
+        new("sous-reseaux", "Sous-réseaux", nameof(Subnet), ["section", "sous_reseau", "description", "vlan", "vrf", "domaine_vlan"], ["domaine_vlan"]),
         new("adresses", "Adresses IP", nameof(IpAddress), ["section", "sous_reseau", "adresse", "nom_hote", "description", "mac", "proprietaire", "etiquette"]),
         new("equipements", "Équipements", nameof(Device), ["nom", "ip", "type", "emplacement", "description"]),
         new("emplacements", "Emplacements", nameof(Location), ["nom", "adresse", "latitude", "longitude", "description"]),
@@ -44,13 +45,13 @@ public static class CsvTransfer
     {
         List<(int Id, string?[] Cells)> data = format.Key switch
         {
-            "vlans" => (await db.Vlans.OrderBy(v => v.Number).ToListAsync())
-                .Select(v => (v.Id, new[] { v.Number.ToString(CultureInfo.InvariantCulture), v.Name, v.Description })).ToList(),
+            "vlans" => (await db.Vlans.Include(v => v.Domain).OrderBy(v => v.Number).ThenBy(v => v.Domain!.Name).ToListAsync())
+                .Select(v => (v.Id, new[] { v.Number.ToString(CultureInfo.InvariantCulture), v.Name, v.Description, v.Domain?.Name })).ToList(),
             "vrfs" => (await db.Vrfs.OrderBy(v => v.Name).ToListAsync())
                 .Select(v => (v.Id, new[] { v.Name, v.RouteDistinguisher, v.Description })).ToList(),
-            "sous-reseaux" => (await db.Subnets.Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf)
+            "sous-reseaux" => (await db.Subnets.Include(s => s.Section).Include(s => s.Vlan).ThenInclude(v => v!.Domain).Include(s => s.Vrf)
                     .OrderBy(s => s.SectionId).ThenBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync())
-                .Select(s => (s.Id, new[] { s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number.ToString(CultureInfo.InvariantCulture), s.Vrf?.Name })).ToList(),
+                .Select(s => (s.Id, new[] { s.Section?.Name, s.Network.ToString(), s.Description, s.Vlan?.Number.ToString(CultureInfo.InvariantCulture), s.Vrf?.Name, s.Vlan?.Domain?.Name })).ToList(),
             "adresses" => (await db.IpAddresses.Include(a => a.Subnet).ThenInclude(s => s!.Section).Include(a => a.Tag)
                     .OrderBy(a => a.Subnet!.SectionId).ThenBy(a => a.Address).ToListAsync())
                 .Select(a => (a.Id, new[] { a.Subnet?.Section?.Name, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description, a.MacAddress, a.Owner, a.Tag?.Name })).ToList(),
@@ -82,7 +83,7 @@ public static class CsvTransfer
         // En-têtes comparés sans casse ni accents ; l'ordre des colonnes est libre, les colonnes inconnues sont ignorées.
         Dictionary<string, int> columns = rows[0].Select((name, index) => (Name: Key(name), Index: index))
             .GroupBy(c => c.Name).ToDictionary(g => g.Key, g => g.First().Index);
-        string[] missing = format.Columns.Where(c => !columns.ContainsKey(c)).ToArray();
+        string[] missing = format.Columns.Where(c => !columns.ContainsKey(c) && format.Optional?.Contains(c) != true).ToArray();
         if (missing.Length > 0)
         {
             errors.Add($"Colonnes manquantes dans l'en-tête : {string.Join(", ", missing)}. Attendu : {string.Join(";", format.Columns)}");
@@ -97,7 +98,7 @@ public static class CsvTransfer
         for (int index = 1; index < rows.Count; index++)
         {
             string[] row = rows[index];
-            string? Cell(string column) => columns[column] < row.Length && row[columns[column]].Trim() is { Length: > 0 } value ? value : null;
+            string? Cell(string column) => columns.TryGetValue(column, out int at) && at < row.Length && row[at].Trim() is { Length: > 0 } value ? value : null;
             int line = index + 1;
             List<string> rowErrors = [];
             object? entity = format.Key switch
@@ -140,12 +141,20 @@ public static class CsvTransfer
             errors.Add("numéro de VLAN entre 1 et 4094 attendu.");
             return null;
         }
-        if (await db.Vlans.AnyAsync(v => v.Number == number) || pending.OfType<Vlan>().Any(v => v.Number == number))
+        // Domaine L2 par nom ; vide = domaine par défaut.
+        string? domainName = cell("domaine");
+        VlanDomain? domain = domainName is null ? await db.VlanDomains.OrderBy(d => d.Id).FirstAsync() : await db.VlanDomains.SingleOrDefaultAsync(d => d.Name == domainName);
+        if (domain is null)
         {
-            errors.Add($"le VLAN {number} existe déjà.");
+            errors.Add($"domaine L2 « {domainName} » inconnu.");
+            return null;
+        }
+        if (await db.Vlans.AnyAsync(v => v.DomainId == domain.Id && v.Number == number) || pending.OfType<Vlan>().Any(v => v.DomainId == domain.Id && v.Number == number))
+        {
+            errors.Add($"le VLAN {number} existe déjà dans le domaine « {domain.Name} ».");
         }
         string? name = Required(cell("nom"), "nom", errors);
-        return new Vlan { Number = number, Name = name ?? "", Description = cell("description") };
+        return new Vlan { DomainId = domain.Id, Number = number, Name = name ?? "", Description = cell("description") };
     }
 
     private static async Task<Vrf?> VrfAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
@@ -190,13 +199,19 @@ public static class CsvTransfer
         }
         if (cell("vlan") is { } vlanText)
         {
+            // Un même numéro peut exister dans plusieurs domaines L2 : « domaine_vlan » lève l'ambiguïté.
             int? number = int.TryParse(vlanText, out int parsed) ? parsed : null;
-            Vlan? vlan = number is null ? null : await db.Vlans.SingleOrDefaultAsync(v => v.Number == number);
-            if (vlan is null)
+            string? domainName = cell("domaine_vlan");
+            List<Vlan> matches = number is null ? [] : await db.Vlans.Where(v => v.Number == number && (domainName == null || v.Domain!.Name == domainName)).Take(2).ToListAsync();
+            if (matches.Count == 0)
             {
-                errors.Add($"VLAN « {vlanText} » inconnu.");
+                errors.Add($"VLAN « {vlanText} »{(domainName is null ? "" : $" du domaine « {domainName} »")} inconnu.");
             }
-            subnet.VlanId = vlan?.Id;
+            else if (matches.Count > 1)
+            {
+                errors.Add($"VLAN {number} présent dans plusieurs domaines L2 : précisez la colonne « domaine_vlan ».");
+            }
+            subnet.VlanId = matches.Count == 1 ? matches[0].Id : null;
         }
         if (cell("vrf") is { } vrfName)
         {

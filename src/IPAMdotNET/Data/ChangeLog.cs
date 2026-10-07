@@ -55,6 +55,7 @@ public class ChangeLog
             [nameof(Section)] = ("Section", "/Sections/Index", true),
             [nameof(Subnet)] = ("Sous-réseau", "/Network/Subnets/Details", true),
             [nameof(Vlan)] = ("VLAN", "/Network/Vlans/Index", false),
+            [nameof(VlanDomain)] = ("Domaine L2", "/Network/VlanDomains/Index", false),
             [nameof(Vrf)] = ("VRF", "/Network/Vrfs/Index", false),
             [nameof(Nameserver)] = ("Serveurs de noms", "/Network/Nameservers/Index", false),
             [nameof(NatRule)] = ("NAT", "/Network/Nat/Index", false),

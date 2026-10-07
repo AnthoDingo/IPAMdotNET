@@ -12,9 +12,19 @@
         <span><i class="bi bi-hdd-network"></i> VLAN</span>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
+            <a asp-page="Edit" asp-route-domain="@Model.Domain" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
+    @if (Model.Domains.Count > 1)
+    {
+        <ul class="nav nav-pills nav-sm px-2 pt-2">
+            <li class="nav-item"><a asp-page="Index" class="nav-link py-1 @(Model.Domain is null ? "active" : "")">@L.T("Tous les domaines")</a></li>
+            @foreach (VlanDomain domain in Model.Domains)
+            {
+                <li class="nav-item"><a asp-page="Index" asp-route-domain="@domain.Id" class="nav-link py-1 @(Model.Domain == domain.Id ? "active" : "")">@domain.Name</a></li>
+            }
+        </ul>
+    }
     @if (Model.Vlans.Count == 0)
     {
         <p class="ipam-empty">@L.T("Aucun VLAN.")</p>
@@ -22,13 +32,17 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Numéro")</th><th>@L.T("Nom")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Numéro")</th><th>@L.T("Nom")</th>@if (Model.Domains.Count > 1) { <th>@L.T("Domaine L2")</th> }<th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (VlanRow row in Model.Vlans)
                 {
                     <tr>
                         <td>@row.Vlan.Number</td>
                         <td>@row.Vlan.Name</td>
+                        @if (Model.Domains.Count > 1)
+                        {
+                            <td>@row.Vlan.Domain?.Name</td>
+                        }
                         <td>@row.Vlan.Description</td>
                         <td class="text-end">@row.SubnetCount</td>
                         @foreach (CustomField field in Model.CustomFields)

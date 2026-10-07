@@ -1246,6 +1246,9 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("DomainId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1256,10 +1259,35 @@ namespace IPAMdotNet.Migrations.SqlServer
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Number")
+                    b.HasIndex("DomainId", "Number")
                         .IsUnique();
 
                     b.ToTable("Vlans");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.VlanDomain", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("VlanDomains");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Vrf", b =>
@@ -1596,6 +1624,17 @@ namespace IPAMdotNet.Migrations.SqlServer
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AuthMethod");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.Vlan", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.VlanDomain", "Domain")
+                        .WithMany()
+                        .HasForeignKey("DomainId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Domain");
                 });
 
             modelBuilder.Entity("UserGroups", b =>

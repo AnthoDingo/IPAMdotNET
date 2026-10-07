@@ -1,5 +1,6 @@
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,11 @@ public class IndexModel(AppDbContext db) : PageModel
     public Dictionary<int, Dictionary<int, string>> CustomValues { get; private set; } = [];
 
     public List<VlanRow> Vlans { get; private set; } = [];
+    public List<VlanDomain> Domains { get; private set; } = [];
+
+    /// <summary>Domaine affiché ; null = tous.</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? Domain { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -20,8 +26,10 @@ public class IndexModel(AppDbContext db) : PageModel
         IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
         CustomFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
         CustomValues = await CustomFieldForm.ValuesForAsync(db, nameof(Vlan));
-        Vlans = await db.Vlans
-            .OrderBy(v => v.Number)
+        Domains = await db.VlanDomains.OrderBy(d => d.Name).ToListAsync();
+        Vlans = await db.Vlans.Include(v => v.Domain)
+            .Where(v => Domain == null || v.DomainId == Domain)
+            .OrderBy(v => v.Number).ThenBy(v => v.Domain!.Name)
             .Select(v => new VlanRow(v, readable.Count(s => s.VlanId == v.Id)))
             .ToListAsync();
     }

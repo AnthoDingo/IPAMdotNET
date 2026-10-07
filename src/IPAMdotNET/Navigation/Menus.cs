@@ -70,6 +70,7 @@ public static class Menus
             new("Types d'équipements", "cpu", "/Infrastructure/DeviceTypes/Index"),
             new("Racks", "hdd-stack", "/Infrastructure/Racks/Index"),
             new("VLAN", "hdd-network", "/Network/Vlans/Index"),
+            new("Domaines L2", "bounding-box", "/Network/VlanDomains/Index"),
             new("VRF", "shuffle", "/Network/Vrfs/Index"),
             new("Serveurs de noms", "globe2", "/Network/Nameservers/Index"),
             new("Emplacements", "geo-alt", "/Infrastructure/Locations/Index"),

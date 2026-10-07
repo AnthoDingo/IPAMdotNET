@@ -10,6 +10,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Subnet> Subnets => Set<Subnet>();
     public DbSet<Vlan> Vlans => Set<Vlan>();
+    public DbSet<VlanDomain> VlanDomains => Set<VlanDomain>();
     public DbSet<Vrf> Vrfs => Set<Vrf>();
     public DbSet<Nameserver> Nameservers => Set<Nameserver>();
     public DbSet<NatRule> NatRules => Set<NatRule>();
@@ -141,7 +142,13 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(s => s.Nameserver).WithMany().OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Vlan>().HasIndex(v => v.Number).IsUnique();
+        modelBuilder.Entity<VlanDomain>().HasIndex(d => d.Name).IsUnique();
+        modelBuilder.Entity<Vlan>(entity =>
+        {
+            entity.HasIndex(v => new { v.DomainId, v.Number }).IsUnique();
+            // Un domaine qui contient des VLAN ne peut pas être supprimé (les formulaires le refusent avant).
+            entity.HasOne(v => v.Domain).WithMany().OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<Vrf>().HasIndex(v => v.Name).IsUnique();
         modelBuilder.Entity<BgpPeer>().HasOne(b => b.Vrf).WithMany().OnDelete(DeleteBehavior.SetNull);
 
