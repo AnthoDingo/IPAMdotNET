@@ -1,4 +1,6 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,11 +10,15 @@ public sealed record PstnNode(PstnPrefix Prefix, int Depth, int NumberCount);
 
 public class IndexModel(AppDbContext db) : PageModel
 {
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList Custom { get; set; } = new();
+
     public List<PstnNode> Nodes { get; private set; } = [];
 
     public async Task OnGetAsync()
     {
-        List<PstnPrefix> prefixes = await db.PstnPrefixes.Include(p => p.Device).ToListAsync();
+        await Custom.LoadAsync(db, nameof(PstnPrefix));
+        List<PstnPrefix> prefixes = await Custom.Apply(db, db.PstnPrefixes).Include(p => p.Device).ToListAsync();
         Dictionary<int, int> counts = await db.PstnNumbers.GroupBy(n => n.PrefixId)
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count);

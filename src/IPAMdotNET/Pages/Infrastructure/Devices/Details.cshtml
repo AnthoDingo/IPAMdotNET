@@ -1,0 +1,100 @@
+@page "{id:int}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Infrastructure.Devices.DetailsModel
+@{
+    ViewData["Title"] = Model.Device.Hostname;
+    Device device = Model.Device;
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-hdd"></i> @device.Hostname</span>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="Edit" asp-route-id="@device.Id" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-pencil"></i> @L.T("Modifier")</a>
+        }
+    </div>
+    <dl class="row mb-0 ipam-details">
+        <dt class="col-sm-4 col-xl-3">@L.T("Adresse IP")</dt>
+        <dd class="col-sm-8 col-xl-9 font-monospace">@(device.IpAddress ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Type")</dt>
+        <dd class="col-sm-8 col-xl-9">@(device.DeviceType?.Name ?? "—")</dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Emplacement")</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (device.Location is null) { <text>—</text> }
+            else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@device.Location.Id">@device.Location.Name</a> }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Rack")</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (device.Rack is null) { <text>—</text> }
+            else
+            {
+                <a asp-page="/Infrastructure/Racks/Details" asp-route-id="@device.Rack.Id">@device.Rack.Name</a>
+                @if (device.RackStart is not null)
+                {
+                    <span class="text-body-secondary">U@(device.RackStart)@(device.RackSize > 1 ? $"–{device.RackEnd}" : "")@(device.RackFace == RackFace.Back ? " " + L.T("(arrière)") : "")</span>
+                }
+            }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Client")</dt>
+        <dd class="col-sm-8 col-xl-9">
+            @if (device.Customer is null) { <text>—</text> }
+            else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@device.Customer.Id">@device.Customer.Name</a> }
+        </dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Sections")</dt>
+        <dd class="col-sm-8 col-xl-9">@(device.Sections.Count == 0 ? L.T("Toutes (visible de tous)") : string.Join(", ", device.Sections.OrderBy(s => s.Name).Select(s => s.Name)))</dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>
+        <dd class="col-sm-8 col-xl-9">@(device.Description ?? "—")</dd>
+        <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
+    </dl>
+</div>
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-list-ul"></i> @(L.T("Adresses IP ({0})", Model.Addresses.Count))</div>
+    @if (Model.Addresses.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucune adresse rattachée à cet équipement.")</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Adresse")</th><th>@L.T("Sous-réseau")</th><th>@L.T("Étiquette")</th><th>@L.T("Nom d'hôte")</th><th>@L.T("Description")</th><th>MAC</th></tr></thead>
+            <tbody>
+                @foreach (IpAddress address in Model.Addresses)
+                {
+                    <tr>
+                        <td class="font-monospace">@address.Value</td>
+                        <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@address.SubnetId">@address.Subnet?.Network</a></td>
+                        <td>@address.Tag?.Name</td>
+                        <td>@address.Hostname</td>
+                        <td>@address.Description</td>
+                        <td class="font-monospace">@address.MacAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (Model.NatRules.Count > 0 || Model.PstnPrefixes.Count > 0 || Model.Circuits.Count > 0)
+{
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-link-45deg"></i> @L.T("Objets liés")</div>
+        <ul class="mb-0">
+            @foreach (Circuit circuit in Model.Circuits)
+            {
+                <li>@L.T("Circuit") : <a asp-page="/Infrastructure/Circuits/Index" asp-fragment="circuit-@circuit.Id" class="font-monospace">@circuit.Cid</a> <span class="text-body-secondary">@circuit.Provider?.Name</span></li>
+            }
+            @foreach (NatRule rule in Model.NatRules)
+            {
+                <li>@L.T("NAT") : <a asp-page="/Network/Nat/Index">@rule.Name</a></li>
+            }
+            @foreach (PstnPrefix prefix in Model.PstnPrefixes)
+            {
+                <li>@L.T("Préfixe RTC") : <a asp-page="/Infrastructure/Pstn/Details" asp-route-id="@prefix.Id" class="font-monospace">@prefix.Prefix</a> @prefix.Name</li>
+            }
+        </ul>
+    </div>
+}
+
+<vc:history entity-type="Device" entity-id="@device.Id" />

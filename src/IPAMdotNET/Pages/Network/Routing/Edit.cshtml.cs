@@ -21,6 +21,11 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public LinkedLinesForm Received { get; set; } = new();
 
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public List<SelectListItem> Vrfs { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int? id)
@@ -36,6 +41,7 @@ public class EditModel(AppDbContext db) : PageModel
             Advertised = await SubnetsFormAsync(peer, BgpDirection.Advertised);
             Received = await SubnetsFormAsync(peer, BgpDirection.Received);
         }
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(BgpPeer), id ?? 0);
         await LoadVrfsAsync();
         return Page();
     }
@@ -53,8 +59,11 @@ public class EditModel(AppDbContext db) : PageModel
             .. await SubnetsAsync(Advertised, BgpDirection.Advertised, "Advertised.Text"),
             .. await SubnetsAsync(Received, BgpDirection.Received, "Received.Text"),
         ];
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(BgpPeer));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             await LoadVrfsAsync();
             return Page();
         }
@@ -72,6 +81,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         peer.Subnets.AddRange(subnets);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, peer.Id, customValues);
         return RedirectToPage("Index");
     }
 

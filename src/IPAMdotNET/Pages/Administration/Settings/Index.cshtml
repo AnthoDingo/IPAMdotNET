@@ -59,6 +59,11 @@
             <label asp-for="Settings.EnableChangelog" class="form-check-label"></label>
             <div class="form-text">@L.T("Désactivé, les modifications ne sont plus enregistrées dans le journal.")</div>
         </div>
+        <div class="form-check form-switch mb-2">
+            <input asp-for="Settings.EnableMaps" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableMaps" class="form-check-label"></label>
+            <div class="form-text">@L.T("Carte intégrée sur les fiches et la liste des emplacements (tuiles OpenStreetMap chargées par le navigateur). Désactivée, seul un lien vers OpenStreetMap est proposé.")</div>
+        </div>
         <div class="form-check form-switch">
             <input asp-for="Settings.HideFreeRanges" class="form-check-input" role="switch" />
             <label asp-for="Settings.HideFreeRanges" class="form-check-label"></label>
@@ -91,6 +96,16 @@
                 <div class="form-text">@L.T("Hors « Se souvenir de moi » (30 jours). S'applique aux connexions suivantes.")</div>
                 <span asp-validation-for="Settings.SessionMinutes" class="text-danger"></span>
             </div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-journal-text"></i> @L.T("Journaux")</div>
+        <div class="col-md-4">
+            <label asp-for="Settings.LogRetentionDays" class="form-label"></label>
+            <input asp-for="Settings.LogRetentionDays" class="form-control" min="0" max="3650" />
+            <div class="form-text">@L.T("0 = conservation illimitée. Les entrées plus anciennes sont supprimées automatiquement.")</div>
+            <span asp-validation-for="Settings.LogRetentionDays" class="text-danger"></span>
         </div>
     </div>
 

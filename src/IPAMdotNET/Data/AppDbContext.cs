@@ -24,6 +24,9 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<Rack> Racks => Set<Rack>();
     public DbSet<CircuitProvider> CircuitProviders => Set<CircuitProvider>();
     public DbSet<Circuit> Circuits => Set<Circuit>();
+    public DbSet<CircuitType> CircuitTypes => Set<CircuitType>();
+    public DbSet<LogicalCircuit> LogicalCircuits => Set<LogicalCircuit>();
+    public DbSet<LogicalCircuitMember> LogicalCircuitMembers => Set<LogicalCircuitMember>();
     public DbSet<PstnPrefix> PstnPrefixes => Set<PstnPrefix>();
     public DbSet<PstnNumber> PstnNumbers => Set<PstnNumber>();
     public DbSet<ChangeLog> ChangeLogs => Set<ChangeLog>();
@@ -92,6 +95,8 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         await Devices.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
         await Racks.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
         await Circuits.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
+        await Vlans.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
+        await IpAddresses.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
     }
 
     public async Task DetachRackAsync(int id)
@@ -113,6 +118,13 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         await PstnNumbers.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await IpAddresses.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await NatRules.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await Circuits.Where(x => x.DeviceAId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceAId, (int?)null));
+        await Circuits.Where(x => x.DeviceBId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceBId, (int?)null));
+    }
+
+    public async Task DetachCircuitTypeAsync(int id)
+    {
+        await Circuits.Where(x => x.TypeId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.TypeId, (int?)null));
     }
 
     /// <summary>
@@ -224,7 +236,24 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(c => c.Provider).WithMany().OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(c => c.LocationA).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(c => c.LocationB).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.DeviceA).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.DeviceB).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.Type).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(c => c.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<CircuitType>().HasIndex(t => t.Name).IsUnique();
+
+        modelBuilder.Entity<Vlan>().HasOne(v => v.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        modelBuilder.Entity<IpAddress>().HasOne(a => a.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+
+        modelBuilder.Entity<LogicalCircuit>().HasIndex(l => l.Cid).IsUnique();
+
+        modelBuilder.Entity<LogicalCircuitMember>(entity =>
+        {
+            entity.HasIndex(m => new { m.LogicalCircuitId, m.CircuitId }).IsUnique();
+            entity.HasOne(m => m.LogicalCircuit).WithMany(l => l.Members).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(m => m.Circuit).WithMany().OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PstnPrefix>(entity =>

@@ -51,15 +51,15 @@
 
 ## Maintenance — écarts restants avec phpIPAM
 
-- [ ] Champs personnalisés : sur les autres objets (NAT, BGP, RTC, sections…), filtres dans les listes, journalisation des valeurs.
-- [ ] Import / export : mise à jour d'objets existants (aujourd'hui création seule), export Excel.
-- [ ] Journaux : erreurs applicatives (exceptions), purge automatique des anciennes entrées.
+- [x] Champs personnalisés : sur les autres objets (NAT, BGP, RTC, sections…), filtres dans les listes, journalisation des valeurs.
+- [x] Import / export : mise à jour d'objets existants (aujourd'hui création seule), export Excel.
+- [x] Journaux : erreurs applicatives (exceptions), purge automatique des anciennes entrées.
 
 ## Partie Infrastructure — écarts restants avec phpIPAM
 
 - [ ] Tester sur **PostgreSQL et MySQL** (seul SQL Server LocalDB a été testé).
-- [ ] Emplacements : carte intégrée (aujourd'hui lien vers OpenStreetMap).
-- [ ] Racks : face arrière et numérotation descendante (aujourd'hui face avant, U1 en bas).
-- [ ] Équipements : page de détail avec les adresses IP rattachées (dépend des adresses IP), visibilité par section.
-- [ ] Circuits : extrémités sur un équipement (aujourd'hui sur un emplacement), types de circuits paramétrables, circuits logiques.
-- [ ] Clients : coordonnées GPS et objets VLAN / adresses rattachés.
+- [x] Emplacements : carte intégrée (aujourd'hui lien vers OpenStreetMap).
+- [x] Racks : face arrière et numérotation descendante (aujourd'hui face avant, U1 en bas).
+- [x] Équipements : page de détail avec les adresses IP rattachées (dépend des adresses IP), visibilité par section.
+- [x] Circuits : extrémités sur un équipement (aujourd'hui sur un emplacement), types de circuits paramétrables, circuits logiques.
+- [x] Clients : coordonnées GPS et objets VLAN / adresses rattachés.

@@ -25,7 +25,6 @@
   <ItemGroup>
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
     <EmbeddedResource Include="Localization\i18n\*.json" LogicalName="i18n/%(Filename)%(Extension)" />
-    <Content Update="appsettings.local.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>

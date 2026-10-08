@@ -81,8 +81,9 @@ public class DetailsModel(AppDbContext db) : PageModel
                     .ToListAsync())
                 .GroupBy(v => v.EntityId).ToDictionary(g => g.Key, g => g.ToDictionary(v => v.FieldId, v => v.Value));
         }
-        List<AddressRow> rows = Compress(addresses);
-        Rows = SettingsStore.Server.HideFreeRanges ? [.. rows] : WithFreeRanges(subnet.Network, rows);
+        AddressFilter.Fields = AddressFields;
+        List<AddressRow> rows = Compress(await AddressFilter.ApplyAsync<IpAddress, IpAddress>(db, addresses, a => a.Id));
+        Rows = SettingsStore.Server.HideFreeRanges || AddressFilter.Active ? [.. rows] : WithFreeRanges(subnet.Network, rows);
         if (subnet.IsIPv4 && Ip.AddressCount(subnet.Network) <= GridMaxAddresses)
         {
             Grid = BuildGrid(subnet.Network, addresses);
@@ -114,6 +115,10 @@ public class DetailsModel(AppDbContext db) : PageModel
 
     /// <summary>Champs personnalisés des adresses (colonnes de la liste) et leurs valeurs : adresse → (champ → valeur).</summary>
     public List<CustomField> AddressFields { get; private set; } = [];
+
+    /// <summary>Filtre de la liste des adresses sur un champ personnalisé (sans plages libres).</summary>
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList AddressFilter { get; set; } = new();
     public Dictionary<int, Dictionary<int, string>> AddressValues { get; private set; } = [];
     public System.Net.IPAddress? FirstFree { get; private set; }
     public bool ScanEnabled { get; private set; }

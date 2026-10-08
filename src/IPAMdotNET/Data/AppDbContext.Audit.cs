@@ -59,6 +59,15 @@ public abstract partial class AppDbContext
             return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
         List<PendingChange> pending = await CollectChangesAsync(cancellationToken);
+        await CollectCustomValueChangesAsync(pending, cancellationToken);
+        // Numéros RTC supprimés en cascade côté base avec leur préfixe : leurs valeurs (sans clé étrangère) d'abord.
+        List<int> deletedPrefixes = pending.Where(p => p.Action == ChangeAction.Deleted && p.Entry.Entity is PstnPrefix)
+            .Select(p => ((PstnPrefix)p.Entry.Entity).Id).ToList();
+        if (deletedPrefixes.Count > 0)
+        {
+            await CustomFieldValues.Where(v => v.Field!.EntityType == nameof(PstnNumber)
+                && PstnNumbers.Any(n => n.Id == v.EntityId && deletedPrefixes.Contains(n.PrefixId))).ExecuteDeleteAsync(cancellationToken);
+        }
         // Avant l'enregistrement : un sous-réseau supprimé en même temps est encore lisible.
         Dictionary<int, int> subnetSections = await SubnetSectionsAsync(pending, cancellationToken);
         int result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
@@ -189,6 +198,68 @@ public abstract partial class AppDbContext
         }
         return pending;
     }
+
+    /// <summary>
+    /// Valeurs de champs personnalisés : journalisées comme une modification de leur objet (libellé = nom du champ),
+    /// fusionnées avec son entrée si l'objet est enregistré dans la même opération.
+    /// </summary>
+    private async Task CollectCustomValueChangesAsync(List<PendingChange> pending, CancellationToken cancellationToken)
+    {
+        List<EntityEntry<CustomFieldValue>> entries = ChangeTracker.Entries<CustomFieldValue>()
+            .Where(e => e.State is EntityState.Added or EntityState.Deleted or EntityState.Modified).ToList();
+        if (entries.Count == 0)
+        {
+            return;
+        }
+        List<int> fieldIds = entries.Select(e => e.Entity.FieldId).Distinct().ToList();
+        Dictionary<int, CustomField> fields = await CustomFields.AsNoTracking().Where(f => fieldIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, cancellationToken);
+        foreach (IGrouping<(string Type, int Id), EntityEntry<CustomFieldValue>> group in entries.Where(e => fields.ContainsKey(e.Entity.FieldId))
+            .GroupBy(e => (fields[e.Entity.FieldId].EntityType, e.Entity.EntityId)))
+        {
+            Dictionary<string, string?[]> changes = [];
+            foreach (EntityEntry<CustomFieldValue> entry in group)
+            {
+                CustomField field = fields[entry.Entity.FieldId];
+                string? before = entry.State == EntityState.Added ? null : FormatCustomValue(field, entry.Property(v => v.Value).OriginalValue);
+                string? after = entry.State == EntityState.Deleted ? null : FormatCustomValue(field, entry.Entity.Value);
+                if (before != after)
+                {
+                    changes[field.Name] = [before, after];
+                }
+            }
+            if (changes.Count == 0)
+            {
+                continue;
+            }
+            bool IsOwner(EntityEntry e) => e.Metadata.ClrType.Name == group.Key.Type && e.Metadata.FindProperty("Id") is not null
+                && Equals(e.Property("Id").CurrentValue, group.Key.Id);
+            if (pending.FirstOrDefault(p => p.Action != ChangeAction.Deleted && IsOwner(p.Entry)) is { } owner)
+            {
+                foreach (KeyValuePair<string, string?[]> change in changes)
+                {
+                    owner.Changes[change.Key] = change.Value;
+                }
+                continue;
+            }
+            EntityEntry? tracked = ChangeTracker.Entries().FirstOrDefault(IsOwner);
+            object? entity = tracked?.Entity;
+            if (entity is null && Model.GetEntityTypes().FirstOrDefault(t => t.ClrType.Name == group.Key.Type) is { } entityType)
+            {
+                entity = await (Task<object?>)typeof(AppDbContext)
+                    .GetMethod(nameof(FindUntrackedAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
+                    .MakeGenericMethod(entityType.ClrType, typeof(int))
+                    .Invoke(this, ["Id", group.Key.Id, cancellationToken])!;
+            }
+            if (entity is not null)
+            {
+                // Objet non suivi : Entry() ne l'attache pas, il sert seulement au libellé et à la section.
+                pending.Add(new PendingChange(tracked ?? Entry(entity), ChangeAction.Updated, changes));
+            }
+        }
+    }
+
+    private static string? FormatCustomValue(CustomField field, string? value) => string.IsNullOrEmpty(value) ? null
+        : field.Type == CustomFieldType.Boolean ? (value == "true" ? "Oui" : "Non") : value;
 
     private static string FieldLabel(IProperty property) =>
         property.PropertyInfo?.GetCustomAttribute<DisplayAttribute>()?.Name ?? property.Name;

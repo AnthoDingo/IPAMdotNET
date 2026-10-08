@@ -10,8 +10,8 @@ public sealed record VlanRow(Vlan Vlan, int SubnetCount);
 
 public class IndexModel(AppDbContext db) : PageModel
 {
-    public List<CustomField> CustomFields { get; private set; } = [];
-    public Dictionary<int, Dictionary<int, string>> CustomValues { get; private set; } = [];
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList Custom { get; set; } = new();
 
     public List<VlanRow> Vlans { get; private set; } = [];
     public List<VlanDomain> Domains { get; private set; } = [];
@@ -24,10 +24,9 @@ public class IndexModel(AppDbContext db) : PageModel
     {
         // Nombre de sous-réseaux limité aux sections lisibles.
         IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
-        CustomFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
-        CustomValues = await CustomFieldForm.ValuesForAsync(db, nameof(Vlan));
+        await Custom.LoadAsync(db, nameof(Vlan));
         Domains = await db.VlanDomains.OrderBy(d => d.Name).ToListAsync();
-        Vlans = await db.Vlans.Include(v => v.Domain)
+        Vlans = await Custom.Apply(db, db.Vlans).Include(v => v.Domain)
             .Where(v => Domain == null || v.DomainId == Domain)
             .OrderBy(v => v.Number).ThenBy(v => v.Domain!.Name)
             .Select(v => new VlanRow(v, readable.Count(s => s.VlanId == v.Id)))

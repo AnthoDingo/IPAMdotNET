@@ -1,0 +1,19 @@
+@using IPAMdotNet.Maintenance
+@model (string? Latitude, string? Longitude, string Label)
+@* Coordonnées GPS, lien OpenStreetMap et, si les cartes sont activées (paramètres serveur), carte intégrée (fiches emplacement et client). *@
+
+@if (Model.Latitude is not null && Model.Longitude is not null)
+{
+    <span class="font-monospace">@Model.Latitude, @Model.Longitude</span>
+    <a href="https://www.openstreetmap.org/?mlat=@Model.Latitude&mlon=@Model.Longitude#map=16/@Model.Latitude/@Model.Longitude" target="_blank" rel="noopener noreferrer">
+        <i class="bi bi-box-arrow-up-right"></i>@L.T("Ouvrir dans OpenStreetMap")
+    </a>
+    @if (SettingsStore.Server.EnableMaps)
+    {
+        <partial name="_Map" model="@(new List<MapPoint> { new(Model.Label, Model.Latitude, Model.Longitude) })" />
+    }
+}
+else
+{
+    <text>—</text>
+}

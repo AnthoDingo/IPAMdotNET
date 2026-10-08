@@ -110,12 +110,16 @@ public class IndexModel(AppDbContext db) : PageModel
             {
                 problems.Add($"{device.Hostname} : dans le rack {device.Rack.Name} sans position.");
             }
+            else if (device.Rack is not null && device.RackFace == RackFace.Back && !device.Rack.HasBack)
+            {
+                problems.Add($"{device.Hostname} : en face arrière du rack {device.Rack.Name}, qui n'en a pas.");
+            }
             else if (device.Rack is not null && device.RackEnd > device.Rack.Size)
             {
                 problems.Add($"{device.Hostname} : dépasse le rack {device.Rack.Name} ({device.Rack.Size} U).");
             }
         }
-        foreach (IGrouping<int?, Device> rack in devices.Where(d => d.RackId is not null && d.RackStart is not null && d.RackSize is not null).GroupBy(d => d.RackId))
+        foreach (IGrouping<(int?, RackFace), Device> rack in devices.Where(d => d.RackId is not null && d.RackStart is not null && d.RackSize is not null).GroupBy(d => (d.RackId, d.RackFace)))
         {
             List<Device> placed = rack.OrderBy(d => d.RackStart).ToList();
             for (int i = 1; i < placed.Count; i++)
@@ -191,6 +195,11 @@ public class IndexModel(AppDbContext db) : PageModel
         nameof(Customer) => db.Customers.Select(x => x.Id).ToListAsync(),
         nameof(Rack) => db.Racks.Select(x => x.Id).ToListAsync(),
         nameof(Circuit) => db.Circuits.Select(x => x.Id).ToListAsync(),
+        nameof(Section) => db.Sections.Select(x => x.Id).ToListAsync(),
+        nameof(NatRule) => db.NatRules.Select(x => x.Id).ToListAsync(),
+        nameof(BgpPeer) => db.BgpPeers.Select(x => x.Id).ToListAsync(),
+        nameof(PstnPrefix) => db.PstnPrefixes.Select(x => x.Id).ToListAsync(),
+        nameof(PstnNumber) => db.PstnNumbers.Select(x => x.Id).ToListAsync(),
         _ => Task.FromResult(new List<int>()),
     };
 }

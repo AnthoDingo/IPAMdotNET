@@ -1,4 +1,6 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +10,9 @@ public sealed record LocationRow(Location Location, int SubnetCount, int DeviceC
 
 public class IndexModel(AppDbContext db) : PageModel
 {
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList Custom { get; set; } = new();
+
     public List<LocationRow> Locations { get; private set; } = [];
 
     public async Task OnGetAsync()
@@ -16,7 +21,8 @@ public class IndexModel(AppDbContext db) : PageModel
         SectionAccess access = await SectionAccess.ForAsync(db, User);
         IQueryable<Subnet> readable = access.Readable(db.Subnets);
         IQueryable<Device> devices = access.Readable(db.Devices);
-        Locations = await db.Locations
+        await Custom.LoadAsync(db, nameof(Location));
+        Locations = await Custom.Apply(db, db.Locations)
             .OrderBy(l => l.Name)
             .Select(l => new LocationRow(l,
                 readable.Count(s => s.LocationId == l.Id),

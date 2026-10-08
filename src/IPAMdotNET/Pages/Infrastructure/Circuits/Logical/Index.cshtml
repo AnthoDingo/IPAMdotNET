@@ -1,0 +1,57 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Logical.IndexModel
+@{
+    ViewData["Title"] = L.T("Circuits logiques");
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center gap-2">
+        <span><i class="bi bi-diagram-2"></i> @L.T("Circuits logiques")</span>
+        <a asp-page="../Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-plug"></i> @L.T("Circuits")</a>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
+        }
+    </div>
+    @if (Model.Circuits.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucun circuit logique : un circuit logique enchaîne plusieurs circuits physiques en un lien de bout en bout.")</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Identifiant")</th><th>@L.T("Usage")</th><th>@L.T("Circuits (dans l'ordre)")</th><th>@L.T("Commentaire")</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (LogicalCircuit logical in Model.Circuits)
+                {
+                    <tr id="logical-@logical.Id">
+                        <td class="font-monospace">@logical.Cid</td>
+                        <td>@logical.Purpose</td>
+                        <td>
+                            <ol class="mb-0 ps-3">
+                                @foreach (LogicalCircuitMember member in logical.Members.OrderBy(m => m.Order))
+                                {
+                                    <li>
+                                        <a asp-page="../Index" asp-fragment="circuit-@member.CircuitId" class="font-monospace">@member.Circuit?.Cid</a>
+                                        <span class="text-body-secondary">@member.Circuit?.Provider?.Name</span>
+                                        @if (member.Circuit?.Type is { } type)
+                                        {
+                                            <span class="text-body-secondary"><span class="ipam-swatch" style="background-color: @type.Color"></span>@type.Name</span>
+                                        }
+                                    </li>
+                                }
+                            </ol>
+                        </td>
+                        <td>@logical.Comment</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@logical.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -38,6 +38,7 @@ public sealed class ScanAgent(IServiceScopeFactory scopes, ILogger<ScanAgent> lo
             {
                 // L'agent ne doit jamais s'arrêter sur une erreur ponctuelle (base injoignable, réseau…).
                 logger.LogError(exception, "Cycle de l'agent de scan en échec.");
+                await ErrorLog.WriteAsync(scopes, exception, "Agent de scan");
             }
             force = await WaitAsync(stoppingToken);
         }

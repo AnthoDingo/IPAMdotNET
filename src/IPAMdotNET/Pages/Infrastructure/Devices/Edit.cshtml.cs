@@ -87,7 +87,7 @@ public class EditModel(AppDbContext db) : PageModel
         tracked.Sections.AddRange(sections);
         await db.SaveChangesAsync();
         await CustomFieldForm.SaveAsync(db, Device.Id, customValues);
-        return RedirectToPage("Index", null, $"device-{Device.Id}");
+        return RedirectToPage("Details", new { id = Device.Id });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
@@ -105,13 +105,14 @@ public class EditModel(AppDbContext db) : PageModel
         return RedirectToPage("Index");
     }
 
-    /// <summary>Position obligatoire dans un rack, contenue dans sa hauteur et sans chevauchement avec un autre équipement.</summary>
+    /// <summary>Position obligatoire dans un rack, contenue dans sa hauteur et sans chevauchement avec un autre équipement de la même face.</summary>
     private async Task ValidateRackPositionAsync()
     {
         if (Device.RackId is null)
         {
             Device.RackStart = null;
             Device.RackSize = null;
+            Device.RackFace = RackFace.Front;
             return;
         }
         if (Device.RackStart is null || Device.RackSize is null)
@@ -125,6 +126,11 @@ public class EditModel(AppDbContext db) : PageModel
             ModelState.AddModelError("Device.RackId", "Rack inconnu.");
             return;
         }
+        if (Device.RackFace == RackFace.Back && !rack.HasBack)
+        {
+            ModelState.AddModelError("Device.RackFace", "Ce rack n'a pas de face arrière.");
+            return;
+        }
         int start = Device.RackStart.Value;
         int end = start + Device.RackSize.Value - 1;
         if (end > rack.Size)
@@ -133,7 +139,7 @@ public class EditModel(AppDbContext db) : PageModel
             return;
         }
         Device? overlap = await db.Devices
-            .Where(d => d.RackId == rack.Id && d.Id != Device.Id && d.RackStart != null
+            .Where(d => d.RackId == rack.Id && d.Id != Device.Id && d.RackFace == Device.RackFace && d.RackStart != null
                 && d.RackStart <= end && start <= d.RackStart + d.RackSize - 1)
             .FirstOrDefaultAsync();
         if (overlap is not null)

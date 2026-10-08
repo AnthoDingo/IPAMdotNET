@@ -21,6 +21,15 @@ public class Customer
     [MaxLength(100), Display(Name = "Région / état")]
     public string? State { get; set; }
 
+    /// <summary>Coordonnées GPS en texte invariant, comme <see cref="Location"/> (voir <see cref="Location.TryNormalizeCoordinate"/>).</summary>
+    [MaxLength(20), Display(Name = "Latitude")]
+    public string? Latitude { get; set; }
+
+    [MaxLength(20), Display(Name = "Longitude")]
+    public string? Longitude { get; set; }
+
+    public bool HasCoordinates => Latitude is not null && Longitude is not null;
+
     [MaxLength(100), Display(Name = "Contact")]
     public string? ContactPerson { get; set; }
 

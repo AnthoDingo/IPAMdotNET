@@ -76,7 +76,7 @@
                     @foreach (Device device in Model.Devices)
                     {
                         <tr>
-                            <td><a asp-page="/Infrastructure/Devices/Index" asp-fragment="device-@device.Id">@device.Hostname</a></td>
+                            <td><a asp-page="/Infrastructure/Devices/Details" asp-route-id="@device.Id">@device.Hostname</a></td>
                             <td class="font-monospace">@device.IpAddress</td>
                             <td>@device.DeviceType?.Name</td>
                             <td>@device.Description</td>

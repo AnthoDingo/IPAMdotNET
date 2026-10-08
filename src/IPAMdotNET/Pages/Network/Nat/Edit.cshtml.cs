@@ -20,6 +20,11 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public LinkedLinesForm Destination { get; set; } = new();
 
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public List<SelectListItem> Devices { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int? id)
@@ -35,6 +40,7 @@ public class EditModel(AppDbContext db) : PageModel
             Source = await LinkedLines.FormAsync(db, rule.Sources.Select(o => (o.Text, o.SubnetId, o.AddressId)));
             Destination = await LinkedLines.FormAsync(db, rule.Destinations.Select(o => (o.Text, o.SubnetId, o.AddressId)));
         }
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(NatRule), id ?? 0);
         await LoadAsync();
         return Page();
     }
@@ -54,8 +60,11 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Rule.DeviceId", "Équipement inexistant.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(NatRule));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             await LoadAsync();
             return Page();
         }
@@ -71,6 +80,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         rule.Objects.AddRange(objects);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, rule.Id, customValues);
         return RedirectToPage("Index");
     }
 

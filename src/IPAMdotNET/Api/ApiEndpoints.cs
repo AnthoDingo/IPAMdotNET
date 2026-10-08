@@ -13,11 +13,12 @@ namespace IPAMdotNet.Api;
 public sealed record SubnetDto(int Id, int SectionId, string? Section, string Network, string? Description, int? Vlan, string? Vrf,
     string? Location, string? Customer, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record AddressDto(int Id, int SubnetId, string? Subnet, string Address, string? Hostname, string? Description,
-    string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen, IReadOnlyDictionary<string, string>? CustomFields = null);
-public sealed record VlanDto(int Id, int DomainId, int Number, string Name, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
+    string? MacAddress, string? Owner, string? Tag, string? Device, DateTime? LastSeen, IReadOnlyDictionary<string, string>? CustomFields = null, int? CustomerId = null);
+public sealed record VlanDto(int Id, int DomainId, int Number, string Name, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null,
+    int? CustomerId = null);
 public sealed record VrfDto(int Id, string Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, string>? CustomFields = null);
 public sealed record DeviceDto(int Id, string Hostname, string? IpAddress, string? Type, string? Location, string? Rack, int? RackStart, int? RackSize,
-    string? Description, int[] SectionIds, IReadOnlyDictionary<string, string>? CustomFields = null);
+    string? Description, int[] SectionIds, IReadOnlyDictionary<string, string>? CustomFields = null, string? RackFace = null);
 public sealed record SearchDto(List<SubnetDto> Subnets, List<AddressDto> Addresses, List<DeviceDto> Devices);
 public sealed record FirstFreeDto(string Address);
 
@@ -26,8 +27,9 @@ public sealed record FirstFreeDto(string Address);
 public sealed record SubnetInput(int? SectionId, string? Network, string? Description, int? VlanId, int? VrfId, int? LocationId, int? CustomerId,
     bool? PingCheck, bool? Discover, bool? AllowRequests, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 public sealed record AddressInput(int? SubnetId, string? Address, string? Hostname, string? Description, string? MacAddress, string? Owner, string? Tag,
-    int? DeviceId, bool? ExcludePing, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
-public sealed record VlanInput(int? Number, string? Name, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null, int? DomainId = null);
+    int? DeviceId, bool? ExcludePing, IReadOnlyDictionary<string, JsonElement>? CustomFields = null, int? CustomerId = null);
+public sealed record VlanInput(int? Number, string? Name, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null, int? DomainId = null,
+    int? CustomerId = null);
 public sealed record VrfInput(string? Name, string? RouteDistinguisher, string? Description, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 public sealed record DeviceInput(string? Hostname, string? IpAddress, int? DeviceTypeId, int? LocationId, int? CustomerId, string? Description, int[]? SectionIds, IReadOnlyDictionary<string, JsonElement>? CustomFields = null);
 
@@ -188,7 +190,7 @@ public static partial class ApiEndpoints
         api.MapGet("/vlans", async (AppDbContext db) =>
         {
             Dictionary<int, Dictionary<string, string>> custom = await CustomFieldsByIdAsync(db, nameof(Vlan));
-            return (await db.Vlans.OrderBy(v => v.Number).ThenBy(v => v.DomainId).Select(v => new VlanDto(v.Id, v.DomainId, v.Number, v.Name, v.Description, null)).ToListAsync())
+            return (await db.Vlans.OrderBy(v => v.Number).ThenBy(v => v.DomainId).Select(v => new VlanDto(v.Id, v.DomainId, v.Number, v.Name, v.Description, null, v.CustomerId)).ToListAsync())
                 .Select(v => v with { CustomFields = custom.GetValueOrDefault(v.Id) ?? [] });
         });
 
@@ -447,7 +449,7 @@ public static partial class ApiEndpoints
             db.Vlans.Add(vlan);
             await db.SaveChangesAsync();
             await SaveCustomFieldsAsync(db, vlan.Id, custom);
-            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
+            return Results.Created($"/api/vlans/{vlan.Id}", new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id), vlan.CustomerId));
         });
 
         api.MapPatch("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id, VlanInput input) =>
@@ -472,7 +474,7 @@ public static partial class ApiEndpoints
             }
             await db.SaveChangesAsync();
             await SaveCustomFieldsAsync(db, vlan.Id, custom);
-            return Results.Ok(new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id)));
+            return Results.Ok(new VlanDto(vlan.Id, vlan.DomainId, vlan.Number, vlan.Name, vlan.Description, await CustomOfAsync(db, nameof(Vlan), vlan.Id), vlan.CustomerId));
         });
 
         api.MapDelete("/vlans/{id:int}", async (HttpContext http, AppDbContext db, int id) =>
@@ -716,6 +718,11 @@ public static partial class ApiEndpoints
             AddIf(errors, deviceId != 0 && !await db.Devices.AnyAsync(d => d.Id == deviceId), "deviceId", "Équipement inexistant.");
             entry.DeviceId = deviceId == 0 ? null : deviceId;
         }
+        if (input.CustomerId is int addressCustomerId)
+        {
+            AddIf(errors, addressCustomerId != 0 && !await db.Customers.AnyAsync(c => c.Id == addressCustomerId), "customerId", "Client inexistant.");
+            entry.CustomerId = addressCustomerId == 0 ? null : addressCustomerId;
+        }
         entry.ExcludePing = input.ExcludePing ?? entry.ExcludePing;
         foreach (KeyValuePair<string, string[]> error in Validate(entry))
         {
@@ -731,6 +738,11 @@ public static partial class ApiEndpoints
         vlan.Number = input.Number ?? vlan.Number;
         vlan.Name = input.Name is null ? vlan.Name : input.Name.Trim();
         vlan.Description = input.Description is null ? vlan.Description : Clean(input.Description);
+        if (input.CustomerId is int customerId)
+        {
+            AddIf(errors, customerId != 0 && !await db.Customers.AnyAsync(c => c.Id == customerId), "customerId", "Client inexistant.");
+            vlan.CustomerId = customerId == 0 ? null : customerId;
+        }
         // Sans domaine précisé, un nouveau VLAN va dans le domaine par défaut.
         vlan.DomainId = input.DomainId ?? (creating ? await Vlan.DefaultDomainIdAsync(db) : vlan.DomainId);
         bool domainExists = await db.VlanDomains.AnyAsync(d => d.Id == vlan.DomainId);
@@ -863,7 +875,7 @@ public static partial class ApiEndpoints
 
     private static readonly System.Linq.Expressions.Expression<Func<Device, DeviceDto>> DeviceProjection = d =>
         new DeviceDto(d.Id, d.Hostname, d.IpAddress, d.DeviceType!.Name, d.Location!.Name, d.Rack!.Name, d.RackStart, d.RackSize, d.Description,
-            d.Sections.Select(s => s.Id).ToArray());
+            d.Sections.Select(s => s.Id).ToArray(), null, d.RackId == null ? null : d.RackFace == RackFace.Back ? "back" : "front");
 
     private static async Task<List<AddressDto>> ListAddressesAsync(AppDbContext db, IQueryable<IpAddress> query, int limit)
     {
@@ -882,7 +894,7 @@ public static partial class ApiEndpoints
                 .Where(v => v.Field!.EntityType == nameof(IpAddress) && ids.Contains(v.EntityId)).ToListAsync())
             .GroupBy(v => v.EntityId).ToDictionary(g => g.Key, g => g.ToDictionary(v => v.Field!.Name, v => v.Value));
         return addresses.Select(a => new AddressDto(a.Id, a.SubnetId, a.Subnet?.Network.ToString(), a.Value.ToString(), a.Hostname, a.Description,
-            a.MacAddress, a.Owner, a.Tag?.Name, a.Device?.Hostname, a.LastSeen, custom.GetValueOrDefault(a.Id))).ToList();
+            a.MacAddress, a.Owner, a.Tag?.Name, a.Device?.Hostname, a.LastSeen, custom.GetValueOrDefault(a.Id), a.CustomerId)).ToList();
     }
 
     private static SubnetDto ToDto(Subnet s, IReadOnlyDictionary<string, string>? custom = null) =>

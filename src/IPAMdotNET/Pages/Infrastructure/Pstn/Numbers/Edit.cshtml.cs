@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,6 +13,11 @@ public class EditModel(AppDbContext db) : PageModel
 {
     [BindProperty]
     public PstnNumber Number { get; set; } = new();
+
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
 
     public PstnPrefix Prefix { get; private set; } = new();
     public List<SelectListItem> Devices { get; private set; } = [];
@@ -31,6 +37,7 @@ public class EditModel(AppDbContext db) : PageModel
         {
             Number.PrefixId = prefixId.Value;
         }
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(PstnNumber), id ?? 0);
         return await LoadAsync() ? Page() : NotFound();
     }
 
@@ -49,12 +56,16 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Number.Number", "Ce numéro existe déjà dans le préfixe.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(PstnNumber));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         db.Update(Number);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Number.Id, customValues);
         return RedirectToPage("../Details", new { id = Number.PrefixId });
     }
 

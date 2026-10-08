@@ -30,6 +30,7 @@ public class EditModel(AppDbContext db) : PageModel
     public Subnet Subnet { get; private set; } = new();
     public List<SelectListItem> Tags { get; private set; } = [];
     public List<SelectListItem> Devices { get; private set; } = [];
+    public List<SelectListItem> Customers { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int? id, int? subnetId, string? ip)
     {
@@ -170,6 +171,7 @@ public class EditModel(AppDbContext db) : PageModel
         Tags = await db.Tags.OrderByDescending(t => t.Locked).ThenBy(t => t.Name).Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToListAsync();
         // Équipements de la section du sous-réseau, ou sans section (comme phpIPAM).
         Devices = await db.Devices.Where(d => !d.Sections.Any() || d.Sections.Any(s => s.Id == subnet.SectionId)).OrderBy(d => d.Hostname).Select(d => new SelectListItem(d.Hostname, d.Id.ToString())).ToListAsync();
+        Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
         return null;
     }
 }

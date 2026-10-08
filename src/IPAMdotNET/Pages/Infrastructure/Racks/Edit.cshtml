@@ -19,6 +19,17 @@
                 <input asp-for="Rack.Size" class="form-control" min="1" max="60" />
                 <span asp-validation-for="Rack.Size" class="text-danger"></span>
             </div>
+            <div class="col-12">
+                <div class="form-check form-check-inline">
+                    <input asp-for="Rack.HasBack" class="form-check-input" />
+                    <label asp-for="Rack.HasBack" class="form-check-label"></label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input asp-for="Rack.TopDown" class="form-check-input" />
+                    <label asp-for="Rack.TopDown" class="form-check-label"></label>
+                </div>
+                <span asp-validation-for="Rack.HasBack" class="text-danger"></span>
+            </div>
             <div class="col-md-6">
                 <label asp-for="Rack.LocationId" class="form-label"></label>
                 <select asp-for="Rack.LocationId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>

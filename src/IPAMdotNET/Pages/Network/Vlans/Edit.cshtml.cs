@@ -20,6 +20,7 @@ public class EditModel(AppDbContext db) : PageModel
 
     public List<CustomFieldInput> CustomInputs { get; private set; } = [];
     public List<SelectListItem> Domains { get; private set; } = [];
+    public List<SelectListItem> Customers { get; private set; } = [];
 
     /// <summary>Création : domaine proposé (celui de la liste d'origine), sinon le domaine par défaut.</summary>
     public async Task<IActionResult> OnGetAsync(int? id, int? domain)
@@ -76,6 +77,9 @@ public class EditModel(AppDbContext db) : PageModel
         return RedirectToPage("Index");
     }
 
-    private async Task LoadDomainsAsync() =>
+    private async Task LoadDomainsAsync()
+    {
         Domains = await db.VlanDomains.OrderBy(d => d.Name).Select(d => new SelectListItem(d.Name, d.Id.ToString())).ToListAsync();
+        Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
+    }
 }

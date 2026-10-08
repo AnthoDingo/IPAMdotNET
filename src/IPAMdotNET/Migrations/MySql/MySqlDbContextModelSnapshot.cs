@@ -289,6 +289,12 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("DeviceAId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DeviceBId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("LocationAId")
                         .HasColumnType("int");
 
@@ -301,17 +307,22 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("Type")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<int?>("TypeId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("DeviceAId");
+
+                    b.HasIndex("DeviceBId");
+
                     b.HasIndex("LocationAId");
 
                     b.HasIndex("LocationBId");
+
+                    b.HasIndex("TypeId");
 
                     b.HasIndex("ProviderId", "Cid")
                         .IsUnique();
@@ -344,6 +355,34 @@ namespace IPAMdotNet.Migrations.MySql
                         .IsUnique();
 
                     b.ToTable("CircuitProviders");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.CircuitType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("varchar(7)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CircuitTypes");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.CustomField", b =>
@@ -440,6 +479,14 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -488,6 +535,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasColumnType("varchar(45)");
 
                     b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RackFace")
                         .HasColumnType("int");
 
                     b.Property<int?>("RackId")
@@ -591,6 +641,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(16)
                         .HasColumnType("varbinary(16)");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
@@ -623,6 +676,8 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("DeviceId");
 
@@ -763,6 +818,58 @@ namespace IPAMdotNet.Migrations.MySql
                     b.HasIndex("Date");
 
                     b.ToTable("LogEntries");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Cid")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cid")
+                        .IsUnique();
+
+                    b.ToTable("LogicalCircuits");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuitMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("CircuitId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LogicalCircuitId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CircuitId");
+
+                    b.HasIndex("LogicalCircuitId", "CircuitId")
+                        .IsUnique();
+
+                    b.ToTable("LogicalCircuitMembers");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Nameserver", b =>
@@ -950,6 +1057,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
+                    b.Property<bool>("HasBack")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
 
@@ -960,6 +1070,9 @@ namespace IPAMdotNet.Migrations.MySql
 
                     b.Property<int>("Size")
                         .HasColumnType("int");
+
+                    b.Property<bool>("TopDown")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
@@ -1237,6 +1350,9 @@ namespace IPAMdotNet.Migrations.MySql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
@@ -1253,6 +1369,8 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("DomainId", "Number")
                         .IsUnique();
@@ -1400,6 +1518,14 @@ namespace IPAMdotNet.Migrations.MySql
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
+                    b.HasOne("IPAMdotNet.Data.Device", "DeviceA")
+                        .WithMany()
+                        .HasForeignKey("DeviceAId");
+
+                    b.HasOne("IPAMdotNet.Data.Device", "DeviceB")
+                        .WithMany()
+                        .HasForeignKey("DeviceBId");
+
                     b.HasOne("IPAMdotNet.Data.Location", "LocationA")
                         .WithMany()
                         .HasForeignKey("LocationAId");
@@ -1414,13 +1540,23 @@ namespace IPAMdotNet.Migrations.MySql
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IPAMdotNet.Data.CircuitType", "Type")
+                        .WithMany()
+                        .HasForeignKey("TypeId");
+
                     b.Navigation("Customer");
+
+                    b.Navigation("DeviceA");
+
+                    b.Navigation("DeviceB");
 
                     b.Navigation("LocationA");
 
                     b.Navigation("LocationB");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Type");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.CustomFieldValue", b =>
@@ -1482,6 +1618,10 @@ namespace IPAMdotNet.Migrations.MySql
 
             modelBuilder.Entity("IPAMdotNet.Data.IpAddress", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
                     b.HasOne("IPAMdotNet.Data.Device", "Device")
                         .WithMany()
                         .HasForeignKey("DeviceId");
@@ -1496,6 +1636,8 @@ namespace IPAMdotNet.Migrations.MySql
                         .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Device");
 
@@ -1528,6 +1670,25 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Navigation("RequestedBy");
 
                     b.Navigation("Subnet");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuitMember", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Circuit", "Circuit")
+                        .WithMany()
+                        .HasForeignKey("CircuitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.LogicalCircuit", "LogicalCircuit")
+                        .WithMany("Members")
+                        .HasForeignKey("LogicalCircuitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Circuit");
+
+                    b.Navigation("LogicalCircuit");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
@@ -1685,11 +1846,17 @@ namespace IPAMdotNet.Migrations.MySql
 
             modelBuilder.Entity("IPAMdotNet.Data.Vlan", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
                     b.HasOne("IPAMdotNet.Data.VlanDomain", "Domain")
                         .WithMany()
                         .HasForeignKey("DomainId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Domain");
                 });
@@ -1727,6 +1894,11 @@ namespace IPAMdotNet.Migrations.MySql
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
                 {
                     b.Navigation("Subnets");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuit", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>

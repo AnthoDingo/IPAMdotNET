@@ -1,5 +1,6 @@
 @page
 @using System.Globalization
+@using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Infrastructure.Pstn.IndexModel
 @{
     ViewData["Title"] = L.T("Préfixes RTC");
@@ -14,6 +15,7 @@
             <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
     @if (Model.Nodes.Count == 0)
     {
         <p class="ipam-empty">@L.T("Aucun préfixe.")</p>
@@ -21,7 +23,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Préfixe")</th><th>@L.T("Nom")</th><th>@L.T("Plage")</th><th class="text-end">@L.T("Numéros")</th><th>@L.T("Équipement")</th><th>@L.T("Description")</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Préfixe")</th><th>@L.T("Nom")</th><th>@L.T("Plage")</th><th class="text-end">@L.T("Numéros")</th><th>@L.T("Équipement")</th><th>@L.T("Description")</th>@foreach (CustomField field in Model.Custom.Fields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (PstnNode node in Model.Nodes)
                 {
@@ -36,8 +38,12 @@
                         <td>@node.Prefix.Name</td>
                         <td class="font-monospace">@node.Prefix.Start – @node.Prefix.Stop</td>
                         <td class="text-end">@node.NumberCount</td>
-                        <td>@node.Prefix.Device?.Hostname</td>
+                        <td>@if (node.Prefix.Device is not null) { <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@node.Prefix.Device.Id">@node.Prefix.Device.Hostname</a> }</td>
                         <td>@node.Prefix.Description</td>
+                        @foreach (CustomField field in Model.Custom.Fields)
+                        {
+                            <td>@Model.Custom.Display(node.Prefix.Id, field)</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@node.Prefix.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>

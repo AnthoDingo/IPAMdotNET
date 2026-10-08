@@ -270,6 +270,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             PostCode = S(row, "postcode", 20),
             City = S(row, "city", 100),
             State = S(row, "state", 100),
+            Latitude = Location.TryNormalizeCoordinate(S(row, "lat"), 90, out string? latitude) ? latitude : null,
+            Longitude = Location.TryNormalizeCoordinate(S(row, "long"), 180, out string? longitude) ? longitude : null,
             ContactPerson = S(row, "contact_person", 100),
             ContactPhone = S(row, "contact_phone", 50),
             ContactMail = S(row, "contact_mail", 200) is { } mail && email.IsValid(mail) ? mail : null,
@@ -306,6 +308,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         {
             Name = S(row, "name", 100) ?? "Rack",
             Size = Math.Clamp(I(row, "size") ?? 42, 1, 60),
+            HasBack = I(row, "hasBack") == 1,
+            TopDown = I(row, "topDown") == 1,
             LocationId = Map(row, "location", locations),
             CustomerId = Map(row, "customer_id", customers),
             Description = S(row, "description", 500),
@@ -316,9 +320,18 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
 
     private async Task DevicesAsync()
     {
+        // phpIPAM numérote la face arrière à la suite de la face avant : unité n de l'arrière = taille du rack + n.
+        Dictionary<int, int> rackSizes = data.Rows("racks").Where(r => I(r, "id") is not null && I(r, "hasBack") == 1)
+            .ToDictionary(r => I(r, "id")!.Value, r => I(r, "size") ?? 42);
         List<(int, Device)> items = data.Rows("devices").Select(row =>
         {
-            int? start = I(row, "rack_start") is int s && s is >= 1 and <= 60 ? s : null;
+            int? raw = I(row, "rack_start");
+            bool back = I(row, "rack") is int source && rackSizes.TryGetValue(source, out int rackSize) && raw > rackSize;
+            if (back)
+            {
+                raw -= rackSizes[I(row, "rack")!.Value];
+            }
+            int? start = raw is int s && s is >= 1 and <= 60 ? s : null;
             int? size = I(row, "rack_size") is int z && z is >= 1 and <= 60 ? z : null;
             int? rack = Map(row, "rack", racks);
             return (I(row, "id") ?? 0, new Device
@@ -331,6 +344,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 RackId = rack,
                 RackStart = rack is null ? null : start,
                 RackSize = rack is null ? null : size,
+                RackFace = rack is not null && back ? RackFace.Back : RackFace.Front,
             });
         }).ToList();
         Merge(devices, await SaveAsync(items, d => d.Id));
@@ -392,7 +406,8 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 report.Warnings.Add($"VLAN {number} en double dans un même domaine L2, non importé.");
                 continue;
             }
-            items.Add((old, new Vlan { DomainId = domain, Number = number, Name = S(row, "name", 100) ?? $"VLAN {number}", Description = S(row, "description", 500) }));
+            items.Add((old, new Vlan { DomainId = domain, Number = number, Name = S(row, "name", 100) ?? $"VLAN {number}", Description = S(row, "description", 500),
+                CustomerId = Map(row, "customer_id", customers) }));
         }
         Merge(vlans, await SaveAsync(items, v => v.Id));
         report.Counts.Add(("domaine(s) L2", newDomains.Count));
@@ -616,6 +631,7 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
                 Owner = S(row, "owner", 100),
                 TagId = Map(row, "state", tags) ?? usedTag,
                 DeviceId = Map(row, "switch", devices),
+                CustomerId = Map(row, "customer_id", customers),
                 ExcludePing = B(row, "excludePing"),
                 LastSeen = Date(row, "lastSeen"),
             }));
@@ -652,7 +668,27 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         Merge(providers, await SaveAsync(newProviders, p => p.Id));
         report.Counts.Add(("fournisseur(s) de circuits", newProviders.Count));
 
-        Dictionary<int, string> types = data.Rows("circuitTypes").Where(r => S(r, "ctname") is not null).ToDictionary(r => I(r, "id") ?? 0, r => S(r, "ctname", 50)!);
+        // Types : réutilisés par nom (types par défaut de l'installation), sinon créés avec leur couleur.
+        Dictionary<string, int> typeIds = (await db.CircuitTypes.ToListAsync(cancellationToken)).ToDictionary(t => t.Name, t => t.Id, StringComparer.OrdinalIgnoreCase);
+        Dictionary<int, int> types = [];
+        List<(int, CircuitType)> newTypes = [];
+        foreach (Dictionary<string, string?> row in data.Rows("circuitTypes"))
+        {
+            int old = I(row, "id") ?? 0;
+            if (S(row, "ctname", 50) is not { } name)
+            {
+                continue;
+            }
+            if (typeIds.TryGetValue(name, out int id))
+            {
+                types[old] = id;
+                continue;
+            }
+            typeIds[name] = 0;
+            string? color = S(row, "ctcolor");
+            newTypes.Add((old, new CircuitType { Name = name, Color = color is not null && System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9a-fA-F]{6}$") ? color : "#6c757d" }));
+        }
+        Merge(types, await SaveAsync(newTypes, t => t.Id));
         HashSet<(int, string)> seen = [];
         List<(int, Circuit)> items = [];
         foreach (Dictionary<string, string?> row in data.Rows("circuits"))
@@ -668,10 +704,12 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
             {
                 Cid = cid,
                 ProviderId = provider.Value,
-                Type = I(row, "type") is int type && types.TryGetValue(type, out string? typeName) ? typeName : S(row, "type", 50),
+                TypeId = Map(row, "type", types),
                 Capacity = S(row, "capacity", 50),
                 Status = Enum.TryParse(S(row, "status"), true, out CircuitStatus status) ? status : CircuitStatus.Active,
+                DeviceAId = Map(row, "device1", devices),
                 LocationAId = Map(row, "location1", locations),
+                DeviceBId = Map(row, "device2", devices),
                 LocationBId = Map(row, "location2", locations),
                 CustomerId = Map(row, "customer_id", customers),
                 Comment = S(row, "comment", 500),
@@ -679,6 +717,30 @@ public sealed class PhpIpamImporter(AppDbContext db, PhpIpamData data, Func<stri
         }
         Merge(circuits, await SaveAsync(items, c => c.Id));
         report.Counts.Add(("circuit(s)", items.Count));
+
+        // Circuits logiques et leurs membres ordonnés (base MySQL uniquement : l'API ne les expose pas).
+        ILookup<int, Dictionary<string, string?>> mapping = data.Rows("circuitsLogicalMapping").ToLookup(r => I(r, "logicalCircuit_id") ?? 0);
+        HashSet<string> logicalCids = new(StringComparer.OrdinalIgnoreCase);
+        List<LogicalCircuit> logical = [];
+        foreach (Dictionary<string, string?> row in data.Rows("circuitsLogical"))
+        {
+            if (S(row, "logical_cid", 100) is not { } cid || !logicalCids.Add(cid))
+            {
+                continue;
+            }
+            LogicalCircuit item = new() { Cid = cid, Purpose = S(row, "purpose", 200), Comment = S(row, "comments", 500) };
+            foreach (Dictionary<string, string?> member in mapping[I(row, "id") ?? 0].OrderBy(m => I(m, "order") ?? 0))
+            {
+                if (Map(member, "circ_id", circuits) is int circuitId && item.Members.All(m => m.CircuitId != circuitId))
+                {
+                    item.Members.Add(new LogicalCircuitMember { CircuitId = circuitId, Order = item.Members.Count + 1 });
+                }
+            }
+            logical.Add(item);
+        }
+        db.LogicalCircuits.AddRange(logical);
+        await db.SaveChangesAsync(cancellationToken);
+        report.Counts.Add(("circuit(s) logique(s)", logical.Count));
     }
 
     /// <summary>Colonnes « custom_* » → champs personnalisés et leurs valeurs, pour les objets repris ici.</summary>

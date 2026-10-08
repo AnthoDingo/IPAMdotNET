@@ -26,13 +26,20 @@
     {
         <p class="text-body-secondary">@Model.Section.Description</p>
     }
-    @if (Model.Tree.Count == 0)
+    @if (Model.CustomFieldValues.Count > 0)
     {
-        <p class="ipam-empty">@L.T("Aucun sous-réseau dans cette section.")</p>
+        <dl class="row ipam-details">
+            <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
+        </dl>
+    }
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
+    @if (Model.Listed.Count == 0)
+    {
+        <p class="ipam-empty">@(Model.Custom.Active ? L.T("Aucun sous-réseau ne correspond au filtre.") : L.T("Aucun sous-réseau dans cette section."))</p>
     }
     else
     {
-        <partial name="_SubnetTable" model="Model.Tree" />
+        <partial name="_SubnetTable" model="Model.Listed" />
     }
 </div>
 

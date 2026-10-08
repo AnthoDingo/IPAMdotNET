@@ -20,6 +20,8 @@
             @if (city.Length > 0) { <br />@city }
             @if (!string.IsNullOrEmpty(Model.Customer.State)) { <br />@Model.Customer.State }
         </dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Coordonnées")</dt>
+        <dd class="col-sm-8 col-xl-9"><partial name="_Coordinates" model="(Model.Customer.Latitude, Model.Customer.Longitude, Model.Customer.Name)" /></dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Contact")</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Customer.ContactPerson ?? "—")</dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Téléphone")</dt>

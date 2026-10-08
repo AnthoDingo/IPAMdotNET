@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,6 +14,11 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public PstnPrefix Prefix { get; set; } = new();
 
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public List<SelectListItem> Devices { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int? id)
@@ -26,6 +32,7 @@ public class EditModel(AppDbContext db) : PageModel
             }
             Prefix = prefix;
         }
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(PstnPrefix), id ?? 0);
         await LoadDevicesAsync();
         return Page();
     }
@@ -57,13 +64,17 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Prefix.Stop", "Des numéros existants sortiraient de la plage.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(PstnPrefix));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             await LoadDevicesAsync();
             return Page();
         }
         db.Update(Prefix);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Prefix.Id, customValues);
         return RedirectToPage("Details", new { id = Prefix.Id });
     }
 

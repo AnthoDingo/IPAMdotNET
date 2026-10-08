@@ -26,8 +26,12 @@ builder.Services.AddFileBasedSetup<IpamSetupInitializer>(options =>
     options.AllowedProviders = [DbProvider.SqlServer, DbProvider.Postgres, DbProvider.MySql];
     options.AllowUsernameAdmin = true;
     options.ConnectionStringName = "Default";
+    // Licence en première page de l'assistant, acceptation obligatoire avant la connexion à la base.
+    options.LicenseText = License.Text();
+    options.RequireLicenseAcceptance = true;
 });
-builder.Services.AddSetupStep<LicenseSetupStep>();
+// Après la licence : avertissement de non-affiliation.
+builder.Services.AddSetupPreInstallTask<DisclaimerSetupTask>();
 
 string? connectionString = builder.Configuration.GetConnectionString("Default");
 bool databaseConfigured = Enum.TryParse(builder.Configuration["Setup:Provider"], out DbProvider provider) && connectionString is not null;
@@ -93,6 +97,9 @@ builder.Services.AddHostedService<ScanAgent>();
 // Reprise unique des libellés des entrées du journal antérieures à leur résolution à l'écriture.
 builder.Services.AddHostedService<ChangeLogBackfill>();
 
+// Purge des entrées du journal système plus anciennes que la durée de conservation.
+builder.Services.AddHostedService<LogPurge>();
+
 // Uniquement pour la page /update d'AnthoDingo.Update (composant Blazor interactif côté serveur).
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
@@ -138,6 +145,9 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+// Exceptions non gérées : écrites dans le journal système, puis traitées par la page d'erreur.
+app.UseErrorLogging();
 
 app.UseHttpsRedirection();
 app.UseRouting();

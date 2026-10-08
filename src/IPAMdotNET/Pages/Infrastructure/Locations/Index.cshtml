@@ -1,4 +1,5 @@
 @page
+@using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Infrastructure.Locations.IndexModel
 @{
     ViewData["Title"] = L.T("Emplacements");
@@ -13,6 +14,16 @@
             <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
+    @if (IPAMdotNet.Maintenance.SettingsStore.Server.EnableMaps)
+    {
+        List<MapPoint> points = [.. Model.Locations.Where(r => r.Location.HasCoordinates)
+            .Select(r => new MapPoint(r.Location.Name, r.Location.Latitude!, r.Location.Longitude!, Url.Page("Details", new { id = r.Location.Id })))];
+        @if (points.Count > 0)
+        {
+            <div class="px-2"><partial name="_Map" model="points" /></div>
+        }
+    }
     @if (Model.Locations.Count == 0)
     {
         <p class="ipam-empty">@L.T("Aucun emplacement.")</p>
@@ -20,7 +31,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Adresse")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th><th class="text-end">@L.T("Équipements")</th><th class="text-end">@L.T("Racks")</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Adresse")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Sous-réseaux")</th><th class="text-end">@L.T("Équipements")</th><th class="text-end">@L.T("Racks")</th>@foreach (CustomField field in Model.Custom.Fields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (LocationRow row in Model.Locations)
                 {
@@ -31,6 +42,10 @@
                         <td class="text-end">@row.SubnetCount</td>
                         <td class="text-end">@row.DeviceCount</td>
                         <td class="text-end">@row.RackCount</td>
+                        @foreach (CustomField field in Model.Custom.Fields)
+                        {
+                            <td>@Model.Custom.Display(row.Location.Id, field)</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Location.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>

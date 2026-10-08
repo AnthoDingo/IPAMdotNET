@@ -18,7 +18,9 @@
             </div>
             <dl class="row mb-0 ipam-details">
                 <dt class="col-sm-5">@L.T("Hauteur")</dt>
-                <dd class="col-sm-7">@Model.Rack.Size U</dd>
+                <dd class="col-sm-7">@Model.Rack.Size U@(Model.Rack.HasBack ? ", " + L.T("deux faces") : "")</dd>
+                <dt class="col-sm-5">@L.T("Numérotation")</dt>
+                <dd class="col-sm-7">@(Model.Rack.TopDown ? L.T("U1 en haut") : L.T("U1 en bas"))</dd>
                 <dt class="col-sm-5">@L.T("Emplacement")</dt>
                 <dd class="col-sm-7">
                     @if (Model.Rack.Location is null) { <text>—</text> }
@@ -40,40 +42,45 @@
                     <ul class="mb-0">
                         @foreach (Device device in Model.Unplaced)
                         {
-                            <li>@device.Hostname</li>
+                            <li>@if (device.Id == 0) { @device.Hostname } else { <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@device.Id">@device.Hostname</a> }</li>
                         }
                     </ul>
                 </div>
             }
         </div>
     </div>
-    <div class="col-xl-7">
-        <div class="ipam-panel">
-            <div class="ipam-panel-title"><i class="bi bi-layout-three-columns"></i> @L.T("Face avant")</div>
-            <table class="ipam-rack">
-                <tbody>
-                    @for (int unit = Model.Rack.Size; unit >= 1; unit--)
-                    {
-                        Device? device = Model.Units[unit];
-                        <tr>
-                            <th scope="row">@unit</th>
-                            @if (device is null)
-                            {
-                                <td class="ipam-rack-empty"></td>
-                            }
-                            else if (unit == Math.Min(device.RackEnd!.Value, Model.Rack.Size))
-                            {
-                                <td class="ipam-rack-device" rowspan="@(unit - device.RackStart!.Value + 1)">
-                                    <strong>@device.Hostname</strong>
-                                    <span>@device.DeviceType?.Name @device.IpAddress</span>
-                                </td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    @foreach ((RackFace face, Device?[] units) in Model.Units)
+    {
+        <div class="@(Model.Rack.HasBack ? "col-md-6 col-xl-3" : "col-xl-7")">
+            <div class="ipam-panel">
+                <div class="ipam-panel-title"><i class="bi bi-layout-three-columns"></i> @(face == RackFace.Front ? L.T("Face avant") : L.T("Face arrière"))</div>
+                <table class="ipam-rack">
+                    <tbody>
+                        @foreach (int unit in Model.Rack.UnitsTopToBottom)
+                        {
+                            Device? device = units[unit];
+                            // La cellule d'un équipement est posée sur sa première unité affichée (la plus haute à l'écran).
+                            int top = device is null ? 0 : Model.Rack.TopDown ? device.RackStart!.Value : Math.Min(device.RackEnd!.Value, Model.Rack.Size);
+                            <tr>
+                                <th scope="row">@unit</th>
+                                @if (device is null)
+                                {
+                                    <td class="ipam-rack-empty"></td>
+                                }
+                                else if (unit == top)
+                                {
+                                    <td class="ipam-rack-device" rowspan="@(Math.Min(device.RackEnd!.Value, Model.Rack.Size) - device.RackStart!.Value + 1)">
+                                        <strong>@if (device.Id == 0) { @device.Hostname } else { <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@device.Id">@device.Hostname</a> }</strong>
+                                        <span>@device.DeviceType?.Name @device.IpAddress</span>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @if (Model.Rack.Id != 0)

@@ -13,16 +13,23 @@
 <div class="row g-3">
     <div class="col-xl-5">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-download"></i> @L.T("Export CSV")</div>
-            <p class="text-body-secondary">@L.T("Séparateur « ; », encodage UTF-8 : le fichier s'ouvre directement dans Excel et peut être réimporté.")</p>
-            <ul class="list-unstyled mb-0">
-                @foreach (CsvFormat format in CsvTransfer.Formats)
-                {
-                    <li class="mb-1">
-                        <a asp-page-handler="Export" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv"></i>@format.Label</a>
-                    </li>
-                }
-            </ul>
+            <div class="ipam-panel-title"><i class="bi bi-download"></i> @L.T("Export")</div>
+            <p class="text-body-secondary">@L.T("CSV : séparateur « ; », encodage UTF-8, s'ouvre dans Excel et peut être réimporté. Excel : classeur .xlsx, pour consultation.")</p>
+            <table class="table table-sm align-middle mb-2">
+                <tbody>
+                    @foreach (CsvFormat format in CsvTransfer.Formats)
+                    {
+                        <tr>
+                            <td>@format.Label</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-page-handler="Export" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv"></i> CSV</a>
+                                <a asp-page-handler="Excel" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <a asp-page-handler="Excel" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-excel"></i> @L.T("Tout exporter (Excel, une feuille par type)")</a>
         </div>
     </div>
     <div class="col-xl-7">
@@ -40,6 +47,11 @@
                         <input asp-for="Upload" type="file" accept=".csv,text/csv" class="form-control" />
                         <span asp-validation-for="Upload" class="text-danger"></span>
                     </div>
+                </div>
+                <div class="form-check mb-2">
+                    <input asp-for="Update" class="form-check-input" />
+                    <label asp-for="Update" class="form-check-label"></label>
+                    <div class="form-text">@L.T("Un objet déjà présent (même clé : numéro et domaine du VLAN, nom de VRF, section et CIDR, sous-réseau et adresse, nom d'équipement, d'emplacement ou de client) voit ses colonnes remplacées ; une cellule vide efface la valeur. Sinon, les VLAN, VRF, sous-réseaux et adresses existants sont refusés.")</div>
                 </div>
                 <button type="submit" class="btn btn-primary">@L.T("Vérifier le fichier")</button>
             </form>
@@ -78,7 +90,8 @@
             <form method="post" asp-page-handler="Import" class="mb-3">
                 <input type="hidden" asp-for="Format" />
                 <input type="hidden" asp-for="CsvText" />
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i>@(L.T("Importer {0} objet(s)", Model.Result.Entities.Count))</button>
+                <input type="hidden" asp-for="Update" />
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i>@(L.T("Importer : {0} création(s), {1} mise(s) à jour", Model.Result.Entities.Count, Model.Result.Updated.Count))</button>
             </form>
         }
         <div class="table-responsive">

@@ -103,18 +103,29 @@ public static partial class ApiEndpoints
         {
             Path = "customers", Label = "Client",
             Fields = [nameof(Customer.Name), nameof(Customer.Address), nameof(Customer.PostCode), nameof(Customer.City), nameof(Customer.State),
-                nameof(Customer.ContactPerson), nameof(Customer.ContactPhone), nameof(Customer.ContactMail), nameof(Customer.Note)],
+                nameof(Customer.Latitude), nameof(Customer.Longitude), nameof(Customer.ContactPerson), nameof(Customer.ContactPhone),
+                nameof(Customer.ContactMail), nameof(Customer.Note)],
+            Validate = (db, c, errors) =>
+            {
+                AddIf(errors, !Location.TryNormalizeCoordinate(c.Latitude, 90, out string? latitude), "latitude", "Latitude invalide (nombre entre -90 et 90).");
+                AddIf(errors, !Location.TryNormalizeCoordinate(c.Longitude, 180, out string? longitude), "longitude", "Longitude invalide (nombre entre -180 et 180).");
+                (c.Latitude, c.Longitude) = (latitude, longitude);
+                return Task.CompletedTask;
+            },
             BeforeDelete = async (db, id, key) => { await db.DetachCustomerAsync(id); return null; },
         });
         MapResource(api, new ApiResource<Rack>
         {
             Path = "racks", Label = "Rack",
-            Fields = [nameof(Rack.Name), nameof(Rack.Size), nameof(Rack.LocationId), nameof(Rack.CustomerId), nameof(Rack.Description)],
+            Fields = [nameof(Rack.Name), nameof(Rack.Size), nameof(Rack.HasBack), nameof(Rack.TopDown), nameof(Rack.LocationId), nameof(Rack.CustomerId),
+                nameof(Rack.Description)],
             Validate = async (db, r, errors) =>
             {
                 int highest = r.Id == 0 ? 0 : await db.Devices.Where(d => d.RackId == r.Id && d.RackStart != null)
                     .Select(d => (int?)(d.RackStart + d.RackSize - 1)).MaxAsync() ?? 0;
                 AddIf(errors, highest > r.Size, "size", $"Un équipement occupe l'unité {highest} : la hauteur ne peut pas être inférieure.");
+                AddIf(errors, !r.HasBack && r.Id != 0 && await db.Devices.AnyAsync(d => d.RackId == r.Id && d.RackFace == RackFace.Back), "hasBack",
+                    "Des équipements sont placés en face arrière : déplacez-les d'abord.");
             },
             BeforeDelete = async (db, id, key) => { await db.DetachRackAsync(id); return null; },
         });
@@ -175,11 +186,46 @@ public static partial class ApiEndpoints
         MapResource(api, new ApiResource<Circuit>
         {
             Path = "circuits", Label = "Circuit",
-            Fields = [nameof(Circuit.Cid), nameof(Circuit.ProviderId), nameof(Circuit.Type), nameof(Circuit.Capacity), nameof(Circuit.Status),
-                nameof(Circuit.LocationAId), nameof(Circuit.LocationBId), nameof(Circuit.CustomerId), nameof(Circuit.Comment)],
+            Fields = [nameof(Circuit.Cid), nameof(Circuit.ProviderId), nameof(Circuit.TypeId), nameof(Circuit.Capacity), nameof(Circuit.Status),
+                nameof(Circuit.DeviceAId), nameof(Circuit.LocationAId), nameof(Circuit.DeviceBId), nameof(Circuit.LocationBId), nameof(Circuit.CustomerId),
+                nameof(Circuit.Comment)],
             Validate = async (db, c, errors) =>
                 AddIf(errors, await db.Circuits.AnyAsync(x => x.ProviderId == c.ProviderId && x.Cid == c.Cid && x.Id != c.Id), "cid",
                     "Ce fournisseur a déjà un circuit avec cet identifiant."),
+        });
+        MapResource(api, new ApiResource<CircuitType>
+        {
+            Path = "circuit-types", Label = "Type de circuit",
+            Fields = [nameof(CircuitType.Name), nameof(CircuitType.Color), nameof(CircuitType.Description)],
+            Validate = async (db, t, errors) =>
+                AddIf(errors, await db.CircuitTypes.AnyAsync(x => x.Name == t.Name && x.Id != t.Id), "name", "Un type porte déjà ce nom."),
+            BeforeDelete = async (db, id, key) => { await db.DetachCircuitTypeAsync(id); return null; },
+        });
+        MapResource(api, new ApiResource<LogicalCircuit>
+        {
+            Path = "logical-circuits", Label = "Circuit logique",
+            Fields = [nameof(LogicalCircuit.Cid), nameof(LogicalCircuit.Purpose), nameof(LogicalCircuit.Comment)],
+            Validate = async (db, l, errors) =>
+                AddIf(errors, await db.LogicalCircuits.AnyAsync(x => x.Cid == l.Cid && x.Id != l.Id), "cid", "Un circuit logique porte déjà cet identifiant."),
+            ExtraFields = ["circuitIds"],
+            // Membres remplacés en bloc, dans l'ordre de la liste envoyée.
+            Check = async call =>
+            {
+                if (!call.TryGet("circuitIds", out JsonElement json) || await IdsAsync(call.Db.Circuits, json, "circuitIds", "Circuit inexistant.", call.Errors) is null)
+                {
+                    return;
+                }
+                List<int> ordered = json.ValueKind == JsonValueKind.Array ? [.. json.EnumerateArray().Select(e => e.GetInt32()).Distinct()] : [];
+                if (!call.Creating && !call.Db.Entry(call.Item).Collection(l => l.Members).IsLoaded)
+                {
+                    await call.Db.Entry(call.Item).Collection(l => l.Members).LoadAsync();
+                }
+                call.Item.SetMembers(call.Db, ordered);
+            },
+            ExtraJson = async (db, l) => new Dictionary<string, object?>
+            {
+                ["circuitIds"] = await db.LogicalCircuitMembers.Where(m => m.LogicalCircuitId == l.Id).OrderBy(m => m.Order).Select(m => m.CircuitId).ToListAsync(),
+            },
         });
         MapResource(api, new ApiResource<NatRule>
         {

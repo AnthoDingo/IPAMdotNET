@@ -40,6 +40,7 @@
             </div>
         </div>
         <p class="form-text">@L.T("La hiérarchie est calculée automatiquement : un préfixe est rangé sous le plus long préfixe qui le commence.")</p>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>

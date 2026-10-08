@@ -32,6 +32,12 @@ public class IpAddress
     [MaxLength(100), Display(Name = "Propriétaire")]
     public string? Owner { get; set; }
 
+    [Display(Name = "Client")]
+    public int? CustomerId { get; set; }
+
+    [ValidateNever]
+    public Customer? Customer { get; set; }
+
     [Display(Name = "Étiquette")]
     public int? TagId { get; set; }
 

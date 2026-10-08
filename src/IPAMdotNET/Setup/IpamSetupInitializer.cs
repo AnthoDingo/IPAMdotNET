@@ -19,6 +19,12 @@ public sealed class IpamSetupInitializer : ISetupInitializer
             db.DeviceTypes.AddRange(names.Select(name => new DeviceType { Name = name }));
             await db.SaveChangesAsync(ct);
         }
+        if (!await db.CircuitTypes.AnyAsync(ct))
+        {
+            string[] names = ["Fibre noire", "Lien Ethernet", "MPLS", "Accès Internet", "Liaison louée"];
+            db.CircuitTypes.AddRange(names.Select(name => new CircuitType { Name = name }));
+            await db.SaveChangesAsync(ct);
+        }
     }
 
     public async Task CreateAdminAsync(DbProvider provider, string connectionString, AdminAccount admin, CancellationToken ct = default)

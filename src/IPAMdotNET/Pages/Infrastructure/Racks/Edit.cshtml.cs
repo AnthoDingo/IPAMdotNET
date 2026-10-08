@@ -49,6 +49,10 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Rack.Size", $"Un équipement occupe l'unité {highestUnit} : la hauteur ne peut pas être inférieure.");
         }
+        if (!Rack.HasBack && Rack.Id != 0 && await db.Devices.AnyAsync(d => d.RackId == Rack.Id && d.RackFace == RackFace.Back))
+        {
+            ModelState.AddModelError("Rack.HasBack", "Des équipements sont placés en face arrière : déplacez-les d'abord.");
+        }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Rack));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)

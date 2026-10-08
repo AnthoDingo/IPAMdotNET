@@ -122,3 +122,30 @@ document.addEventListener("click", async e => {
         location.href = link.href;
     }
 });
+
+// Cartes (vue partielle _Map) : marqueurs avec un lien vers la fiche, popups construites en DOM (pas de HTML injecté).
+document.querySelectorAll("[data-ipam-map]").forEach(element => {
+    if (typeof L === "undefined") {
+        return;
+    }
+    const map = L.map(element, { scrollWheelZoom: false });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    const markers = JSON.parse(element.dataset.ipamMap).map(point => {
+        const label = document.createElement(point.url ? "a" : "span");
+        label.textContent = point.label;
+        if (point.url) {
+            label.href = point.url;
+        }
+        return L.marker([Number(point.lat), Number(point.lon)], { title: point.label }).bindPopup(label).addTo(map);
+    });
+    if (markers.length === 1) {
+        map.setView(markers[0].getLatLng(), 15);
+    } else {
+        map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
+    }
+    // Carte dans un panneau replié puis déplié : recalcul de la taille.
+    new ResizeObserver(() => map.invalidateSize()).observe(element);
+});

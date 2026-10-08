@@ -186,6 +186,7 @@
     {
         <p class="small text-body-secondary mb-2">@L.T("Première adresse libre :") <span class="font-monospace">@Model.FirstFree</span></p>
     }
+    <partial name="_CustomFieldFilter" model="Model.AddressFilter" />
     @if (Model.Rows.Count == 0)
     {
         <p class="ipam-empty">@L.T("Aucune adresse.")</p>
@@ -253,7 +254,7 @@
                             <td>@address.Description</td>
                             <td class="font-monospace small">@User.FormatMac(address.MacAddress)</td>
                             <td>@address.Owner</td>
-                            <td>@address.Device?.Hostname</td>
+                            <td>@if (address.Device is not null) { <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@address.Device.Id">@address.Device.Hostname</a> }</td>
                             @foreach (CustomField field in Model.AddressFields)
                             {
                                 <td>@CustomFieldForm.Display(field, Model.AddressValues.GetValueOrDefault(address.Id)?.GetValueOrDefault(field.Id))</td>

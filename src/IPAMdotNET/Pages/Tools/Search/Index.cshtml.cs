@@ -111,6 +111,9 @@ public class IndexModel(AppDbContext db) : PageModel
             HashSet<int> readableAddresses = (await db.IpAddresses.Where(a => addressIds.Contains(a.Id) && readableSubnets.Contains(a.SubnetId))
                 .Select(a => a.Id).ToListAsync()).ToHashSet();
             CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(IpAddress) && !readableAddresses.Contains(v.EntityId));
+            CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(Section) && !access.CanRead(v.EntityId));
+            HashSet<int> readableDevices = (await access.Readable(db.Devices).Select(d => d.Id).ToListAsync()).ToHashSet();
+            CustomValues.RemoveAll(v => v.Field!.EntityType == nameof(Device) && !readableDevices.Contains(v.EntityId));
         }
     }
 

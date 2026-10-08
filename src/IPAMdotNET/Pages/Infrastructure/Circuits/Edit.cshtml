@@ -27,15 +27,12 @@
                     <span asp-validation-for="Circuit.ProviderId" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
-                    <label asp-for="Circuit.Type" class="form-label"></label>
-                    <input asp-for="Circuit.Type" class="form-control" list="circuit-types" placeholder="@L.T("Fibre, MPLS, Internet…")" />
-                    <datalist id="circuit-types">
-                        <option value="Fibre noire"></option>
-                        <option value="Lien Ethernet"></option>
-                        <option value="MPLS"></option>
-                        <option value="Accès Internet"></option>
-                        <option value="Liaison louée"></option>
-                    </datalist>
+                    <label asp-for="Circuit.TypeId" class="form-label"></label>
+                    <select asp-for="Circuit.TypeId" asp-items="Model.Types" class="form-select"><option value="">@L.T("Aucun")</option></select>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="form-text"><a asp-page="Types/Index">@L.T("Gérer les types")</a></div>
+                    }
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Circuit.Capacity" class="form-label"></label>
@@ -45,14 +42,20 @@
                     <label asp-for="Circuit.Status" class="form-label"></label>
                     <select asp-for="Circuit.Status" asp-items="Html.GetEnumSelectList<CircuitStatus>()" class="form-select"></select>
                 </div>
-                <div class="col-md-4">
+                <fieldset class="col-md-6">
+                    <legend class="fs-6 fw-semibold mb-1">@L.T("Extrémité A")</legend>
+                    <label asp-for="Circuit.DeviceAId" class="form-label"></label>
+                    <select asp-for="Circuit.DeviceAId" asp-items="Model.Devices" class="form-select mb-2"><option value="">@L.T("Aucun")</option></select>
                     <label asp-for="Circuit.LocationAId" class="form-label"></label>
                     <select asp-for="Circuit.LocationAId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
-                </div>
-                <div class="col-md-4">
+                </fieldset>
+                <fieldset class="col-md-6">
+                    <legend class="fs-6 fw-semibold mb-1">@L.T("Extrémité B")</legend>
+                    <label asp-for="Circuit.DeviceBId" class="form-label"></label>
+                    <select asp-for="Circuit.DeviceBId" asp-items="Model.Devices" class="form-select mb-2"><option value="">@L.T("Aucun")</option></select>
                     <label asp-for="Circuit.LocationBId" class="form-label"></label>
                     <select asp-for="Circuit.LocationBId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
-                </div>
+                </fieldset>
                 <div class="col-md-4">
                     <label asp-for="Circuit.CustomerId" class="form-label"></label>
                     <select asp-for="Circuit.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>

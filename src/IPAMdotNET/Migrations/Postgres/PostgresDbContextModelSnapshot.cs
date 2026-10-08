@@ -304,6 +304,12 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Property<int?>("CustomerId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("DeviceAId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DeviceBId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("LocationAId")
                         .HasColumnType("integer");
 
@@ -316,17 +322,22 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Type")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int?>("TypeId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("DeviceAId");
+
+                    b.HasIndex("DeviceBId");
+
                     b.HasIndex("LocationAId");
 
                     b.HasIndex("LocationBId");
+
+                    b.HasIndex("TypeId");
 
                     b.HasIndex("ProviderId", "Cid")
                         .IsUnique();
@@ -361,6 +372,36 @@ namespace IPAMdotNet.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("CircuitProviders");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.CircuitType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("CircuitTypes");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.CustomField", b =>
@@ -463,6 +504,14 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("Latitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Longitude")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -513,6 +562,9 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("character varying(45)");
 
                     b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RackFace")
                         .HasColumnType("integer");
 
                     b.Property<int?>("RackId")
@@ -624,6 +676,9 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(16)
                         .HasColumnType("bytea");
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -656,6 +711,8 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("DeviceId");
 
@@ -802,6 +859,62 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.HasIndex("Date");
 
                     b.ToTable("LogEntries");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cid")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cid")
+                        .IsUnique();
+
+                    b.ToTable("LogicalCircuits");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuitMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CircuitId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LogicalCircuitId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CircuitId");
+
+                    b.HasIndex("LogicalCircuitId", "CircuitId")
+                        .IsUnique();
+
+                    b.ToTable("LogicalCircuitMembers");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.Nameserver", b =>
@@ -1001,6 +1114,9 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<bool>("HasBack")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("LocationId")
                         .HasColumnType("integer");
 
@@ -1011,6 +1127,9 @@ namespace IPAMdotNet.Migrations.Postgres
 
                     b.Property<int>("Size")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("TopDown")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -1300,6 +1419,9 @@ namespace IPAMdotNet.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -1316,6 +1438,8 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("DomainId", "Number")
                         .IsUnique();
@@ -1467,6 +1591,14 @@ namespace IPAMdotNet.Migrations.Postgres
                         .WithMany()
                         .HasForeignKey("CustomerId");
 
+                    b.HasOne("IPAMdotNet.Data.Device", "DeviceA")
+                        .WithMany()
+                        .HasForeignKey("DeviceAId");
+
+                    b.HasOne("IPAMdotNet.Data.Device", "DeviceB")
+                        .WithMany()
+                        .HasForeignKey("DeviceBId");
+
                     b.HasOne("IPAMdotNet.Data.Location", "LocationA")
                         .WithMany()
                         .HasForeignKey("LocationAId");
@@ -1481,13 +1613,23 @@ namespace IPAMdotNet.Migrations.Postgres
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("IPAMdotNet.Data.CircuitType", "Type")
+                        .WithMany()
+                        .HasForeignKey("TypeId");
+
                     b.Navigation("Customer");
+
+                    b.Navigation("DeviceA");
+
+                    b.Navigation("DeviceB");
 
                     b.Navigation("LocationA");
 
                     b.Navigation("LocationB");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Type");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.CustomFieldValue", b =>
@@ -1549,6 +1691,10 @@ namespace IPAMdotNet.Migrations.Postgres
 
             modelBuilder.Entity("IPAMdotNet.Data.IpAddress", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
                     b.HasOne("IPAMdotNet.Data.Device", "Device")
                         .WithMany()
                         .HasForeignKey("DeviceId");
@@ -1563,6 +1709,8 @@ namespace IPAMdotNet.Migrations.Postgres
                         .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Device");
 
@@ -1595,6 +1743,25 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Navigation("RequestedBy");
 
                     b.Navigation("Subnet");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuitMember", b =>
+                {
+                    b.HasOne("IPAMdotNet.Data.Circuit", "Circuit")
+                        .WithMany()
+                        .HasForeignKey("CircuitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IPAMdotNet.Data.LogicalCircuit", "LogicalCircuit")
+                        .WithMany("Members")
+                        .HasForeignKey("LogicalCircuitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Circuit");
+
+                    b.Navigation("LogicalCircuit");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>
@@ -1752,11 +1919,17 @@ namespace IPAMdotNet.Migrations.Postgres
 
             modelBuilder.Entity("IPAMdotNet.Data.Vlan", b =>
                 {
+                    b.HasOne("IPAMdotNet.Data.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
                     b.HasOne("IPAMdotNet.Data.VlanDomain", "Domain")
                         .WithMany()
                         .HasForeignKey("DomainId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Domain");
                 });
@@ -1794,6 +1967,11 @@ namespace IPAMdotNet.Migrations.Postgres
             modelBuilder.Entity("IPAMdotNet.Data.BgpPeer", b =>
                 {
                     b.Navigation("Subnets");
+                });
+
+            modelBuilder.Entity("IPAMdotNet.Data.LogicalCircuit", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("IPAMdotNet.Data.NatRule", b =>

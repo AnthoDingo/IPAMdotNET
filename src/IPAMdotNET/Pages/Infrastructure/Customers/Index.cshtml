@@ -14,6 +14,7 @@
             <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
     @if (Model.Customers.Count == 0)
     {
         <p class="ipam-empty">@L.T("Aucun client.")</p>
@@ -21,7 +22,7 @@
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Ville")</th><th>@L.T("Contact")</th><th>@L.T("Téléphone")</th><th>@L.T("E-mail")</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Ville")</th><th>@L.T("Contact")</th><th>@L.T("Téléphone")</th><th>@L.T("E-mail")</th>@foreach (CustomField field in Model.Custom.Fields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (Customer customer in Model.Customers)
                 {
@@ -31,6 +32,10 @@
                         <td>@customer.ContactPerson</td>
                         <td>@customer.ContactPhone</td>
                         <td>@if (customer.ContactMail is not null) { <a href="mailto:@customer.ContactMail">@customer.ContactMail</a> }</td>
+                        @foreach (CustomField field in Model.Custom.Fields)
+                        {
+                            <td>@Model.Custom.Display(customer.Id, field)</td>
+                        }
                         @if (admin)
                         {
                             <td class="text-end"><a asp-page="Edit" asp-route-id="@customer.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>

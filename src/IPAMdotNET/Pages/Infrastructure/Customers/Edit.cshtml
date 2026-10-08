@@ -30,6 +30,16 @@
                 <label asp-for="Customer.State" class="form-label"></label>
                 <input asp-for="Customer.State" class="form-control" />
             </div>
+            <div class="col-md-6">
+                <label asp-for="Customer.Latitude" class="form-label"></label>
+                <input asp-for="Customer.Latitude" class="form-control" placeholder="48.8566" />
+                <span asp-validation-for="Customer.Latitude" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Customer.Longitude" class="form-label"></label>
+                <input asp-for="Customer.Longitude" class="form-control" placeholder="2.3522" />
+                <span asp-validation-for="Customer.Longitude" class="text-danger"></span>
+            </div>
             <div class="col-md-4">
                 <label asp-for="Customer.ContactPerson" class="form-label"></label>
                 <input asp-for="Customer.ContactPerson" class="form-control" />

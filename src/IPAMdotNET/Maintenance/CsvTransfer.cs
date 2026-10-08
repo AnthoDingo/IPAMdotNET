@@ -15,17 +15,23 @@ namespace IPAMdotNet.Maintenance;
 public sealed record CsvFormat(string Key, string Label, string EntityType, string[] Columns, string[]? Optional = null);
 
 /// <summary>
-/// Résultat de la préparation d'un import : objets prêts à insérer, ou erreurs (l'import est tout ou rien).
+/// Résultat de la préparation d'un import : objets prêts à insérer (<see cref="Entities"/>) ou objets existants déjà modifiés
+/// dans le contexte (<see cref="Updated"/>, enregistrés par SaveChanges), ou erreurs (l'import est tout ou rien).
 /// <see cref="CustomValues"/> : valeurs de champs personnalisés par objet, à enregistrer une fois l'identifiant connu.
 /// </summary>
 public sealed record CsvImportResult(List<object> Entities, List<string> Errors, int RowCount)
 {
+    public List<object> Updated { get; } = [];
+
     public Dictionary<object, Dictionary<int, string?>> CustomValues { get; } = new(ReferenceEqualityComparer.Instance);
 }
 
 /// <summary>
-/// Import / export CSV. Les en-têtes d'export sont ceux attendus à l'import (aller-retour possible).
+/// Import / export CSV (export aussi en Excel). Les en-têtes d'export sont ceux attendus à l'import (aller-retour possible).
 /// Les références (section, VLAN, VRF, type, emplacement) se font par nom ou numéro et doivent exister.
+/// Un objet est reconnu par sa clé naturelle (<see cref="ExistingAsync"/>) : en mise à jour, ses colonnes sont remplacées
+/// (cellule vide = valeur effacée), sinon il est refusé — sauf équipements, emplacements et clients, dont le nom n'est pas unique
+/// et qui sont alors toujours créés.
 /// </summary>
 public static class CsvTransfer
 {
@@ -37,11 +43,25 @@ public static class CsvTransfer
         new("adresses", "Adresses IP", nameof(IpAddress), ["section", "sous_reseau", "adresse", "nom_hote", "description", "mac", "proprietaire", "etiquette"]),
         new("equipements", "Équipements", nameof(Device), ["nom", "ip", "type", "emplacement", "description"]),
         new("emplacements", "Emplacements", nameof(Location), ["nom", "adresse", "latitude", "longitude", "description"]),
-        new("clients", "Clients", nameof(Customer), ["nom", "adresse", "code_postal", "ville", "contact", "telephone", "email", "notes"]),
+        new("clients", "Clients", nameof(Customer), ["nom", "adresse", "code_postal", "ville", "latitude", "longitude", "contact", "telephone", "email", "notes"],
+            ["latitude", "longitude"]),
     ];
 
-    /// <summary>Export : colonnes du format, puis une colonne par champ personnalisé (valeurs sous leur forme invariante).</summary>
-    public static async Task<string> ExportAsync(AppDbContext db, CsvFormat format)
+    /// <summary>Propriétés remplacées lors d'une mise à jour (les autres colonnes forment la clé de l'objet).</summary>
+    private static readonly Dictionary<Type, string[]> Updatable = new()
+    {
+        [typeof(Vlan)] = [nameof(Vlan.Name), nameof(Vlan.Description)],
+        [typeof(Vrf)] = [nameof(Vrf.RouteDistinguisher), nameof(Vrf.Description)],
+        [typeof(Subnet)] = [nameof(Subnet.Description), nameof(Subnet.VlanId), nameof(Subnet.VrfId)],
+        [typeof(IpAddress)] = [nameof(IpAddress.Hostname), nameof(IpAddress.Description), nameof(IpAddress.MacAddress), nameof(IpAddress.Owner), nameof(IpAddress.TagId)],
+        [typeof(Device)] = [nameof(Device.IpAddress), nameof(Device.DeviceTypeId), nameof(Device.LocationId), nameof(Device.Description)],
+        [typeof(Location)] = [nameof(Location.Address), nameof(Location.Latitude), nameof(Location.Longitude), nameof(Location.Description)],
+        [typeof(Customer)] = [nameof(Customer.Address), nameof(Customer.PostCode), nameof(Customer.City), nameof(Customer.Latitude), nameof(Customer.Longitude), nameof(Customer.ContactPerson),
+            nameof(Customer.ContactPhone), nameof(Customer.ContactMail), nameof(Customer.Note)],
+    };
+
+    /// <summary>Export : en-tête (colonnes du format, puis une par champ personnalisé) et lignes, valeurs sous leur forme invariante.</summary>
+    public static async Task<List<string?[]>> ExportAsync(AppDbContext db, CsvFormat format)
     {
         List<(int Id, string?[] Cells)> data = format.Key switch
         {
@@ -60,17 +80,18 @@ public static class CsvTransfer
             "emplacements" => (await db.Locations.OrderBy(l => l.Name).ToListAsync())
                 .Select(l => (l.Id, new[] { l.Name, l.Address, l.Latitude, l.Longitude, l.Description })).ToList(),
             "clients" => (await db.Customers.OrderBy(c => c.Name).ToListAsync())
-                .Select(c => (c.Id, new[] { c.Name, c.Address, c.PostCode, c.City, c.ContactPerson, c.ContactPhone, c.ContactMail, c.Note })).ToList(),
+                .Select(c => (c.Id, new[] { c.Name, c.Address, c.PostCode, c.City, c.Latitude, c.Longitude, c.ContactPerson, c.ContactPhone, c.ContactMail, c.Note })).ToList(),
             _ => [],
         };
         List<CustomField> fields = await CustomFieldForm.DefinitionsAsync(db, format.EntityType);
         Dictionary<int, Dictionary<int, string>> values = fields.Count == 0 ? [] : await CustomFieldForm.ValuesForAsync(db, format.EntityType);
         List<string?[]> rows = [[.. format.Columns, .. fields.Select(f => f.Name)]];
         rows.AddRange(data.Select(row => (string?[])[.. row.Cells, .. fields.Select(f => values.GetValueOrDefault(row.Id)?.GetValueOrDefault(f.Id))]));
-        return Csv.Write(rows);
+        return rows;
     }
 
-    public static async Task<CsvImportResult> PrepareAsync(AppDbContext db, CsvFormat format, List<string[]> rows)
+    /// <param name="update">Objets existants mis à jour ; sinon refusés (formats à clé unique) ou recréés.</param>
+    public static async Task<CsvImportResult> PrepareAsync(AppDbContext db, CsvFormat format, List<string[]> rows, bool update)
     {
         List<object> entities = [];
         List<string> errors = [];
@@ -94,6 +115,9 @@ public static class CsvTransfer
         List<CustomField> fields = (await CustomFieldForm.DefinitionsAsync(db, format.EntityType))
             .Where(f => !format.Columns.Contains(Key(f.Name))).ToList();
         CsvImportResult result = new(entities, errors, rows.Count - 1);
+        // Clés vues dans le fichier : une même ligne deux fois créerait un doublon ou mettrait à jour deux fois le même objet.
+        HashSet<string> keys = [];
+        bool unique = format.Key is "vlans" or "vrfs" or "sous-reseaux" or "adresses";
 
         for (int index = 1; index < rows.Count; index++)
         {
@@ -103,10 +127,10 @@ public static class CsvTransfer
             List<string> rowErrors = [];
             object? entity = format.Key switch
             {
-                "vlans" => await VlanAsync(db, Cell, entities, rowErrors),
-                "vrfs" => await VrfAsync(db, Cell, entities, rowErrors),
-                "sous-reseaux" => await SubnetAsync(db, Cell, entities, rowErrors),
-                "adresses" => await AddressAsync(db, Cell, entities, rowErrors),
+                "vlans" => await VlanAsync(db, Cell, rowErrors),
+                "vrfs" => VrfFromRow(Cell, rowErrors),
+                "sous-reseaux" => await SubnetAsync(db, Cell, rowErrors),
+                "adresses" => await AddressAsync(db, Cell, rowErrors),
                 "equipements" => await DeviceAsync(db, Cell, rowErrors),
                 "emplacements" => LocationFromRow(Cell, rowErrors),
                 "clients" => CustomerFromRow(Cell, rowErrors),
@@ -116,17 +140,49 @@ public static class CsvTransfer
             {
                 CheckLengths(entity, rowErrors);
             }
+            object? existing = null;
+            if (entity is not null && rowErrors.Count == 0 && (unique || update))
+            {
+                List<object> matches = await ExistingAsync(db, entity);
+                if (!keys.Add(NaturalKey(entity)))
+                {
+                    rowErrors.Add($"{Describe(entity)} figure déjà sur une ligne précédente du fichier.");
+                }
+                else if (matches.Count > 1)
+                {
+                    rowErrors.Add($"plusieurs objets correspondent à {Describe(entity)} : mise à jour impossible.");
+                }
+                else if (matches.Count == 1 && !update)
+                {
+                    rowErrors.Add($"{Describe(entity)} existe déjà (cochez « Mettre à jour les objets existants »).");
+                }
+                existing = matches.Count == 1 ? matches[0] : null;
+            }
+            // Mise à jour : seuls les champs personnalisés présents dans le fichier sont repris (les autres gardent leur valeur).
             Dictionary<int, string?> posted = fields.Where(f => columns.ContainsKey(Key(f.Name)))
                 .ToDictionary(f => f.Id, f => Cell(Key(f.Name)));
             ModelStateDictionary state = new();
-            Dictionary<int, string?> custom = CustomFieldForm.Validate(fields, posted, state);
+            Dictionary<int, string?> custom = CustomFieldForm.Validate(existing is null ? fields : fields.Where(f => posted.ContainsKey(f.Id)).ToList(), posted, state);
             rowErrors.AddRange(state.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
             if (rowErrors.Count == 0 && entity is not null)
             {
-                entities.Add(entity);
+                object target = entity;
+                if (existing is not null)
+                {
+                    foreach (string property in Updatable[entity.GetType()])
+                    {
+                        db.Entry(existing).Property(property).CurrentValue = entity.GetType().GetProperty(property)!.GetValue(entity);
+                    }
+                    result.Updated.Add(existing);
+                    target = existing;
+                }
+                else
+                {
+                    entities.Add(entity);
+                }
                 if (custom.Count > 0)
                 {
-                    result.CustomValues[entity] = custom;
+                    result.CustomValues[target] = custom;
                 }
             }
             errors.AddRange(rowErrors.Select(e => $"Ligne {line} : {e}"));
@@ -134,7 +190,45 @@ public static class CsvTransfer
         return result;
     }
 
-    private static async Task<Vlan?> VlanAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
+    /// <summary>Objets existants de même clé naturelle (suivis : une mise à jour les modifie directement), deux au plus.</summary>
+    private static async Task<List<object>> ExistingAsync(AppDbContext db, object entity) => entity switch
+    {
+        Vlan v => [.. await db.Vlans.Where(x => x.DomainId == v.DomainId && x.Number == v.Number).Take(2).ToListAsync()],
+        Vrf v => [.. await db.Vrfs.Where(x => x.Name == v.Name).Take(2).ToListAsync()],
+        Subnet s => [.. await db.Subnets.Where(x => x.SectionId == s.SectionId && x.Address == s.Address && x.PrefixLength == s.PrefixLength).Take(2).ToListAsync()],
+        IpAddress a => [.. await db.IpAddresses.Where(x => x.SubnetId == a.SubnetId && x.Address == a.Address).Take(2).ToListAsync()],
+        Device d => [.. await db.Devices.Where(x => x.Hostname == d.Hostname).Take(2).ToListAsync()],
+        Location l => [.. await db.Locations.Where(x => x.Name == l.Name).Take(2).ToListAsync()],
+        Customer c => [.. await db.Customers.Where(x => x.Name == c.Name).Take(2).ToListAsync()],
+        _ => [],
+    };
+
+    /// <summary>Clé naturelle, pour repérer une même ligne deux fois dans le fichier (noms sans casse, comme SQL Server et MySQL).</summary>
+    private static string NaturalKey(object entity) => entity switch
+    {
+        Vlan v => $"{v.DomainId}|{v.Number}",
+        Subnet s => $"{s.SectionId}|{Convert.ToHexString(s.Address)}|{s.PrefixLength}",
+        IpAddress a => $"{a.SubnetId}|{Convert.ToHexString(a.Address)}",
+        Vrf v => v.Name.ToLowerInvariant(),
+        Device d => d.Hostname.ToLowerInvariant(),
+        Location l => l.Name.ToLowerInvariant(),
+        Customer c => c.Name.ToLowerInvariant(),
+        _ => "",
+    };
+
+    private static string Describe(object entity) => entity switch
+    {
+        Vlan v => $"le VLAN {v.Number}",
+        Subnet s => $"le sous-réseau {s.Network}",
+        IpAddress a => $"l'adresse {a.Value}",
+        Vrf v => $"la VRF « {v.Name} »",
+        Device d => $"l'équipement « {d.Hostname} »",
+        Location l => $"l'emplacement « {l.Name} »",
+        Customer c => $"le client « {c.Name} »",
+        _ => "l'objet",
+    };
+
+    private static async Task<Vlan?> VlanAsync(AppDbContext db, Func<string, string?> cell, List<string> errors)
     {
         if (!int.TryParse(cell("numero"), out int number) || number is < 1 or > 4094)
         {
@@ -149,25 +243,17 @@ public static class CsvTransfer
             errors.Add($"domaine L2 « {domainName} » inconnu.");
             return null;
         }
-        if (await db.Vlans.AnyAsync(v => v.DomainId == domain.Id && v.Number == number) || pending.OfType<Vlan>().Any(v => v.DomainId == domain.Id && v.Number == number))
-        {
-            errors.Add($"le VLAN {number} existe déjà dans le domaine « {domain.Name} ».");
-        }
         string? name = Required(cell("nom"), "nom", errors);
         return new Vlan { DomainId = domain.Id, Number = number, Name = name ?? "", Description = cell("description") };
     }
 
-    private static async Task<Vrf?> VrfAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
+    private static Vrf VrfFromRow(Func<string, string?> cell, List<string> errors)
     {
         string? name = Required(cell("nom"), "nom", errors);
-        if (name is not null && (await db.Vrfs.AnyAsync(v => v.Name == name) || pending.OfType<Vrf>().Any(v => v.Name == name)))
-        {
-            errors.Add($"la VRF « {name} » existe déjà.");
-        }
         return new Vrf { Name = name ?? "", RouteDistinguisher = cell("rd"), Description = cell("description") };
     }
 
-    private static async Task<Subnet?> SubnetAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
+    private static async Task<Subnet?> SubnetAsync(AppDbContext db, Func<string, string?> cell, List<string> errors)
     {
         string? sectionName = Required(cell("section"), "section", errors);
         Section? section = sectionName is null ? null : await db.Sections.SingleOrDefaultAsync(s => s.Name == sectionName);
@@ -188,14 +274,9 @@ public static class CsvTransfer
                 subnet.SetNetwork(network);
             }
         }
-        if (section is not null && subnet.Address.Length == 16)
+        if (section is not null)
         {
             subnet.SectionId = section.Id;
-            if (await db.Subnets.AnyAsync(s => s.SectionId == section.Id && s.Address == subnet.Address && s.PrefixLength == subnet.PrefixLength)
-                || pending.OfType<Subnet>().Any(s => s.SectionId == section.Id && s.Address.SequenceEqual(subnet.Address) && s.PrefixLength == subnet.PrefixLength))
-            {
-                errors.Add($"{subnet.Network} existe déjà dans la section « {section.Name} ».");
-            }
         }
         if (cell("vlan") is { } vlanText)
         {
@@ -228,7 +309,7 @@ public static class CsvTransfer
     }
 
     /// <summary>Adresse rattachée au sous-réseau désigné par sa section et son CIDR (qui doivent exister).</summary>
-    private static async Task<IpAddress?> AddressAsync(AppDbContext db, Func<string, string?> cell, List<object> pending, List<string> errors)
+    private static async Task<IpAddress?> AddressAsync(AppDbContext db, Func<string, string?> cell, List<string> errors)
     {
         string? sectionName = Required(cell("section"), "section", errors);
         string? cidr = Required(cell("sous_reseau"), "sous_reseau", errors);
@@ -268,11 +349,6 @@ public static class CsvTransfer
             Description = cell("description"),
             Owner = cell("proprietaire"),
         };
-        if (await db.IpAddresses.AnyAsync(a => a.SubnetId == subnet.Id && a.Address == entry.Address)
-            || pending.OfType<IpAddress>().Any(a => a.SubnetId == subnet.Id && a.Address.SequenceEqual(entry.Address)))
-        {
-            errors.Add($"{address} existe déjà dans {network}.");
-        }
         if (cell("mac") is { } mac)
         {
             entry.MacAddress = IpAddress.NormalizeMac(mac);
@@ -363,6 +439,22 @@ public static class CsvTransfer
             ContactMail = cell("email"),
             Note = cell("notes"),
         };
+        if (Location.TryNormalizeCoordinate(cell("latitude"), 90, out string? latitude))
+        {
+            customer.Latitude = latitude;
+        }
+        else
+        {
+            errors.Add("latitude invalide (nombre entre -90 et 90).");
+        }
+        if (Location.TryNormalizeCoordinate(cell("longitude"), 180, out string? longitude))
+        {
+            customer.Longitude = longitude;
+        }
+        else
+        {
+            errors.Add("longitude invalide (nombre entre -180 et 180).");
+        }
         if (customer.ContactMail is not null && !new EmailAddressAttribute().IsValid(customer.ContactMail))
         {
             errors.Add($"e-mail « {customer.ContactMail} » invalide.");

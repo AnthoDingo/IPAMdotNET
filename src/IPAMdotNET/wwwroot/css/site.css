@@ -790,3 +790,12 @@ a.ipam-tile:hover {
         transition: none !important;
     }
 }
+
+/* Carte Leaflet (vue partielle _Map). */
+.ipam-map {
+    height: 320px;
+    margin-top: .5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    z-index: 0;
+}

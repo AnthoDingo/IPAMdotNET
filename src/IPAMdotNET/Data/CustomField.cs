@@ -21,7 +21,8 @@ public class CustomField
 {
     /// <summary>Types d'objets pouvant porter des champs personnalisés (clé = nom de classe).</summary>
     public static readonly IReadOnlyList<string> SupportedTypes =
-        [nameof(Subnet), nameof(IpAddress), nameof(Vlan), nameof(Vrf), nameof(Device), nameof(Location), nameof(Customer), nameof(Rack), nameof(Circuit)];
+        [nameof(Subnet), nameof(IpAddress), nameof(Vlan), nameof(Vrf), nameof(Device), nameof(Location), nameof(Customer), nameof(Rack), nameof(Circuit),
+         nameof(Section), nameof(NatRule), nameof(BgpPeer), nameof(PstnPrefix), nameof(PstnNumber)];
 
     public int Id { get; set; }
 

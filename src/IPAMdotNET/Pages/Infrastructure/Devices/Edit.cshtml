@@ -31,17 +31,22 @@
                 <label asp-for="Device.CustomerId" class="form-label"></label>
                 <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <label asp-for="Device.RackId" class="form-label"></label>
                 <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 <span asp-validation-for="Device.RackId" class="text-danger"></span>
             </div>
             <div class="col-md-3">
+                <label asp-for="Device.RackFace" class="form-label"></label>
+                <select asp-for="Device.RackFace" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.RackFace>()" class="form-select"></select>
+                <span asp-validation-for="Device.RackFace" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
                 <label asp-for="Device.RackStart" class="form-label"></label>
                 <input asp-for="Device.RackStart" class="form-control" min="1" max="60" />
                 <span asp-validation-for="Device.RackStart" class="text-danger"></span>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label asp-for="Device.RackSize" class="form-label"></label>
                 <input asp-for="Device.RackSize" class="form-control" min="1" max="60" />
                 <span asp-validation-for="Device.RackSize" class="text-danger"></span>

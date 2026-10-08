@@ -1,0 +1,41 @@
+@page
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Types.IndexModel
+@{
+    ViewData["Title"] = L.T("Types de circuits");
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center gap-2">
+        <span><i class="bi bi-palette"></i> @L.T("Types de circuits")</span>
+        <a asp-page="../Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-plug"></i> @L.T("Circuits")</a>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
+        }
+    </div>
+    @if (Model.Types.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucun type de circuit.")</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Circuits")</th>@if (admin) { <th></th> }</tr></thead>
+            <tbody>
+                @foreach (CircuitTypeRow row in Model.Types)
+                {
+                    <tr>
+                        <td><span class="ipam-swatch" style="background-color: @row.Type.Color"></span>@row.Type.Name</td>
+                        <td>@row.Type.Description</td>
+                        <td class="text-end">@row.CircuitCount</td>
+                        @if (admin)
+                        {
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Type.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

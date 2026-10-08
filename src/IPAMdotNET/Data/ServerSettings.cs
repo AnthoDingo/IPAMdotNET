@@ -23,6 +23,9 @@ public sealed class ServerSettings
     [Display(Name = "Journal des modifications")]
     public bool EnableChangelog { get; set; } = true;
 
+    [Display(Name = "Cartes des emplacements et clients")]
+    public bool EnableMaps { get; set; } = true;
+
     [Display(Name = "Masquer les plages libres dans la liste des adresses")]
     public bool HideFreeRanges { get; set; }
 
@@ -40,6 +43,9 @@ public sealed class ServerSettings
 
     [Range(5, 43200, ErrorMessage = "Entre 5 et 43200 minutes."), Display(Name = "Durée de session (minutes)", Description = "Hors « Se souvenir de moi » (30 jours).")]
     public int SessionMinutes { get; set; } = 480;
+
+    [Range(0, 3650, ErrorMessage = "Entre 0 et 3650 jours."), Display(Name = "Conservation du journal système (jours)", Description = "0 = conservation illimitée.")]
+    public int LogRetentionDays { get; set; } = 365;
 }
 
 /// <summary>Formats d'affichage des MAC ; elles restent stockées en aa:bb:cc:dd:ee:ff (<see cref="IpAddress.NormalizeMac"/>).</summary>

@@ -16,19 +16,7 @@
         <dt class="col-sm-4 col-xl-3">@L.T("Adresse postale")</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Location.Address ?? "—")</dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Coordonnées")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (Model.Location.HasCoordinates)
-            {
-                <span class="font-monospace">@Model.Location.Latitude, @Model.Location.Longitude</span>
-                <a href="https://www.openstreetmap.org/?mlat=@Model.Location.Latitude&mlon=@Model.Location.Longitude#map=16/@Model.Location.Latitude/@Model.Location.Longitude" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-map"></i>@L.T("Voir sur la carte")
-                </a>
-            }
-            else
-            {
-                <text>—</text>
-            }
-        </dd>
+        <dd class="col-sm-8 col-xl-9"><partial name="_Coordinates" model="(Model.Location.Latitude, Model.Location.Longitude, Model.Location.Name)" /></dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>
         <dd class="col-sm-8 col-xl-9">@(Model.Location.Description ?? "—")</dd>
         <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />

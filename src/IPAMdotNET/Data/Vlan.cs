@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Data;
@@ -21,6 +22,12 @@ public class Vlan
 
     [MaxLength(500), Display(Name = "Description")]
     public string? Description { get; set; }
+
+    [Display(Name = "Client")]
+    public int? CustomerId { get; set; }
+
+    [ValidateNever]
+    public Customer? Customer { get; set; }
 
     /// <summary>Domaine par défaut : le premier créé (« default », créé par la migration).</summary>
     /// <summary>VLAN utilisables par un sous-réseau de la section : domaine sans restriction, ou ouvert à la section.</summary>

@@ -53,6 +53,7 @@
                 <span asp-validation-for="Rule.Description" class="text-danger"></span>
             </div>
         </div>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
