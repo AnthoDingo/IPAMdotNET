@@ -1,14 +1,14 @@
 @page
 @model IPAMdotNet.Pages.Tools.Calculator.IndexModel
 @{
-    ViewData["Title"] = "Calculateur IP";
+    ViewData["Title"] = L.T("Calculateur IP");
 }
 
 <div class="ipam-panel mb-3 ipam-form">
-    <div class="ipam-panel-title"><i class="bi bi-calculator"></i> Calculateur IP</div>
+    <div class="ipam-panel-title"><i class="bi bi-calculator"></i> @L.T("Calculateur IP")</div>
     <form method="get" class="d-flex gap-2">
-        <input asp-for="Q" class="form-control font-monospace" placeholder="192.168.1.10/24 ou 2001:db8::1/64" autofocus aria-label="Adresse ou réseau" />
-        <button type="submit" class="btn btn-primary">Calculer</button>
+        <input asp-for="Q" class="form-control font-monospace" placeholder="@L.T("192.168.1.10/24 ou 2001:db8::1/64")" autofocus aria-label="@L.T("Adresse ou réseau")" />
+        <button type="submit" class="btn btn-primary">@L.T("Calculer")</button>
     </form>
     @if (Model.Error is not null)
     {
@@ -29,7 +29,7 @@
             </tbody>
         </table>
         <a asp-page="/Tools/Search/Index" asp-route-q="@Model.Result.Address" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-search"></i>Rechercher @Model.Result.Address dans l'IPAM
+            <i class="bi bi-search"></i>@(L.T("Rechercher {0} dans l'IPAM", Model.Result.Address))
         </a>
     </div>
 }

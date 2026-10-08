@@ -1,0 +1,4 @@
+@using IPAMdotNet.Data
+@model Tag
+@* Pastille d'étiquette, réutilisable pour l'affichage des adresses IP. *@
+<span class="badge" style="background-color: @Model.BackgroundColor; color: @Model.TextColor" title="@Model.Description">@Model.Name</span>

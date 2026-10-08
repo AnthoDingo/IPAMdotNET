@@ -3,6 +3,7 @@ using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Network.Vlans;
@@ -18,9 +19,13 @@ public class EditModel(AppDbContext db) : PageModel
     public Dictionary<int, string?> Custom { get; set; } = [];
 
     public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+    public List<SelectListItem> Domains { get; private set; } = [];
+    public List<SelectListItem> Customers { get; private set; } = [];
 
-    public async Task<IActionResult> OnGetAsync(int? id)
+    /// <summary>Création : domaine proposé (celui de la liste d'origine), sinon le domaine par défaut.</summary>
+    public async Task<IActionResult> OnGetAsync(int? id, int? domain)
     {
+        Vlan.DomainId = domain ?? await Vlan.DefaultDomainIdAsync(db);
         if (id is not null)
         {
             Vlan? vlan = await db.Vlans.FindAsync(id);
@@ -31,21 +36,27 @@ public class EditModel(AppDbContext db) : PageModel
             Vlan = vlan;
         }
         CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Vlan), id ?? 0);
+        await LoadDomainsAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(int? id)
     {
         Vlan.Id = id ?? 0;
-        if (await db.Vlans.AnyAsync(v => v.Number == Vlan.Number && v.Id != Vlan.Id))
+        if (!await db.VlanDomains.AnyAsync(d => d.Id == Vlan.DomainId))
         {
-            ModelState.AddModelError("Vlan.Number", "Ce numéro de VLAN existe déjà.");
+            ModelState.AddModelError("Vlan.DomainId", "Domaine L2 inexistant.");
+        }
+        else if (await db.Vlans.AnyAsync(v => v.DomainId == Vlan.DomainId && v.Number == Vlan.Number && v.Id != Vlan.Id))
+        {
+            ModelState.AddModelError("Vlan.Number", "Ce numéro de VLAN existe déjà dans ce domaine.");
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
             CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
+            await LoadDomainsAsync();
             return Page();
         }
         db.Update(Vlan);
@@ -64,5 +75,11 @@ public class EditModel(AppDbContext db) : PageModel
         db.Vlans.Remove(vlan);
         await db.SaveChangesAsync();
         return RedirectToPage("Index");
+    }
+
+    private async Task LoadDomainsAsync()
+    {
+        Domains = await db.VlanDomains.OrderBy(d => d.Name).Select(d => new SelectListItem(d.Name, d.Id.ToString())).ToListAsync();
+        Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
     }
 }

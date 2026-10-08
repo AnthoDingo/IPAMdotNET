@@ -1,10 +1,12 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPAMdotNet.Pages.Tools.Requests;
 
+[IpRequestsEnabled]
 public class IndexModel(AppDbContext db) : PageModel
 {
     public List<IpRequest> Pending { get; private set; } = [];

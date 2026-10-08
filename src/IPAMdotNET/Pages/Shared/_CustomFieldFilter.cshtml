@@ -1,0 +1,40 @@
+@using IPAMdotNet.Data
+@using IPAMdotNet.Maintenance
+@model CustomFieldList
+@* Filtre d'une liste sur un champ personnalisé ; les autres paramètres de la page sont conservés. *@
+
+@if (Model.Fields.Count > 0)
+{
+    string prefix = CustomFieldList.Prefix;
+    <form method="get" class="row g-2 align-items-center px-2 pt-2">
+        @foreach (KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> pair in Context.Request.Query
+            .Where(q => !q.Key.StartsWith(prefix + ".", StringComparison.OrdinalIgnoreCase) && q.Key != "p"))
+        {
+            @foreach (string? value in pair.Value)
+            {
+                <input type="hidden" name="@pair.Key" value="@value" />
+            }
+        }
+        <div class="col-sm-4 col-lg-3">
+            <select name="@(prefix).Field" class="form-select form-select-sm" aria-label="@L.T("Champ personnalisé")">
+                @foreach (CustomField field in Model.Fields)
+                {
+                    <option value="@field.Id" selected="@(field.Id == Model.Field)">@field.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-4 col-lg-3">
+            <input name="@(prefix).Value" value="@Model.Value" class="form-control form-control-sm" placeholder="@L.T("Valeur")" aria-label="@L.T("Valeur")" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel"></i> @L.T("Filtrer")</button>
+            @if (Model.Active)
+            {
+                string url = Context.Request.Path + QueryString.Create(Context.Request.Query
+                    .Where(q => !q.Key.StartsWith(prefix + ".", StringComparison.OrdinalIgnoreCase))
+                    .SelectMany(q => q.Value.Select(v => new KeyValuePair<string, string?>(q.Key, v))));
+                <a href="@url" class="btn btn-link btn-sm">@L.T("Effacer")</a>
+            }
+        </div>
+    </form>
+}

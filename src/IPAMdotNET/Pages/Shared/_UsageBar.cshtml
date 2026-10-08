@@ -1,0 +1,18 @@
+@using System.Numerics
+@model (int Used, BigInteger Usable)
+@{
+    // Pourcentage arrondi à l'entier ; > 0 dès la première adresse pour rester visible.
+    int percent = Model.Usable == 0 ? 0 : (int)BigInteger.Min(100, Model.Used * new BigInteger(100) / Model.Usable);
+    if (Model.Used > 0 && percent == 0)
+    {
+        percent = 1;
+    }
+    string color = percent >= 90 ? "bg-danger" : percent >= 70 ? "bg-warning" : "bg-success";
+    string usable = Model.Usable > 1_000_000 ? "∞" : Model.Usable.ToString("N0");
+}
+<div class="d-flex align-items-center gap-2" title="@Model.Used adresse(s) sur @Model.Usable.ToString("N0") utilisables">
+    <div class="progress flex-grow-1" style="height: .5rem; min-width: 4rem" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="@L.T("Occupation")">
+        <div class="progress-bar @color" style="width: @percent%"></div>
+    </div>
+    <span class="small text-body-secondary text-nowrap">@Model.Used / @usable</span>
+</div>

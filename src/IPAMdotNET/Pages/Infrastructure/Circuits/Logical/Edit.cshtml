@@ -1,0 +1,60 @@
+@page "{id:int?}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Logical.EditModel
+@{
+    ViewData["Title"] = Model.Logical.Id == 0 ? "Nouveau circuit logique" : $"Circuit logique {Model.Logical.Cid}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Logical.Cid" class="form-label"></label>
+                <input asp-for="Logical.Cid" class="form-control font-monospace" />
+                <span asp-validation-for="Logical.Cid" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Logical.Purpose" class="form-label"></label>
+                <input asp-for="Logical.Purpose" class="form-control" />
+                <span asp-validation-for="Logical.Purpose" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Logical.Comment" class="form-label"></label>
+                <textarea asp-for="Logical.Comment" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Logical.Comment" class="text-danger"></span>
+            </div>
+        </div>
+        <fieldset class="mb-3">
+            <legend class="fs-6 fw-semibold border-bottom pb-1">@L.T("Circuits")</legend>
+            <p class="form-text mt-0">@L.T("Indiquez la position (1, 2, 3…) des circuits qui composent le lien, de l'extrémité A à l'extrémité B ; laissez vide pour les autres.")</p>
+            @if (Model.AllCircuits.Count == 0)
+            {
+                <p class="ipam-empty">@L.T("Aucun circuit.")</p>
+            }
+            else
+            {
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th style="width: 6rem">@L.T("Position")</th><th>@L.T("Identifiant")</th><th>@L.T("Fournisseur")</th><th>@L.T("Type")</th><th>@L.T("Capacité")</th></tr></thead>
+                    <tbody>
+                        @foreach (Circuit circuit in Model.AllCircuits)
+                        {
+                            string id = $"order-{circuit.Id}";
+                            <tr>
+                                <td><input class="form-control form-control-sm" id="@id" name="Orders[@circuit.Id]" inputmode="numeric" value="@Model.Orders.GetValueOrDefault(circuit.Id)" aria-label="@L.T("Position de {0}", circuit.Cid)" /></td>
+                                <td class="font-monospace"><label for="@id">@circuit.Cid</label></td>
+                                <td>@circuit.Provider?.Name</td>
+                                <td>@if (circuit.Type is not null) { <span class="ipam-swatch" style="background-color: @circuit.Type.Color"></span>@circuit.Type.Name }</td>
+                                <td>@circuit.Capacity</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </fieldset>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Logical.Id, "ce circuit logique"))" />
+</div>

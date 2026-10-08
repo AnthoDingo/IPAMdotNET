@@ -2,7 +2,7 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Administration.ImportExport.IndexModel
 @{
-    ViewData["Title"] = "Import / export";
+    ViewData["Title"] = L.T("Import / export");
 }
 
 @if (Model.Message is not null)
@@ -13,21 +13,28 @@
 <div class="row g-3">
     <div class="col-xl-5">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-download"></i> Export CSV</div>
-            <p class="text-body-secondary">Séparateur « ; », encodage UTF-8 : le fichier s'ouvre directement dans Excel et peut être réimporté.</p>
-            <ul class="list-unstyled mb-0">
-                @foreach (CsvFormat format in CsvTransfer.Formats)
-                {
-                    <li class="mb-1">
-                        <a asp-page-handler="Export" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv"></i>@format.Label</a>
-                    </li>
-                }
-            </ul>
+            <div class="ipam-panel-title"><i class="bi bi-download"></i> @L.T("Export")</div>
+            <p class="text-body-secondary">@L.T("CSV : séparateur « ; », encodage UTF-8, s'ouvre dans Excel et peut être réimporté. Excel : classeur .xlsx, pour consultation.")</p>
+            <table class="table table-sm align-middle mb-2">
+                <tbody>
+                    @foreach (CsvFormat format in CsvTransfer.Formats)
+                    {
+                        <tr>
+                            <td>@format.Label</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-page-handler="Export" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv"></i> CSV</a>
+                                <a asp-page-handler="Excel" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <a asp-page-handler="Excel" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-excel"></i> @L.T("Tout exporter (Excel, une feuille par type)")</a>
         </div>
     </div>
     <div class="col-xl-7">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-upload"></i> Import CSV</div>
+            <div class="ipam-panel-title"><i class="bi bi-upload"></i> @L.T("Import CSV")</div>
             <form method="post" enctype="multipart/form-data" asp-page-handler="Preview">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                 <div class="row g-2 mb-2">
@@ -41,16 +48,22 @@
                         <span asp-validation-for="Upload" class="text-danger"></span>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Vérifier le fichier</button>
+                <div class="form-check mb-2">
+                    <input asp-for="Update" class="form-check-input" />
+                    <label asp-for="Update" class="form-check-label"></label>
+                    <div class="form-text">@L.T("Un objet déjà présent (même clé : numéro et domaine du VLAN, nom de VRF, section et CIDR, sous-réseau et adresse, nom d'équipement, d'emplacement ou de client) voit ses colonnes remplacées ; une cellule vide efface la valeur. Sinon, les VLAN, VRF, sous-réseaux et adresses existants sont refusés.")</div>
+                </div>
+                <button type="submit" class="btn btn-primary">@L.T("Vérifier le fichier")</button>
             </form>
             <hr />
             <div class="small text-body-secondary">
-                <div class="fw-semibold mb-1">Colonnes attendues (première ligne)</div>
+                <div class="fw-semibold mb-1">@L.T("Colonnes attendues (première ligne)")</div>
                 @foreach (CsvFormat format in CsvTransfer.Formats)
                 {
                     <div><strong>@format.Label</strong> : <span class="font-monospace">@string.Join(";", format.Columns)</span></div>
                 }
-                <div class="mt-1">Les références (section, VLAN, VRF, type, emplacement) doivent déjà exister. L'import est refusé en entier à la moindre erreur.</div>
+                <div class="mt-1">@L.T("Les références (section, VLAN, VRF, type, emplacement) doivent déjà exister. L'import est refusé en entier à la moindre erreur.")</div>
+                <div class="mt-1">@L.T("Champs personnalisés : une colonne supplémentaire par champ, intitulée de son nom (comme à l'export) ; facultative sauf pour un champ obligatoire.")</div>
             </div>
         </div>
     </div>
@@ -59,11 +72,11 @@
 @if (Model.Result is not null)
 {
     <div class="ipam-panel mt-3">
-        <div class="ipam-panel-title">Aperçu : @Model.Result.RowCount ligne(s)</div>
+        <div class="ipam-panel-title">@(L.T("Aperçu : {0} ligne(s)", Model.Result.RowCount))</div>
         @if (Model.Result.Errors.Count > 0)
         {
             <div class="alert alert-danger">
-                <div class="fw-semibold mb-1">@Model.Result.Errors.Count erreur(s) : rien n'a été importé.</div>
+                <div class="fw-semibold mb-1">@(L.T("{0} erreur(s) : rien n'a été importé.", Model.Result.Errors.Count))</div>
                 <ul class="mb-0">
                     @foreach (string error in Model.Result.Errors.Take(100))
                     {
@@ -77,7 +90,8 @@
             <form method="post" asp-page-handler="Import" class="mb-3">
                 <input type="hidden" asp-for="Format" />
                 <input type="hidden" asp-for="CsvText" />
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i>Importer @Model.Result.Entities.Count objet(s)</button>
+                <input type="hidden" asp-for="Update" />
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i>@(L.T("Importer : {0} création(s), {1} mise(s) à jour", Model.Result.Entities.Count, Model.Result.Updated.Count))</button>
             </form>
         }
         <div class="table-responsive">
@@ -95,7 +109,7 @@
         </div>
         @if (Model.Result.RowCount > 20)
         {
-            <p class="text-body-secondary small mb-0">… 20 premières lignes affichées.</p>
+            <p class="text-body-secondary small mb-0">@L.T("… 20 premières lignes affichées.")</p>
         }
     </div>
 }

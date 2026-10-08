@@ -12,12 +12,17 @@ public sealed class IpamSetupInitializer : ISetupInitializer
         await using AppDbContext db = AppDbContext.Create(provider, connectionString);
         await db.Database.MigrateAsync(ct);
 
-        // Types d'équipements par défaut de phpIPAM.
+        // Types d'équipements par défaut de phpIPAM, sous leurs noms d'origine : l'import phpIPAM les réutilise par nom.
         if (!await db.DeviceTypes.AnyAsync(ct))
         {
-            string[] names = ["Commutateur", "Routeur", "Pare-feu", "Concentrateur", "Point d'accès sans fil",
-                "Base de données", "Poste de travail", "Ordinateur portable", "Autre"];
+            string[] names = ["Switch", "Router", "Firewall", "Hub", "Wireless", "Database", "Workstation", "Laptop", "Other"];
             db.DeviceTypes.AddRange(names.Select(name => new DeviceType { Name = name }));
+            await db.SaveChangesAsync(ct);
+        }
+        if (!await db.CircuitTypes.AnyAsync(ct))
+        {
+            string[] names = ["Fibre noire", "Lien Ethernet", "MPLS", "Accès Internet", "Liaison louée"];
+            db.CircuitTypes.AddRange(names.Select(name => new CircuitType { Name = name }));
             await db.SaveChangesAsync(ct);
         }
     }

@@ -1,0 +1,34 @@
+@page
+@model IPAMdotNet.Pages.Network.VlanDomains.IndexModel
+@{
+    ViewData["Title"] = L.T("Domaines L2");
+    bool admin = User.IsInRole("Admin");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-bounding-box"></i> @L.T("Domaines L2")</span>
+        @if (admin)
+        {
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
+        }
+    </div>
+    <table class="table table-sm table-hover align-middle mb-0">
+        <thead><tr><th>@L.T("Nom")</th><th>@L.T("Description")</th><th>@L.T("Sections")</th><th class="text-end">@L.T("VLAN")</th>@if (admin) { <th></th> }</tr></thead>
+        <tbody>
+            @foreach (VlanDomainRow row in Model.Domains)
+            {
+                <tr>
+                    <td><a asp-page="/Network/Vlans/Index" asp-route-domain="@row.Domain.Id">@row.Domain.Name</a></td>
+                    <td>@row.Domain.Description</td>
+                    <td>@(row.Sections.Count == 0 ? L.T("Toutes") : string.Join(", ", row.Sections))</td>
+                    <td class="text-end">@row.VlanCount</td>
+                    @if (admin)
+                    {
+                        <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Domain.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

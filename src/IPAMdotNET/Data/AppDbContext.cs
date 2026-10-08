@@ -10,10 +10,13 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Subnet> Subnets => Set<Subnet>();
     public DbSet<Vlan> Vlans => Set<Vlan>();
+    public DbSet<VlanDomain> VlanDomains => Set<VlanDomain>();
     public DbSet<Vrf> Vrfs => Set<Vrf>();
     public DbSet<Nameserver> Nameservers => Set<Nameserver>();
     public DbSet<NatRule> NatRules => Set<NatRule>();
+    public DbSet<NatRuleObject> NatRuleObjects => Set<NatRuleObject>();
     public DbSet<BgpPeer> BgpPeers => Set<BgpPeer>();
+    public DbSet<BgpPeerSubnet> BgpPeerSubnets => Set<BgpPeerSubnet>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<DeviceType> DeviceTypes => Set<DeviceType>();
@@ -21,6 +24,9 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<Rack> Racks => Set<Rack>();
     public DbSet<CircuitProvider> CircuitProviders => Set<CircuitProvider>();
     public DbSet<Circuit> Circuits => Set<Circuit>();
+    public DbSet<CircuitType> CircuitTypes => Set<CircuitType>();
+    public DbSet<LogicalCircuit> LogicalCircuits => Set<LogicalCircuit>();
+    public DbSet<LogicalCircuitMember> LogicalCircuitMembers => Set<LogicalCircuitMember>();
     public DbSet<PstnPrefix> PstnPrefixes => Set<PstnPrefix>();
     public DbSet<PstnNumber> PstnNumbers => Set<PstnNumber>();
     public DbSet<ChangeLog> ChangeLogs => Set<ChangeLog>();
@@ -30,6 +36,13 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     public DbSet<CustomField> CustomFields => Set<CustomField>();
     public DbSet<CustomFieldValue> CustomFieldValues => Set<CustomFieldValue>();
     public DbSet<LogEntry> LogEntries => Set<LogEntry>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<SectionPermission> SectionPermissions => Set<SectionPermission>();
+    public DbSet<AuthMethod> AuthMethods => Set<AuthMethod>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
+    public DbSet<RemoteAgent> RemoteAgents => Set<RemoteAgent>();
 
     /// <summary>Ajoute une entrée au journal système.</summary>
     public async Task LogAsync(LogSeverity severity, string category, string message, string? userName, string? ipAddress)
@@ -82,6 +95,8 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         await Devices.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
         await Racks.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
         await Circuits.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
+        await Vlans.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
+        await IpAddresses.Where(x => x.CustomerId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.CustomerId, (int?)null));
     }
 
     public async Task DetachRackAsync(int id)
@@ -101,6 +116,34 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
     {
         await PstnPrefixes.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
         await PstnNumbers.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await IpAddresses.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await NatRules.Where(x => x.DeviceId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceId, (int?)null));
+        await Circuits.Where(x => x.DeviceAId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceAId, (int?)null));
+        await Circuits.Where(x => x.DeviceBId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.DeviceBId, (int?)null));
+    }
+
+    public async Task DetachCircuitTypeAsync(int id)
+    {
+        await Circuits.Where(x => x.TypeId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.TypeId, (int?)null));
+    }
+
+    /// <summary>
+    /// Avant la suppression d'un sous-réseau (et donc de ses adresses, en cascade) : les règles NAT gardent le texte, perdent le lien ;
+    /// ses associations aux pairs BGP sont supprimées.
+    /// Clés en NO ACTION : SQL Server refuse le double chemin sous-réseau → NAT et sous-réseau → adresse → NAT.
+    /// </summary>
+    public async Task DetachSubnetAsync(int id)
+    {
+        await NatRuleObjects.Where(x => x.SubnetId == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.SubnetId, (int?)null));
+        await BgpPeerSubnets.Where(x => x.SubnetId == id).ExecuteDeleteAsync();
+        await DetachAddressesAsync(IpAddresses.Where(a => a.SubnetId == id).Select(a => a.Id));
+    }
+
+    /// <summary>Avant la suppression d'adresses : les règles NAT gardent le texte, perdent le lien.</summary>
+    public async Task DetachAddressesAsync(IQueryable<int> ids)
+    {
+        await NatRuleObjects.Where(x => x.AddressId != null && ids.Contains(x.AddressId.Value))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.AddressId, (int?)null));
     }
 
     public static AppDbContext Create(DbProvider provider, string connectionString) => provider switch
@@ -133,9 +176,34 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(s => s.Nameserver).WithMany().OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Vlan>().HasIndex(v => v.Number).IsUnique();
+        modelBuilder.Entity<VlanDomain>(entity =>
+        {
+            entity.HasIndex(d => d.Name).IsUnique();
+            entity.HasMany(d => d.Sections).WithMany().UsingEntity("VlanDomainSections");
+        });
+        modelBuilder.Entity<Vlan>(entity =>
+        {
+            entity.HasIndex(v => new { v.DomainId, v.Number }).IsUnique();
+            // Un domaine qui contient des VLAN ne peut pas être supprimé (les formulaires le refusent avant).
+            entity.HasOne(v => v.Domain).WithMany().OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<Vrf>().HasIndex(v => v.Name).IsUnique();
         modelBuilder.Entity<BgpPeer>().HasOne(b => b.Vrf).WithMany().OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<BgpPeerSubnet>(entity =>
+        {
+            entity.HasIndex(x => new { x.BgpPeerId, x.SubnetId, x.Direction }).IsUnique();
+            entity.HasOne(x => x.BgpPeer).WithMany(p => p.Subnets).OnDelete(DeleteBehavior.Cascade);
+            // NO ACTION : supprimées par DetachSubnetAsync (chemins multiples refusés par SQL Server, via les VRF).
+            entity.HasOne(x => x.Subnet).WithMany().OnDelete(DeleteBehavior.ClientCascade);
+        });
+        // NAT : liens en NO ACTION, vidés par DetachSubnetAsync / DetachAddressesAsync / DetachDeviceAsync.
+        modelBuilder.Entity<NatRule>().HasOne(n => n.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        modelBuilder.Entity<NatRuleObject>(entity =>
+        {
+            entity.HasOne(o => o.NatRule).WithMany(n => n.Objects).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(o => o.Subnet).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(o => o.Address).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
 
         // Infrastructure : clés étrangères facultatives en NO ACTION, vidées par les méthodes Detach*Async.
         modelBuilder.Entity<Subnet>().HasOne(s => s.Location).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
@@ -147,6 +215,7 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(d => d.Location).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(d => d.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(d => d.Rack).WithMany(r => r.Devices).OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasMany(d => d.Sections).WithMany().UsingEntity("DeviceSections");
         });
 
         modelBuilder.Entity<Rack>(entity =>
@@ -167,7 +236,24 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
             entity.HasOne(c => c.Provider).WithMany().OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(c => c.LocationA).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(c => c.LocationB).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.DeviceA).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.DeviceB).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(c => c.Type).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
             entity.HasOne(c => c.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<CircuitType>().HasIndex(t => t.Name).IsUnique();
+
+        modelBuilder.Entity<Vlan>().HasOne(v => v.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        modelBuilder.Entity<IpAddress>().HasOne(a => a.Customer).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+
+        modelBuilder.Entity<LogicalCircuit>().HasIndex(l => l.Cid).IsUnique();
+
+        modelBuilder.Entity<LogicalCircuitMember>(entity =>
+        {
+            entity.HasIndex(m => new { m.LogicalCircuitId, m.CircuitId }).IsUnique();
+            entity.HasOne(m => m.LogicalCircuit).WithMany(l => l.Members).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(m => m.Circuit).WithMany().OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PstnPrefix>(entity =>
@@ -213,6 +299,41 @@ public abstract partial class AppDbContext(DbContextOptions options) : DbContext
         });
 
         modelBuilder.Entity<LogEntry>().HasIndex(l => l.Date);
+
+        // Serveur : utilisateurs, groupes, permissions, authentification, API
+        modelBuilder.Entity<User>().HasOne(u => u.AuthMethod).WithMany().OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Group>(entity =>
+        {
+            entity.HasIndex(g => g.Name).IsUnique();
+            entity.HasMany(g => g.Users).WithMany(u => u.Groups).UsingEntity("UserGroups");
+        });
+        modelBuilder.Entity<SectionPermission>(entity =>
+        {
+            entity.HasKey(p => new { p.SectionId, p.GroupId });
+            entity.HasOne(p => p.Section).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(p => p.Group).WithMany().OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<AuthMethod>().HasIndex(a => a.Name).IsUnique();
+        modelBuilder.Entity<ApiKey>().HasIndex(k => k.KeyHash).IsUnique();
+        modelBuilder.Entity<ApiKey>().HasOne(k => k.User).WithMany().OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<RemoteAgent>().HasIndex(a => a.KeyHash).IsUnique();
+        // Agent supprimé : ses sous-réseaux reviennent à l'agent intégré (chemin unique, SET NULL accepté par SQL Server).
+        modelBuilder.Entity<Subnet>().HasOne(s => s.ScanAgent).WithMany().OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<IpAddress>(entity =>
+        {
+            entity.Property(a => a.Address).HasMaxLength(16);
+            entity.HasIndex(a => new { a.SubnetId, a.Address }).IsUnique();
+            entity.HasOne(a => a.Subnet).WithMany().OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(a => a.Tag).WithMany().OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(a => a.Device).WithMany().OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<Tag>(entity =>
+        {
+            entity.HasIndex(t => t.Name).IsUnique();
+            entity.Property(t => t.BackgroundColor).HasMaxLength(7);
+            entity.Property(t => t.TextColor).HasMaxLength(7);
+        });
 
         modelBuilder.Entity<PstnNumber>(entity =>
         {

@@ -5,14 +5,14 @@
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
     @if (admin)
     {
-        <li class="breadcrumb-item"><a asp-page="/Administration/Index">Administration</a></li>
+        <li class="breadcrumb-item"><a asp-page="/Administration/Index">@L.T("Administration")</a></li>
     }
     else
     {
-        <li class="breadcrumb-item"><a asp-page="/Tools/Index">Outils</a></li>
+        <li class="breadcrumb-item"><a asp-page="/Tools/Index">@L.T("Outils")</a></li>
     }
     <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
 }

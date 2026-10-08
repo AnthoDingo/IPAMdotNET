@@ -1,4 +1,6 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,11 +10,15 @@ public sealed record SectionRow(Section Section, int SubnetCount);
 
 public class IndexModel(AppDbContext db) : PageModel
 {
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList Custom { get; set; } = new();
+
     public List<SectionRow> Sections { get; private set; } = [];
 
     public async Task OnGetAsync()
     {
-        Sections = await db.Sections
+        await Custom.LoadAsync(db, nameof(Section));
+        Sections = await Custom.Apply(db, db.Sections)
             .OrderBy(s => s.Name)
             .Select(s => new SectionRow(s, s.Subnets.Count))
             .ToListAsync();

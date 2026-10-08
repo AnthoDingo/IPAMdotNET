@@ -1,7 +1,7 @@
 @page
 @model IPAMdotNet.Pages.Administration.Replace.IndexModel
 @{
-    ViewData["Title"] = "Remplacer des valeurs";
+    ViewData["Title"] = L.T("Remplacer des valeurs");
 }
 
 @if (Model.Message is not null)
@@ -10,20 +10,20 @@
 }
 
 <div class="ipam-panel mb-3 ipam-form">
-    <div class="ipam-panel-title"><i class="bi bi-arrow-repeat"></i> Remplacer des valeurs</div>
-    <p class="text-body-secondary">Remplace un texte dans un champ de tous les objets d'un type. Chaque modification est validée puis enregistrée dans le journal des modifications.</p>
+    <div class="ipam-panel-title"><i class="bi bi-arrow-repeat"></i> @L.T("Remplacer des valeurs")</div>
+    <p class="text-body-secondary">@L.T("Remplace un texte dans un champ de tous les objets d'un type. Chaque modification est validée puis enregistrée dans le journal des modifications.")</p>
     <form method="get" id="replace-form">
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label asp-for="Type" class="form-label"></label>
                 <select asp-for="Type" asp-items="Model.Types" class="form-select" onchange="this.form.submit()">
-                    <option value="">Choisir…</option>
+                    <option value="">@L.T("Choisir…")</option>
                 </select>
             </div>
             <div class="col-md-6">
                 <label asp-for="Field" class="form-label"></label>
                 <select asp-for="Field" asp-items="Model.Fields" class="form-select" disabled="@(Model.Fields.Count == 0)">
-                    <option value="">Choisir…</option>
+                    <option value="">@L.T("Choisir…")</option>
                 </select>
             </div>
             <div class="col-md-6">
@@ -32,7 +32,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="ReplaceWith" class="form-label"></label>
-                <input asp-for="ReplaceWith" class="form-control" placeholder="Vide pour supprimer le texte" />
+                <input asp-for="ReplaceWith" class="form-control" placeholder="@L.T("Vide pour supprimer le texte")" />
             </div>
             <div class="col-12">
                 <div class="form-check">
@@ -41,23 +41,23 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-eye"></i>Aperçu</button>
+        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-eye"></i>@L.T("Aperçu")</button>
     </form>
 </div>
 
 @if (Model.Preview is not null)
 {
     <div class="ipam-panel">
-        <div class="ipam-panel-title">Aperçu : @Model.Preview.Count objet(s) concerné(s)</div>
+        <div class="ipam-panel-title">@(L.T("Aperçu : {0} objet(s) concerné(s)", Model.Preview.Count))</div>
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         @if (Model.Preview.Count == 0)
         {
-            <p class="ipam-empty">Aucun objet ne contient ce texte.</p>
+            <p class="ipam-empty">@L.T("Aucun objet ne contient ce texte.")</p>
         }
         else
         {
             <table class="table table-sm mb-3">
-                <thead><tr><th>Objet</th><th>Avant</th><th>Après</th></tr></thead>
+                <thead><tr><th>@L.T("Objet")</th><th>@L.T("Avant")</th><th>@L.T("Après")</th></tr></thead>
                 <tbody>
                     @foreach (Replacement row in Model.Preview.Take(100))
                     {
@@ -71,7 +71,7 @@
                 <input type="hidden" asp-for="Search" />
                 <input type="hidden" asp-for="ReplaceWith" />
                 <input type="hidden" asp-for="MatchCase" />
-                <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg"></i>Remplacer dans @Model.Preview.Count objet(s)</button>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg"></i>@(L.T("Remplacer dans {0} objet(s)", Model.Preview.Count))</button>
             </form>
         }
     </div>

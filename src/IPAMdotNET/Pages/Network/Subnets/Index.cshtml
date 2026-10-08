@@ -1,20 +1,20 @@
 @page
 @model IPAMdotNet.Pages.Network.Subnets.IndexModel
 @{
-    ViewData["Title"] = "Sous-réseaux";
+    ViewData["Title"] = L.T("Sous-réseaux");
 }
 
 <div class="d-flex align-items-center mb-3">
-    <h1 class="h5 mb-0"><i class="bi bi-diagram-3"></i> Tous les sous-réseaux</h1>
-    @if (User.IsInRole("Admin"))
+    <h1 class="h5 mb-0"><i class="bi bi-diagram-3"></i> @L.T("Tous les sous-réseaux")</h1>
+    @if (Model.CanWriteAny)
     {
-        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
     }
 </div>
 
 @if (Model.Sections.Count == 0)
 {
-    <div class="ipam-panel"><p class="ipam-empty">Aucun sous-réseau.</p></div>
+    <div class="ipam-panel"><p class="ipam-empty">@L.T("Aucun sous-réseau.")</p></div>
 }
 else
 {

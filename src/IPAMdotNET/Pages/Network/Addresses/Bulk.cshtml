@@ -1,0 +1,64 @@
+@page
+@model IPAMdotNet.Pages.Network.Addresses.BulkModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = $"Modifier {Model.Addresses.Count} adresse(s)";
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Sections/Index" asp-route-id="@Model.Subnet.SectionId">@Model.Subnet.Section?.Name</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id">@Model.Subnet.Network</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"] <span class="text-body-secondary font-monospace small">(@Model.Subnet.Network)</span></div>
+    <form method="post" asp-page-handler="Apply" asp-route-subnetId="@Model.Subnet.Id">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        @foreach (IPAMdotNet.Data.IpAddress address in Model.Addresses)
+        {
+            <input type="hidden" name="Ids" value="@address.Id" />
+        }
+        <p class="small text-body-secondary font-monospace mb-3" style="max-height: 6rem; overflow: auto">@string.Join(", ", Model.Addresses.Select(a => a.Value))</p>
+        <p class="small text-body-secondary">@L.T("Seuls les champs renseignés sont modifiés ; les autres restent inchangés.")</p>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="TagId" class="form-label"></label>
+                <select asp-for="TagId" asp-items="Model.Tags" class="form-select">
+                    <option value="@BulkModel.Unchanged">@L.T("— inchangée —")</option>
+                    <option value="">@L.T("Aucune")</option>
+                </select>
+                <span asp-validation-for="TagId" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="DeviceId" class="form-label"></label>
+                <select asp-for="DeviceId" asp-items="Model.Devices" class="form-select">
+                    <option value="@BulkModel.Unchanged">@L.T("— inchangé —")</option>
+                    <option value="">@L.T("Aucun")</option>
+                </select>
+                <span asp-validation-for="DeviceId" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Owner" class="form-label"></label>
+                <input asp-for="Owner" class="form-control" />
+                <span asp-validation-for="Owner" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ExcludePing" class="form-label"></label>
+                <select asp-for="ExcludePing" class="form-select">
+                    <option value="@BulkModel.Unchanged">@L.T("— inchangé —")</option>
+                    <option value="true">@L.T("Oui")</option>
+                    <option value="false">@L.T("Non")</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@L.T("Appliquer")</button>
+        <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+    </form>
+</div>

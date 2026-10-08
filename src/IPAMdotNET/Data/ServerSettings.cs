@@ -1,0 +1,136 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace IPAMdotNet.Data;
+
+/// <summary>Paramètres généraux du serveur (Administration › Paramètres), stockés dans <see cref="AppSetting"/>.</summary>
+public sealed class ServerSettings
+{
+    [Required(ErrorMessage = "Le titre est requis."), MaxLength(100), Display(Name = "Titre du site")]
+    public string SiteTitle { get; set; } = "IPAM.Net";
+
+    [MaxLength(200), Url(ErrorMessage = "URL invalide."), Display(Name = "URL du site", Description = "Utilisée dans les liens des e-mails.")]
+    public string? SiteUrl { get; set; }
+
+    [MaxLength(100), Display(Name = "Nom de l'administrateur")]
+    public string? AdminName { get; set; }
+
+    [MaxLength(200), EmailAddress(ErrorMessage = "Adresse e-mail invalide."), Display(Name = "E-mail de l'administrateur", Description = "Affiché en pied de page comme contact.")]
+    public string? AdminEmail { get; set; }
+
+    [Display(Name = "Demandes d'adresses")]
+    public bool EnableIpRequests { get; set; } = true;
+
+    [Display(Name = "Journal des modifications")]
+    public bool EnableChangelog { get; set; } = true;
+
+    [Display(Name = "Cartes des emplacements et clients")]
+    public bool EnableMaps { get; set; } = true;
+
+    [Display(Name = "Masquer les plages libres dans la liste des adresses")]
+    public bool HideFreeRanges { get; set; }
+
+    [MaxLength(10), Display(Name = "Langue par défaut")]
+    public string Language { get; set; } = Localization.L.Source;
+
+    [Display(Name = "Format d'affichage des adresses MAC")]
+    public MacFormat MacFormat { get; set; }
+
+    [Range(0, 100, ErrorMessage = "Entre 0 et 100."), Display(Name = "Échecs de connexion avant verrouillage", Description = "0 = pas de verrouillage.")]
+    public int MaxFailedLogins { get; set; } = 5;
+
+    [Range(1, 1440, ErrorMessage = "Entre 1 et 1440 minutes."), Display(Name = "Durée du verrouillage (minutes)")]
+    public int LockoutMinutes { get; set; } = 15;
+
+    [Range(5, 43200, ErrorMessage = "Entre 5 et 43200 minutes."), Display(Name = "Durée de session (minutes)", Description = "Hors « Se souvenir de moi » (30 jours).")]
+    public int SessionMinutes { get; set; } = 480;
+
+    [Range(0, 3650, ErrorMessage = "Entre 0 et 3650 jours."), Display(Name = "Conservation du journal système (jours)", Description = "0 = conservation illimitée.")]
+    public int LogRetentionDays { get; set; } = 365;
+}
+
+/// <summary>Formats d'affichage des MAC ; elles restent stockées en aa:bb:cc:dd:ee:ff (<see cref="IpAddress.NormalizeMac"/>).</summary>
+public enum MacFormat
+{
+    [Display(Name = "Unix / Linux — aa:bb:cc:dd:ee:ff")] Unix,
+    [Display(Name = "Windows — AA-BB-CC-DD-EE-FF")] Windows,
+    [Display(Name = "Cisco — aabb.ccdd.eeff")] Cisco,
+    [Display(Name = "HP / Aruba — aabbcc-ddeeff")] Hp,
+    [Display(Name = "Sans séparateur — aabbccddeeff")] Bare,
+}
+
+/// <summary>Agent de scan intégré (Administration › Agents de scan). Préfixe à part : la page Paramètres ne l'écrase pas.</summary>
+public sealed class ScanSettings
+{
+    [Display(Name = "Agent de scan intégré activé")]
+    public bool Enabled { get; set; } = true;
+
+    [Range(1, 1440, ErrorMessage = "Entre 1 et 1440 minutes."), Display(Name = "Intervalle entre deux scans d'un sous-réseau (minutes)")]
+    public int IntervalMinutes { get; set; } = 15;
+
+    [Range(100, 10000, ErrorMessage = "Entre 100 et 10000 ms."), Display(Name = "Délai de réponse au ping (ms)")]
+    public int TimeoutMilliseconds { get; set; } = 1000;
+
+    [Range(1, 256, ErrorMessage = "Entre 1 et 256."), Display(Name = "Pings simultanés")]
+    public int Parallelism { get; set; } = 32;
+
+    [Display(Name = "Résoudre le nom des hôtes découverts (DNS inverse)")]
+    public bool ResolveHostnames { get; set; } = true;
+
+    /// <summary>Ports TCP essayés quand le ping ne répond pas (hôtes qui filtrent l'ICMP) ; vide = ping seul.</summary>
+    [MaxLength(200), RegularExpression(@"^\s*\d{1,5}(\s*,\s*\d{1,5})*\s*$", ErrorMessage = "Ports séparés par des virgules (ex. 22, 80, 443, 3389)."),
+     Display(Name = "Ports TCP testés si le ping échoue")]
+    public string? TcpPorts { get; set; }
+
+    public int[] TcpPortList => (TcpPorts ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(p => int.TryParse(p, out int port) ? port : 0).Where(p => p is > 0 and <= 65535).Distinct().ToArray();
+}
+
+/// <summary>Configuration SMTP (Administration › Messagerie).</summary>
+public sealed class MailSettings
+{
+    [Display(Name = "Envoi d'e-mails activé")]
+    public bool Enabled { get; set; }
+
+    [MaxLength(200), Display(Name = "Serveur SMTP")]
+    public string? Host { get; set; }
+
+    [Range(1, 65535, ErrorMessage = "Port entre 1 et 65535."), Display(Name = "Port")]
+    public int Port { get; set; } = 587;
+
+    [Display(Name = "Chiffrement TLS (STARTTLS)")]
+    public bool UseTls { get; set; } = true;
+
+    [MaxLength(200), Display(Name = "Utilisateur")]
+    public string? UserName { get; set; }
+
+    /// <summary>Chiffré par la protection des données d'ASP.NET Core avant stockage.</summary>
+    [MaxLength(2000), Display(Name = "Mot de passe")]
+    public string? Password { get; set; }
+
+    [MaxLength(200), EmailAddress(ErrorMessage = "Adresse e-mail invalide."), Display(Name = "Adresse d'expédition")]
+    public string? FromAddress { get; set; }
+
+    [MaxLength(100), Display(Name = "Nom d'expédition")]
+    public string? FromName { get; set; }
+
+    public bool IsUsable => Enabled && !string.IsNullOrWhiteSpace(Host) && !string.IsNullOrWhiteSpace(FromAddress);
+}
+
+/// <summary>Widgets du tableau de bord affichés (Administration › Widgets).</summary>
+public sealed class WidgetSettings
+{
+    public static readonly IReadOnlyList<(string Key, string Label)> All =
+    [
+        ("statistics", "Statistiques"),
+        ("favorites", "Sous-réseaux favoris"),
+        ("requests", "Demandes d'adresses"),
+        ("top-ipv4", "Top 10 sous-réseaux IPv4"),
+        ("top-ipv6", "Top 10 sous-réseaux IPv6"),
+        ("changes", "Dernières modifications"),
+    ];
+
+    /// <summary>Clés des widgets masqués (par défaut : aucun).</summary>
+    public string Hidden { get; set; } = "";
+
+    public bool IsVisible(string key) => !Hidden.Split(',').Contains(key);
+}

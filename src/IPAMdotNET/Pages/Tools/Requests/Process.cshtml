@@ -1,23 +1,23 @@
 @page "{id:int}"
 @model IPAMdotNet.Pages.Tools.Requests.ProcessModel
 @{
-    ViewData["Title"] = "Traiter une demande";
+    ViewData["Title"] = L.T("Traiter une demande");
 }
 
 <div class="ipam-panel ipam-form">
     <div class="ipam-panel-title">@ViewData["Title"]</div>
     <dl class="row ipam-details">
-        <dt class="col-sm-4">Demandeur</dt>
+        <dt class="col-sm-4">@L.T("Demandeur")</dt>
         <dd class="col-sm-8">@(Model.IpRequest.RequestedBy?.DisplayName ?? Model.IpRequest.RequestedBy?.UserName), le @Model.IpRequest.RequestedAt.ToLocalTime().ToString("g")</dd>
-        <dt class="col-sm-4">Sous-réseau</dt>
+        <dt class="col-sm-4">@L.T("Sous-réseau")</dt>
         <dd class="col-sm-8"><span class="font-monospace">@Model.IpRequest.Subnet?.Network</span> (@Model.IpRequest.Subnet?.Section?.Name)</dd>
-        <dt class="col-sm-4">Adresse souhaitée</dt>
+        <dt class="col-sm-4">@L.T("Adresse souhaitée")</dt>
         <dd class="col-sm-8 font-monospace">@(Model.IpRequest.RequestedAddress ?? "—")</dd>
-        <dt class="col-sm-4">Nom d'hôte</dt>
+        <dt class="col-sm-4">@L.T("Nom d'hôte")</dt>
         <dd class="col-sm-8">@(Model.IpRequest.Hostname ?? "—")</dd>
-        <dt class="col-sm-4">Propriétaire</dt>
+        <dt class="col-sm-4">@L.T("Propriétaire")</dt>
         <dd class="col-sm-8">@(Model.IpRequest.Owner ?? "—")</dd>
-        <dt class="col-sm-4">Motif</dt>
+        <dt class="col-sm-4">@L.T("Motif")</dt>
         <dd class="col-sm-8">@Model.IpRequest.Description</dd>
     </dl>
     <form method="post">
@@ -26,14 +26,26 @@
             <label asp-for="AssignedAddress" class="form-label"></label>
             <input asp-for="AssignedAddress" class="form-control font-monospace" />
             <span asp-validation-for="AssignedAddress" class="text-danger"></span>
+            @if (Model.RequestedTaken)
+            {
+                <div class="form-text text-warning">@L.T("L'adresse demandée est déjà utilisée : la première adresse libre est proposée.")</div>
+            }
+            else if (Model.IpRequest.RequestedAddress is null && Model.FirstFree is not null)
+            {
+                <div class="form-text">@L.T("Aucune adresse demandée : la première adresse libre est proposée.")</div>
+            }
+            else if (Model.FirstFree is null && Model.IpRequest.RequestedAddress is null)
+            {
+                <div class="form-text text-warning">@L.T("Le sous-réseau n'a plus d'adresse libre.")</div>
+            }
         </div>
         <div class="mb-3">
             <label asp-for="AdminComment" class="form-label"></label>
-            <textarea asp-for="AdminComment" class="form-control" rows="2" placeholder="Obligatoire en cas de refus"></textarea>
+            <textarea asp-for="AdminComment" class="form-control" rows="2" placeholder="@L.T("Obligatoire en cas de refus")"></textarea>
             <span asp-validation-for="AdminComment" class="text-danger"></span>
         </div>
-        <button type="submit" asp-page-handler="Approve" asp-route-id="@Model.IpRequest.Id" class="btn btn-success"><i class="bi bi-check-lg"></i>Accepter</button>
-        <button type="submit" asp-page-handler="Reject" asp-route-id="@Model.IpRequest.Id" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i>Refuser</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" asp-page-handler="Approve" asp-route-id="@Model.IpRequest.Id" class="btn btn-success"><i class="bi bi-check-lg"></i>@L.T("Accepter")</button>
+        <button type="submit" asp-page-handler="Reject" asp-route-id="@Model.IpRequest.Id" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i>@L.T("Refuser")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
 </div>

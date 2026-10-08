@@ -32,4 +32,33 @@ public class BgpPeer
     public string? Description { get; set; }
 
     public string Type => LocalAs == PeerAs ? "iBGP" : "eBGP";
+
+    /// <summary>Sous-réseaux annoncés au pair ou reçus de lui (« routing_subnets » de phpIPAM).</summary>
+    [ValidateNever]
+    public List<BgpPeerSubnet> Subnets { get; set; } = [];
+}
+
+public enum BgpDirection
+{
+    [Display(Name = "Annoncé")] Advertised,
+    [Display(Name = "Reçu")] Received,
+}
+
+/// <summary>Sous-réseau annoncé ou reçu par un pair BGP.</summary>
+public class BgpPeerSubnet
+{
+    public int Id { get; set; }
+
+    [Display(Name = "Pair BGP")]
+    public int BgpPeerId { get; set; }
+
+    public BgpPeer? BgpPeer { get; set; }
+
+    [Display(Name = "Sous-réseau")]
+    public int SubnetId { get; set; }
+
+    public Subnet? Subnet { get; set; }
+
+    [Display(Name = "Sens")]
+    public BgpDirection Direction { get; set; }
 }

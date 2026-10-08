@@ -41,7 +41,10 @@ public class Device
     [ValidateNever]
     public Rack? Rack { get; set; }
 
-    /// <summary>Unité basse occupée dans le rack (U1 = bas du rack).</summary>
+    [Display(Name = "Face du rack")]
+    public RackFace RackFace { get; set; }
+
+    /// <summary>Première unité occupée (plus petit numéro) ; U1 est en bas ou en haut selon <see cref="Data.Rack.TopDown"/>.</summary>
     [Range(1, 60, ErrorMessage = "Position entre 1 et 60."), Display(Name = "Position (U)")]
     public int? RackStart { get; set; }
 
@@ -49,4 +52,14 @@ public class Device
     public int? RackSize { get; set; }
 
     public int? RackEnd => RackStart + RackSize - 1;
+
+    /// <summary>Sections où l'équipement est visible (comme phpIPAM) ; aucune = visible de tous.</summary>
+    [ValidateNever]
+    public List<Section> Sections { get; set; } = [];
+}
+
+public enum RackFace
+{
+    [Display(Name = "Avant")] Front,
+    [Display(Name = "Arrière")] Back,
 }

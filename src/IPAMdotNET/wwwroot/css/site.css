@@ -1,19 +1,32 @@
 /* Structure inspirée de phpIPAM : bandeau, barre de menu, fil d'Ariane, colonne gauche + contenu, pied de page.
-   Bootstrap gère light/dark via data-bs-theme ; seules les zones propres à IPAMdotNet sont redéfinies ici. */
+   Bootstrap gère light/dark via data-bs-theme ; seules les zones propres à IPAM.Net sont redéfinies ici.
+   Profondeur par surfaces étagées (fond < panneau < en-tête de panneau) et ombres, plutôt que par les seules bordures. */
 
 :root,
 [data-bs-theme="light"] {
-    --ipam-header-bg: #1f3349;
+    --ipam-header-bg: #1d3148;
+    --ipam-header-bg-end: #25405e;
     --ipam-header-fg: #ffffff;
     --ipam-header-muted: #a9bccf;
-    --ipam-menubar-bg: #e7ecf1;
+    --ipam-menubar-bg: #eef2f6;
     --ipam-menubar-fg: #24384d;
-    --ipam-menubar-hover: #d3dce5;
+    --ipam-menubar-hover: #dfe6ee;
     --ipam-accent: #2a6db0;
-    --ipam-body-bg: #f3f5f7;
+    --ipam-accent-soft: rgba(42, 109, 176, .12);
+    --ipam-body-bg: #f1f4f8;
     --ipam-panel-bg: #ffffff;
-    --ipam-panel-head-bg: #f7f9fb;
-    --ipam-border: #d8dee4;
+    --ipam-panel-head-bg: #f7f9fc;
+    --ipam-border: #dbe2ea;
+    --ipam-shadow: 0 1px 2px rgba(16, 32, 51, .06), 0 4px 14px rgba(16, 32, 51, .06);
+    --ipam-shadow-raised: 0 1px 2px rgba(16, 32, 51, .08), 0 10px 28px rgba(16, 32, 51, .12);
+    --ipam-control-bg: #ffffff;
+    --ipam-control-border: #cdd6e0;
+    --ipam-control-hover: #aebccb;
+    --ipam-control-inset: inset 0 1px 2px rgba(16, 32, 51, .05);
+    --ipam-focus-ring: 0 0 0 .2rem rgba(42, 109, 176, .22);
+    --ipam-row-hover: rgba(42, 109, 176, .05);
+    --ipam-btn-sheen: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0));
+    --ipam-tag-filter: none;
     --bs-link-color: #2a6db0;
     --bs-link-color-rgb: 42, 109, 176;
     --bs-link-hover-color: #1f527f;
@@ -21,23 +34,41 @@
 }
 
 [data-bs-theme="dark"] {
-    --ipam-header-bg: #0b1118;
-    --ipam-header-fg: #e6edf3;
-    --ipam-header-muted: #7d8b99;
-    --ipam-menubar-bg: #151d26;
-    --ipam-menubar-fg: #c9d4df;
-    --ipam-menubar-hover: #213040;
-    --ipam-accent: #3d8bd6;
-    --ipam-body-bg: #0f151c;
-    --ipam-panel-bg: #161e27;
-    --ipam-panel-head-bg: #1b2530;
-    --ipam-border: #2a3644;
-    --bs-body-bg: #0f151c;
-    --bs-border-color: #2a3644;
-    --bs-link-color: #6aaef0;
-    --bs-link-color-rgb: 106, 174, 240;
-    --bs-link-hover-color: #9cc9f5;
-    --bs-link-hover-color-rgb: 156, 201, 245;
+    --ipam-header-bg: #0a1018;
+    --ipam-header-bg-end: #111b27;
+    --ipam-header-fg: #e8eef5;
+    --ipam-header-muted: #8a9aac;
+    --ipam-menubar-bg: #111925;
+    --ipam-menubar-fg: #c8d3df;
+    --ipam-menubar-hover: #1b2635;
+    --ipam-accent: #4d9be6;
+    --ipam-accent-soft: rgba(77, 155, 230, .14);
+    --ipam-body-bg: #080d13;
+    --ipam-panel-bg: #131c28;
+    --ipam-panel-head-bg: #1a2534;
+    --ipam-border: rgba(160, 185, 215, .13);
+    --ipam-shadow: 0 1px 0 rgba(255, 255, 255, .03) inset, 0 6px 20px rgba(0, 0, 0, .35);
+    --ipam-shadow-raised: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 14px 36px rgba(0, 0, 0, .5);
+    --ipam-control-bg: #0c131c;
+    --ipam-control-border: #2b3b4e;
+    --ipam-control-hover: #3c5066;
+    --ipam-control-inset: inset 0 1px 2px rgba(0, 0, 0, .45);
+    --ipam-focus-ring: 0 0 0 .2rem rgba(77, 155, 230, .3);
+    --ipam-row-hover: rgba(120, 170, 230, .06);
+    --ipam-btn-sheen: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0));
+    /* Les couleurs pastel des étiquettes éblouissent sur fond sombre : légèrement atténuées. */
+    --ipam-tag-filter: brightness(.82) saturate(1.1);
+    --bs-body-bg: #080d13;
+    --bs-body-color: #d3dce6;
+    --bs-emphasis-color: #f2f6fa;
+    --bs-secondary-color: rgba(211, 220, 230, .62);
+    --bs-secondary-bg: #19232f;
+    --bs-tertiary-bg: #111925;
+    --bs-border-color: rgba(160, 185, 215, .14);
+    --bs-link-color: #74b4f2;
+    --bs-link-color-rgb: 116, 180, 242;
+    --bs-link-hover-color: #a5cff7;
+    --bs-link-hover-color-rgb: 165, 207, 247;
 }
 
 html {
@@ -51,20 +82,18 @@ body {
     background: var(--ipam-body-bg);
 }
 
-.btn-primary {
-    --bs-btn-bg: var(--ipam-accent);
-    --bs-btn-border-color: var(--ipam-accent);
-    --bs-btn-hover-bg: color-mix(in srgb, var(--ipam-accent) 85%, black);
-    --bs-btn-hover-border-color: color-mix(in srgb, var(--ipam-accent) 85%, black);
-    --bs-btn-active-bg: color-mix(in srgb, var(--ipam-accent) 75%, black);
-    --bs-btn-active-border-color: color-mix(in srgb, var(--ipam-accent) 75%, black);
+[data-bs-theme="dark"] body {
+    /* Halo très léger sous le bandeau : casse l'aplat du fond sans distraire. */
+    background: radial-gradient(1200px 500px at 20% -10%, rgba(77, 155, 230, .07), transparent 60%) no-repeat, var(--ipam-body-bg);
 }
 
 /* Bandeau */
 .ipam-header {
-    background: var(--ipam-header-bg);
+    background: linear-gradient(90deg, var(--ipam-header-bg), var(--ipam-header-bg-end));
     color: var(--ipam-header-fg);
     padding: .6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ipam-accent) 45%, transparent);
 }
 
 .ipam-brand,
@@ -76,9 +105,16 @@ body {
     gap: .6rem;
 }
 
+.ipam-brand-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    align-self: center;
+}
+
 .ipam-brand-name {
     font-size: 1.5rem;
     font-weight: 600;
+    letter-spacing: -.01em;
 }
 
 .ipam-brand-sub,
@@ -88,12 +124,15 @@ body {
 
 .ipam-header-btn {
     color: var(--ipam-header-fg);
-    border: 1px solid var(--ipam-header-muted);
+    border: 1px solid color-mix(in srgb, var(--ipam-header-muted) 55%, transparent);
+    background: rgba(255, 255, 255, .04);
 }
 
-.ipam-header-btn:hover {
-    color: var(--ipam-header-bg);
-    background: var(--ipam-header-fg);
+.ipam-header-btn:hover,
+.ipam-header-btn:focus-visible {
+    color: var(--ipam-header-fg);
+    background: rgba(255, 255, 255, .14);
+    border-color: var(--ipam-header-muted);
 }
 
 [data-bs-theme="light"] .theme-icon-light,
@@ -105,17 +144,47 @@ body {
 .ipam-menubar {
     background: var(--ipam-menubar-bg);
     border-bottom: 1px solid var(--ipam-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
 }
 
 .ipam-menubar .nav-link {
     color: var(--ipam-menubar-fg);
     padding: .65rem 1rem;
+    box-shadow: inset 0 -2px 0 transparent;
+    transition: background-color .15s, box-shadow .15s;
 }
 
 .ipam-menubar .nav-link:hover,
 .ipam-menubar .nav-link.active {
     background: var(--ipam-menubar-hover);
     color: var(--ipam-menubar-fg);
+}
+
+.ipam-menubar .nav-link.active {
+    box-shadow: inset 0 -2px 0 var(--ipam-accent);
+}
+
+/* Menus déroulants */
+.dropdown-menu {
+    border-color: var(--ipam-border);
+    border-radius: .55rem;
+    box-shadow: var(--ipam-shadow-raised);
+    padding: .4rem;
+}
+
+[data-bs-theme="dark"] .dropdown-menu {
+    --bs-dropdown-bg: #172130;
+    --bs-dropdown-link-hover-bg: #223044;
+    --bs-dropdown-header-color: var(--bs-secondary-color);
+}
+
+.dropdown-item {
+    border-radius: .35rem;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background: var(--ipam-accent);
 }
 
 /* Corps */
@@ -132,14 +201,21 @@ body {
 .ipam-panel {
     background: var(--ipam-panel-bg);
     border: 1px solid var(--ipam-border);
-    border-radius: .375rem;
+    border-radius: .6rem;
     padding: 1rem;
+    box-shadow: var(--ipam-shadow);
+}
+
+/* Arête supérieure éclairée : le panneau paraît posé sur le fond. */
+[data-bs-theme="dark"] .ipam-panel,
+[data-bs-theme="dark"] .ipam-tile {
+    border-top-color: rgba(190, 215, 245, .2);
 }
 
 .ipam-panel-title {
-    background: var(--ipam-panel-head-bg);
+    background: linear-gradient(180deg, var(--ipam-panel-head-bg), color-mix(in srgb, var(--ipam-panel-head-bg) 60%, var(--ipam-panel-bg)));
     border-bottom: 1px solid var(--ipam-border);
-    border-radius: .375rem .375rem 0 0;
+    border-radius: .6rem .6rem 0 0;
     margin: -1rem -1rem 1rem;
     padding: .6rem 1rem;
     font-weight: 600;
@@ -169,6 +245,278 @@ body {
 
 .ipam-details dd {
     margin-bottom: .4rem;
+}
+
+/* Contrôles de formulaire */
+.form-control,
+.form-select {
+    background-color: var(--ipam-control-bg);
+    border-color: var(--ipam-control-border);
+    border-radius: .45rem;
+    box-shadow: var(--ipam-control-inset);
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+
+.form-control:hover:not(:disabled):not(:focus),
+.form-select:hover:not(:disabled):not(:focus) {
+    border-color: var(--ipam-control-hover);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--ipam-control-bg);
+    border-color: var(--ipam-accent);
+    box-shadow: var(--ipam-control-inset), var(--ipam-focus-ring);
+}
+
+.form-control:disabled,
+.form-select:disabled,
+.form-control[readonly] {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.form-control::placeholder {
+    color: color-mix(in srgb, var(--bs-secondary-color) 75%, transparent);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: .3rem;
+}
+
+.form-text {
+    color: var(--bs-secondary-color);
+}
+
+.form-check-input {
+    background-color: var(--ipam-control-bg);
+    border-color: var(--ipam-control-border);
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+
+.form-check-input:hover:not(:disabled) {
+    border-color: var(--ipam-control-hover);
+}
+
+.form-check-input:focus {
+    border-color: var(--ipam-accent);
+    box-shadow: var(--ipam-focus-ring);
+}
+
+.form-check-input:checked {
+    background-color: var(--ipam-accent);
+    border-color: var(--ipam-accent);
+}
+
+[data-bs-theme="dark"] .form-switch .form-check-input:not(:checked):not(:focus) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28211, 220, 230, 0.5%29'/%3e%3c/svg%3e");
+}
+
+fieldset legend {
+    color: var(--bs-emphasis-color);
+}
+
+/* Boutons : léger relief, état pressé */
+.btn {
+    border-radius: .45rem;
+    font-weight: 500;
+    transition: background-color .15s, border-color .15s, box-shadow .15s, transform .05s;
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn:focus-visible {
+    box-shadow: var(--ipam-focus-ring);
+}
+
+.btn-primary,
+.btn-success,
+.btn-danger {
+    background-image: var(--ipam-btn-sheen);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .15), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--ipam-accent);
+    --bs-btn-border-color: var(--ipam-accent);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--ipam-accent) 85%, black);
+    --bs-btn-hover-border-color: color-mix(in srgb, var(--ipam-accent) 85%, black);
+    --bs-btn-active-bg: color-mix(in srgb, var(--ipam-accent) 75%, black);
+    --bs-btn-active-border-color: color-mix(in srgb, var(--ipam-accent) 75%, black);
+    --bs-btn-disabled-bg: var(--ipam-accent);
+    --bs-btn-disabled-border-color: var(--ipam-accent);
+}
+
+/* Texte blanc lisible (contraste ≥ 4.5:1) : fond plus soutenu que l'accent des liens. */
+[data-bs-theme="dark"] .btn-primary {
+    --bs-btn-bg: #2f78c4;
+    --bs-btn-border-color: #2f78c4;
+    --bs-btn-hover-bg: #3a86d4;
+    --bs-btn-hover-border-color: #3a86d4;
+    --bs-btn-active-bg: #286aae;
+    --bs-btn-active-border-color: #286aae;
+    --bs-btn-disabled-bg: #2f78c4;
+    --bs-btn-disabled-border-color: #2f78c4;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--ipam-accent);
+    --bs-btn-border-color: color-mix(in srgb, var(--ipam-accent) 60%, transparent);
+    --bs-btn-hover-bg: var(--ipam-accent);
+    --bs-btn-hover-border-color: var(--ipam-accent);
+    --bs-btn-active-bg: color-mix(in srgb, var(--ipam-accent) 85%, black);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--bs-body-color);
+    --bs-btn-border-color: var(--ipam-control-border);
+    --bs-btn-bg: var(--ipam-control-bg);
+    --bs-btn-hover-color: var(--bs-emphasis-color);
+    --bs-btn-hover-bg: var(--ipam-menubar-hover);
+    --bs-btn-hover-border-color: var(--ipam-control-hover);
+    --bs-btn-active-color: var(--bs-emphasis-color);
+    --bs-btn-active-bg: var(--ipam-menubar-hover);
+    --bs-btn-active-border-color: var(--ipam-control-hover);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .06);
+}
+
+[data-bs-theme="dark"] .btn-outline-danger {
+    --bs-btn-color: #f08a8a;
+    --bs-btn-border-color: rgba(240, 138, 138, .45);
+}
+
+/* Tableaux : transparents dans les panneaux (pas de bande plus sombre), en-têtes discrets */
+.ipam-panel .table,
+.modal .table {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--ipam-row-hover);
+    --bs-table-striped-bg: var(--ipam-row-hover);
+    --bs-table-border-color: var(--ipam-border);
+}
+
+.table > thead th {
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--bs-secondary-color);
+    border-bottom-width: 1px;
+    white-space: nowrap;
+}
+
+.table-hover > tbody > tr {
+    transition: background-color .1s;
+}
+
+/* Barres d'occupation */
+.progress {
+    background-color: color-mix(in srgb, var(--bs-secondary-color) 18%, transparent);
+    border-radius: 1rem;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .12);
+}
+
+.progress-bar {
+    border-radius: 1rem;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0));
+}
+
+/* Étiquettes, alertes, fenêtres modales */
+.badge {
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+
+.badge[style*="background-color"],
+.ipam-ipgrid > [style*="background"],
+.ipam-swatch[style*="background"] {
+    filter: var(--ipam-tag-filter);
+}
+
+.alert {
+    border-radius: .55rem;
+    border-left-width: 4px;
+}
+
+.modal-content {
+    background: var(--ipam-panel-bg);
+    border-color: var(--ipam-border);
+    border-radius: .75rem;
+    box-shadow: var(--ipam-shadow-raised);
+}
+
+.modal-header {
+    background: var(--ipam-panel-head-bg);
+    border-bottom-color: var(--ipam-border);
+    border-radius: .75rem .75rem 0 0;
+}
+
+.modal-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* Texte Markdown (instructions) */
+.ipam-markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.ipam-markdown h1,
+.ipam-markdown h2,
+.ipam-markdown h3 {
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.ipam-markdown h1 {
+    font-size: 1.4rem;
+}
+
+.ipam-markdown h2 {
+    font-size: 1.2rem;
+}
+
+.ipam-markdown h3 {
+    font-size: 1.05rem;
+}
+
+.ipam-markdown table {
+    width: auto;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.ipam-markdown th,
+.ipam-markdown td {
+    border: 1px solid var(--ipam-border);
+    padding: .3rem .6rem;
+}
+
+.ipam-markdown th {
+    background: var(--ipam-panel-head-bg);
+}
+
+.ipam-markdown code {
+    background: var(--ipam-panel-head-bg);
+    border-radius: .25rem;
+    padding: .1rem .3rem;
+}
+
+.ipam-markdown pre code {
+    display: block;
+    padding: .6rem;
+}
+
+.ipam-markdown blockquote {
+    border-left: 3px solid var(--ipam-accent);
+    padding-left: .8rem;
+    color: var(--bs-secondary-color);
+}
+
+.ipam-markdown .contains-task-list {
+    list-style: none;
+    padding-left: 1rem;
 }
 
 /* Vue de face d'un rack */
@@ -208,6 +556,91 @@ body {
     margin-left: .5rem;
 }
 
+/* Affichage visuel d'un sous-réseau : une case par adresse (couleurs des étiquettes en style en ligne) */
+.ipam-ipgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.ipam-ipgrid > * {
+    width: 2.25rem;
+    padding: .1rem 0;
+    border: 1px solid var(--ipam-border);
+    border-radius: .25rem;
+    font-family: var(--bs-font-monospace);
+    font-size: .75rem;
+    text-align: center;
+    text-decoration: none;
+    transition: transform .08s, box-shadow .08s;
+}
+
+.ipam-ipgrid > a:hover {
+    outline: 2px solid var(--ipam-accent);
+    outline-offset: 1px;
+    position: relative;
+    z-index: 1;
+}
+
+.ipam-ip-free {
+    background: var(--ipam-control-bg);
+    color: var(--bs-secondary-color);
+}
+
+.ipam-ip-used {
+    background: color-mix(in srgb, var(--ipam-accent) 25%, var(--ipam-panel-bg));
+    color: var(--bs-body-color);
+}
+
+.ipam-ip-reserved {
+    background: var(--ipam-panel-head-bg);
+    color: var(--bs-secondary-color);
+    opacity: .7;
+}
+
+/* Pastille de la légende */
+.ipam-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: .3rem;
+    border: 1px solid var(--ipam-border);
+    border-radius: .25rem;
+    vertical-align: text-bottom;
+}
+
+/* Panneaux repliables (site.js) */
+.ipam-collapsible > .ipam-panel-title {
+    cursor: pointer;
+    user-select: none;
+}
+
+.ipam-collapse-toggle {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--bs-secondary-color);
+}
+
+.ipam-collapse-toggle .bi {
+    display: inline-block;
+    transition: transform .15s;
+}
+
+.ipam-collapsed .ipam-collapse-toggle .bi {
+    transform: rotate(-90deg);
+}
+
+.ipam-collapsed > :not(.ipam-panel-title) {
+    display: none !important;
+}
+
+.ipam-collapsed > .ipam-panel-title {
+    margin-bottom: -1rem;
+    border-bottom: 0;
+    border-radius: .6rem;
+}
+
 /* Recherche du bandeau */
 .ipam-search {
     gap: .25rem;
@@ -215,9 +648,16 @@ body {
 
 .ipam-search .form-control {
     width: 18rem;
-    background: color-mix(in srgb, var(--ipam-header-fg) 10%, transparent);
-    border-color: var(--ipam-header-muted);
+    background: rgba(255, 255, 255, .08);
+    border-color: color-mix(in srgb, var(--ipam-header-muted) 50%, transparent);
     color: var(--ipam-header-fg);
+    box-shadow: none;
+}
+
+.ipam-search .form-control:focus {
+    background: rgba(255, 255, 255, .14);
+    border-color: var(--ipam-header-muted);
+    box-shadow: 0 0 0 .2rem rgba(255, 255, 255, .12);
 }
 
 .ipam-search .form-control::placeholder {
@@ -253,16 +693,18 @@ body {
 
 .ipam-side-title {
     color: var(--bs-secondary-color);
-    font-size: .75rem;
+    font-size: .72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .06em;
     padding: .25rem 1rem;
 }
 
 .ipam-sidebar .nav-link {
     color: var(--bs-body-color);
     padding: .3rem 1rem;
+    border-left: 3px solid transparent;
+    transition: background-color .12s, border-color .12s;
 }
 
 .ipam-sidebar .nav-link:hover {
@@ -270,7 +712,8 @@ body {
 }
 
 .ipam-sidebar .nav-link.active {
-    background: var(--ipam-menubar-hover);
+    background: var(--ipam-accent-soft);
+    border-left-color: var(--ipam-accent);
     color: var(--ipam-accent);
     font-weight: 600;
 }
@@ -300,10 +743,12 @@ body {
     gap: .35rem;
     padding: 1rem .5rem;
     border: 1px solid var(--ipam-border);
-    border-radius: .375rem;
+    border-radius: .55rem;
+    background: var(--ipam-panel-bg);
     color: var(--bs-body-color);
     text-align: center;
     text-decoration: none;
+    transition: background-color .15s, border-color .15s, box-shadow .15s, transform .15s;
 }
 
 .ipam-tile .bi {
@@ -313,8 +758,11 @@ body {
 }
 
 a.ipam-tile:hover {
-    background: var(--ipam-menubar-hover);
+    background: var(--ipam-panel-head-bg);
+    border-color: color-mix(in srgb, var(--ipam-accent) 45%, var(--ipam-border));
+    box-shadow: var(--ipam-shadow-raised);
     color: var(--bs-body-color);
+    transform: translateY(-1px);
 }
 
 .ipam-tile.disabled {
@@ -333,4 +781,21 @@ a.ipam-tile:hover {
     color: var(--bs-secondary-color);
     padding: .75rem 0;
     font-size: .85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+    }
+}
+
+/* Carte Leaflet (vue partielle _Map). */
+.ipam-map {
+    height: 320px;
+    margin-top: .5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    z-index: 0;
 }

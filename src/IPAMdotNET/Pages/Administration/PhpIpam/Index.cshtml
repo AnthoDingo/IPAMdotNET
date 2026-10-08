@@ -1,0 +1,160 @@
+@page
+@using IPAMdotNet.Maintenance
+@model IPAMdotNet.Pages.Administration.PhpIpam.IndexModel
+@{
+    ViewData["Title"] = L.T("Import phpIPAM");
+}
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@if (Model.Report is not null)
+{
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-check2-circle"></i> @L.T("Import terminé")</div>
+        <ul class="mb-2">
+            @foreach ((string label, int count) in Model.Report.Counts.Where(c => c.Count > 0))
+            {
+                <li>@count.ToString("N0") @label</li>
+            }
+        </ul>
+        @if (Model.Report.Warnings.Count > 0)
+        {
+            <div class="alert alert-warning mb-0">
+                <div class="fw-semibold mb-1">@(L.T("À vérifier ({0}) :", Model.Report.Warnings.Count))</div>
+                <ul class="mb-0 small">
+                    @foreach (string warning in Model.Report.Warnings.Take(200))
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="ipam-panel mb-3 ipam-form">
+        <div class="ipam-panel-title"><i class="bi bi-box-arrow-in-down"></i> @L.T("Source")</div>
+        <p class="text-body-secondary">
+            @L.T("Reprend sections, sous-réseaux, adresses, étiquettes, domaines L2, VLAN, VRF, serveurs de noms, équipements, types, racks, emplacements, clients, circuits, NAT, BGP, préfixes RTC et champs personnalisés. Par la") <strong>@L.T("base de données")</strong>@L.T(", également les utilisateurs (avec leur mot de passe phpIPAM), groupes, permissions des sections, annuaires LDAP / AD, paramètres du site, de la messagerie et instructions. L'API phpIPAM n'expose pas ces derniers.")
+        </p>
+        @if (!Model.TargetEmpty)
+        {
+            <div class="alert alert-warning">@L.T("Cette installation contient déjà des données : l'import n'est possible que dans une installation vide (pas de fusion).")</div>
+        }
+        <form method="post" asp-page-handler="Analyze">
+            <div class="mb-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="source-db" name="Connection.Source" value="database" checked="@(Model.Connection.Source != "api")" />
+                    <label class="form-check-label" for="source-db">@L.T("Base de données MySQL / MariaDB")</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="source-api" name="Connection.Source" value="api" checked="@(Model.Connection.Source == "api")" />
+                    <label class="form-check-label" for="source-api">API REST</label>
+                </div>
+            </div>
+            <fieldset class="row g-3 mb-3" data-source="database">
+                <div class="col-md-6">
+                    <label asp-for="Connection.DbHost" class="form-label"></label>
+                    <input asp-for="Connection.DbHost" class="form-control" placeholder="@L.T("phpipam.example.com")" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Connection.DbPort" class="form-label"></label>
+                    <input asp-for="Connection.DbPort" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Connection.DbName" class="form-label"></label>
+                    <input asp-for="Connection.DbName" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Connection.DbUser" class="form-label"></label>
+                    <input asp-for="Connection.DbUser" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Connection.DbPassword" class="form-label"></label>
+                    <input asp-for="Connection.DbPassword" type="password" class="form-control" autocomplete="new-password" />
+                </div>
+                <div class="col-12 form-text mt-1">@L.T("Un compte en lecture seule suffit (SELECT sur la base phpIPAM).")</div>
+            </fieldset>
+            <fieldset class="row g-3 mb-3" data-source="api">
+                <div class="col-md-8">
+                    <label asp-for="Connection.ApiUrl" class="form-label"></label>
+                    <input asp-for="Connection.ApiUrl" class="form-control" placeholder="@L.T("https://phpipam.example.com")" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Connection.ApiApp" class="form-label"></label>
+                    <input asp-for="Connection.ApiApp" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Connection.ApiUser" class="form-label"></label>
+                    <input asp-for="Connection.ApiUser" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Connection.ApiPassword" class="form-label"></label>
+                    <input asp-for="Connection.ApiPassword" type="password" class="form-control" autocomplete="new-password" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Connection.ApiCode" class="form-label"></label>
+                    <input asp-for="Connection.ApiCode" type="password" class="form-control" autocomplete="new-password" />
+                    <div class="form-text">@L.T("Laisser vide si l'application utilise la sécurité « user » (utilisateur et mot de passe ci-dessus).")</div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Connection.IgnoreCertificate" class="form-check-input" />
+                        <label asp-for="Connection.IgnoreCertificate" class="form-check-label"></label>
+                    </div>
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn-primary" onclick="this.disabled = true; this.form.submit();"><i class="bi bi-search"></i>@L.T("Analyser")</button>
+        </form>
+    </div>
+    <script>
+        // Seuls les champs de la source choisie sont visibles.
+        (() => {
+            const update = () => {
+                const source = document.querySelector("input[name='Connection.Source']:checked").value;
+                document.querySelectorAll("fieldset[data-source]").forEach(f => f.hidden = f.dataset.source !== source);
+            };
+            document.querySelectorAll("input[name='Connection.Source']").forEach(r => r.addEventListener("change", update));
+            update();
+        })();
+    </script>
+}
+
+@if (Model.Preview is not null)
+{
+    <div class="ipam-panel mb-3 ipam-form">
+        <div class="ipam-panel-title"><i class="bi bi-list-check"></i> Contenu lu (@(Model.Preview.FromDatabase ? "base de données" : "API"))</div>
+        <table class="table table-sm mb-3" style="max-width: 30rem">
+            <thead><tr><th>@L.T("Table phpIPAM")</th><th class="text-end">@L.T("Lignes")</th></tr></thead>
+            <tbody>
+                @foreach ((string table, int count) in Model.Preview.Summary)
+                {
+                    <tr><td class="font-monospace">@table</td><td class="text-end">@count.ToString("N0")</td></tr>
+                }
+                <tr><td>@L.T("Champs personnalisés")</td><td class="text-end">@Model.Preview.CustomFields.Count</td></tr>
+            </tbody>
+        </table>
+        @if (Model.Preview.Warnings.Count > 0)
+        {
+            <div class="alert alert-warning small">
+                <ul class="mb-0">
+                    @foreach (string warning in Model.Preview.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </div>
+        }
+        <form method="post" asp-page-handler="Import">
+            <input type="hidden" asp-for="Ticket" />
+            <button type="submit" class="btn btn-success" disabled="@(!Model.TargetEmpty)" onclick="if (!confirm('Importer ces données ? L\'opération est faite en une fois (tout ou rien).')) return false; this.disabled = true; this.form.submit();">
+                <i class="bi bi-box-arrow-in-down"></i>@L.T("Importer")
+            </button>
+            <span class="small text-body-secondary ms-2">@L.T("Les données sont relues au moment de l'import.")</span>
+        </form>
+    </div>
+}

@@ -1,12 +1,12 @@
 @page
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Outils";
+    ViewData["Title"] = L.T("Outils");
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Outils</li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@L.T("Outils")</li>
 }
 
 @section Sidebar {

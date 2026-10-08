@@ -15,12 +15,12 @@ public sealed record Replacement(string Label, string Before, string After);
 public class IndexModel(AppDbContext db) : PageModel
 {
     /// <summary>Types concernés : les objets métier journalisés, hors comptes et données techniques.</summary>
-    private static readonly string[] ExcludedTypes = [nameof(User), nameof(AppSetting), nameof(IpRequest), nameof(CustomField)];
+    private static readonly string[] ExcludedTypes = [nameof(User), nameof(AppSetting), nameof(IpRequest), nameof(CustomField), nameof(NatRuleObject), nameof(BgpPeerSubnet)];
 
     /// <summary>Champs normalisés à la saisie (adresses, préfixes, coordonnées) : un remplacement textuel les rendrait invalides.</summary>
     private static readonly HashSet<string> ExcludedFields =
     [
-        "Device.IpAddress", "NatRule.Source", "NatRule.Destination", "BgpPeer.LocalAddress", "BgpPeer.PeerAddress",
+        "Device.IpAddress", "BgpPeer.LocalAddress", "BgpPeer.PeerAddress",
         "Nameserver.Servers", "PstnPrefix.Prefix", "Location.Latitude", "Location.Longitude",
     ];
 

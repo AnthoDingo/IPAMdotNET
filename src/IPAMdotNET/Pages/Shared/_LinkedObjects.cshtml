@@ -4,10 +4,10 @@
 <div class="row g-3">
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> Sous-réseaux (@Model.Subnets.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-diagram-3"></i> @(L.T("Sous-réseaux ({0})", Model.Subnets.Count))</div>
             @if (Model.Subnets.Count == 0)
             {
-                <p class="ipam-empty">Aucun sous-réseau.</p>
+                <p class="ipam-empty">@L.T("Aucun sous-réseau.")</p>
             }
             else
             {
@@ -22,17 +22,17 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> Équipements (@Model.Devices.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-hdd"></i> @(L.T("Équipements ({0})", Model.Devices.Count))</div>
             @if (Model.Devices.Count == 0)
             {
-                <p class="ipam-empty">Aucun équipement.</p>
+                <p class="ipam-empty">@L.T("Aucun équipement.")</p>
             }
             else
             {
                 <ul class="list-unstyled mb-0">
                     @foreach (Device device in Model.Devices)
                     {
-                        <li><a asp-page="/Infrastructure/Devices/Index" asp-fragment="device-@device.Id">@device.Hostname</a> <span class="font-monospace text-body-secondary">@device.IpAddress</span></li>
+                        <li><a asp-page="/Infrastructure/Devices/Details" asp-route-id="@device.Id">@device.Hostname</a> <span class="font-monospace text-body-secondary">@device.IpAddress</span></li>
                     }
                 </ul>
             }
@@ -40,10 +40,10 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-hdd-stack"></i> Racks (@Model.Racks.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-hdd-stack"></i> @(L.T("Racks ({0})", Model.Racks.Count))</div>
             @if (Model.Racks.Count == 0)
             {
-                <p class="ipam-empty">Aucun rack.</p>
+                <p class="ipam-empty">@L.T("Aucun rack.")</p>
             }
             else
             {
@@ -58,10 +58,10 @@
     </div>
     <div class="col-xl-6">
         <div class="ipam-panel h-100">
-            <div class="ipam-panel-title"><i class="bi bi-plug"></i> Circuits (@Model.Circuits.Count)</div>
+            <div class="ipam-panel-title"><i class="bi bi-plug"></i> @(L.T("Circuits ({0})", Model.Circuits.Count))</div>
             @if (Model.Circuits.Count == 0)
             {
-                <p class="ipam-empty">Aucun circuit.</p>
+                <p class="ipam-empty">@L.T("Aucun circuit.")</p>
             }
             else
             {
@@ -74,4 +74,46 @@
             }
         </div>
     </div>
+    @if (Model.Vlans is not null)
+    {
+        <div class="col-xl-6">
+            <div class="ipam-panel h-100">
+                <div class="ipam-panel-title"><i class="bi bi-hdd-network"></i> @(L.T("VLAN ({0})", Model.Vlans.Count))</div>
+                @if (Model.Vlans.Count == 0)
+                {
+                    <p class="ipam-empty">@L.T("Aucun VLAN.")</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (Vlan vlan in Model.Vlans)
+                        {
+                            <li><a asp-page="/Network/Vlans/Index" asp-route-domain="@vlan.DomainId">@vlan.Number – @vlan.Name</a> <span class="text-body-secondary">@vlan.Domain?.Name</span></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+    @if (Model.Addresses is not null)
+    {
+        <div class="col-xl-6">
+            <div class="ipam-panel h-100">
+                <div class="ipam-panel-title"><i class="bi bi-list-ul"></i> @(L.T("Adresses IP ({0})", Model.Addresses.Count))</div>
+                @if (Model.Addresses.Count == 0)
+                {
+                    <p class="ipam-empty">@L.T("Aucune adresse.")</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (IpAddress address in Model.Addresses)
+                        {
+                            <li><a class="font-monospace" asp-page="/Network/Subnets/Details" asp-route-id="@address.SubnetId">@address.Value</a> <span class="text-body-secondary">@address.Hostname @address.Description</span></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
 </div>

@@ -24,6 +24,9 @@ public class IndexModel(AppDbContext db) : PageModel
     [BindProperty]
     public string? CsvText { get; set; }
 
+    [BindProperty, Display(Name = "Mettre à jour les objets existants")]
+    public bool Update { get; set; }
+
     public CsvImportResult? Result { get; private set; }
     public List<string[]> PreviewRows { get; private set; } = [];
 
@@ -41,10 +44,26 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             return NotFound();
         }
-        string content = await CsvTransfer.ExportAsync(db, csv);
+        string content = Csv.Write(await CsvTransfer.ExportAsync(db, csv));
         // BOM UTF-8 : sans lui, Excel ouvre le fichier en ANSI et casse les accents.
         byte[] bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(content)).ToArray();
         return File(bytes, "text/csv; charset=utf-8", $"ipamdotnet-{csv.Key}-{DateTime.Now:yyyyMMdd}.csv");
+    }
+
+    /// <summary>Export Excel : un type d'objet, ou tous (une feuille par type) si <paramref name="format"/> est vide.</summary>
+    public async Task<IActionResult> OnGetExcelAsync(string? format)
+    {
+        List<CsvFormat> formats = string.IsNullOrEmpty(format) ? [.. CsvTransfer.Formats] : [.. CsvTransfer.Formats.Where(f => f.Key == format)];
+        if (formats.Count == 0)
+        {
+            return NotFound();
+        }
+        List<(string Name, List<string?[]> Rows)> sheets = [];
+        foreach (CsvFormat csv in formats)
+        {
+            sheets.Add((csv.Label, await CsvTransfer.ExportAsync(db, csv)));
+        }
+        return File(Xlsx.Write(sheets), Xlsx.ContentType, $"ipamdotnet-{(formats.Count == 1 ? formats[0].Key : "export")}-{DateTime.Now:yyyyMMdd}.xlsx");
     }
 
     public async Task<IActionResult> OnPostPreviewAsync()
@@ -67,16 +86,23 @@ public class IndexModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnPostImportAsync()
     {
         IActionResult page = await PrepareAsync();
-        if (Result is null || Result.Errors.Count > 0 || Result.Entities.Count == 0)
+        if (Result is null || Result.Errors.Count > 0 || Result.Entities.Count + Result.Updated.Count == 0)
         {
             return page;
         }
+        // Les objets mis à jour sont déjà suivis et modifiés par la préparation.
         db.AddRange(Result.Entities);
         await db.SaveChangesAsync();
+        // ponytail: un enregistrement par objet pour ses champs personnalisés ; à regrouper si les imports deviennent volumineux.
+        foreach (KeyValuePair<object, Dictionary<int, string?>> pair in Result.CustomValues)
+        {
+            await CustomFieldForm.SaveAsync(db, (int)db.Entry(pair.Key).Property("Id").CurrentValue!, pair.Value);
+        }
         string label = CsvTransfer.Formats.First(f => f.Key == Format).Label;
-        await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Import CSV : {Result.Entities.Count} objet(s) « {label} » créé(s).",
+        string summary = $"{Result.Entities.Count} objet(s) « {label} » créé(s), {Result.Updated.Count} mis à jour";
+        await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Import CSV : {summary}.",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());
-        Message = $"{Result.Entities.Count} objet(s) « {label} » importé(s).";
+        Message = $"Import terminé : {summary}.";
         return RedirectToPage();
     }
 
@@ -89,7 +115,7 @@ public class IndexModel(AppDbContext db) : PageModel
             return Page();
         }
         List<string[]> rows = Csv.Parse(CsvText);
-        Result = await CsvTransfer.PrepareAsync(db, csv, rows);
+        Result = await CsvTransfer.PrepareAsync(db, csv, rows, Update);
         PreviewRows = rows.Take(21).ToList();
         return Page();
     }

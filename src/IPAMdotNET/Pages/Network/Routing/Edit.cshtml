@@ -17,7 +17,7 @@
             <div class="col-md-4">
                 <label asp-for="Peer.VrfId" class="form-label"></label>
                 <select asp-for="Peer.VrfId" asp-items="Model.Vrfs" class="form-select">
-                    <option value="">Aucune (table globale)</option>
+                    <option value="">@L.T("Aucune (table globale)")</option>
                 </select>
             </div>
             <div class="col-md-4">
@@ -40,15 +40,28 @@
                 <input asp-for="Peer.PeerAddress" class="form-control font-monospace" />
                 <span asp-validation-for="Peer.PeerAddress" class="text-danger"></span>
             </div>
+            <div class="col-md-6">
+                <label asp-for="Advertised.Text" class="form-label">@L.T("Sous-réseaux annoncés")</label>
+                <textarea asp-for="Advertised.Text" class="form-control font-monospace" rows="3" placeholder="10.0.0.0/24"></textarea>
+                <span asp-validation-for="Advertised.Text" class="text-danger"></span>
+                <partial name="_LinkedLines" model="@(("Advertised", Model.Advertised, true))" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Received.Text" class="form-label">@L.T("Sous-réseaux reçus")</label>
+                <textarea asp-for="Received.Text" class="form-control font-monospace" rows="3" placeholder="0.0.0.0/0"></textarea>
+                <span asp-validation-for="Received.Text" class="text-danger"></span>
+                <partial name="_LinkedLines" model="@(("Received", Model.Received, true))" />
+            </div>
             <div class="col-12">
                 <label asp-for="Peer.Description" class="form-label"></label>
                 <textarea asp-for="Peer.Description" class="form-control" rows="2"></textarea>
                 <span asp-validation-for="Peer.Description" class="text-danger"></span>
             </div>
         </div>
-        <p class="form-text">Le type (iBGP / eBGP) est déduit : iBGP si les deux AS sont identiques.</p>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <p class="form-text">@L.T("Le type (iBGP / eBGP) est déduit : iBGP si les deux AS sont identiques.")</p>
+        <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Peer.Id, "ce pair"))" />
 </div>

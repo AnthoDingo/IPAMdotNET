@@ -1,0 +1,88 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Administration.Tags.EditModel
+@{
+    ViewData["Title"] = Model.Tag.Id == 0 ? "Nouvelle étiquette" : $"Étiquette {Model.Tag.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span>@ViewData["Title"]</span>
+        @if (Model.Tag.Locked)
+        {
+            <span class="ms-auto text-body-secondary small"><i class="bi bi-lock"></i>@L.T("Étiquette système")</span>
+        }
+    </div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Tag.Name" class="form-label"></label>
+                <input asp-for="Tag.Name" class="form-control" />
+                <span asp-validation-for="Tag.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Tag.Description" class="form-label"></label>
+                <input asp-for="Tag.Description" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Tag.BackgroundColor" class="form-label"></label>
+                <input asp-for="Tag.BackgroundColor" type="color" class="form-control form-control-color w-100" id="tag-bg" />
+                <span asp-validation-for="Tag.BackgroundColor" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Tag.TextColor" class="form-label"></label>
+                <input asp-for="Tag.TextColor" type="color" class="form-control form-control-color w-100" id="tag-fg" />
+                <span asp-validation-for="Tag.TextColor" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div>
+                    <div class="form-label">@L.T("Aperçu")</div>
+                    <span class="badge fs-6" id="tag-preview" style="background-color: @Model.Tag.BackgroundColor; color: @Model.Tag.TextColor">@(string.IsNullOrEmpty(Model.Tag.Name) ? "Étiquette" : Model.Tag.Name)</span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="Tag.ShowTag" class="form-check-input" role="switch" />
+                    <label asp-for="Tag.ShowTag" class="form-check-label"></label>
+                </div>
+                <div class="form-check form-switch">
+                    <input asp-for="Tag.Compress" class="form-check-input" role="switch" />
+                    <label asp-for="Tag.Compress" class="form-check-label"></label>
+                </div>
+                <div class="form-check form-switch">
+                    <input asp-for="Tag.UpdateByScan" class="form-check-input" role="switch" />
+                    <label asp-for="Tag.UpdateByScan" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+    </form>
+    @if (!Model.Tag.Locked)
+    {
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Tag.Id, "cette étiquette"))" />
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Aperçu en direct des couleurs et du nom.
+        (() => {
+            const preview = document.getElementById("tag-preview");
+            const name = document.getElementById("Tag_Name");
+            const bg = document.getElementById("tag-bg");
+            const fg = document.getElementById("tag-fg");
+            const update = () => {
+                preview.style.backgroundColor = bg.value;
+                preview.style.color = fg.value;
+                preview.textContent = name.value || "Étiquette";
+            };
+            [name, bg, fg].forEach(input => input.addEventListener("input", update));
+        })();
+    </script>
+}
+
+@if (Model.Tag.Id != 0)
+{
+    <vc:history entity-type="Tag" entity-id="@Model.Tag.Id" />
+}

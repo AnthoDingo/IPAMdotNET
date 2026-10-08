@@ -1,7 +1,14 @@
+using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+
 namespace IPAMdotNet.Navigation;
 
 /// <summary>Entrée de menu. <paramref name="Page"/> null = fonctionnalité pas encore implémentée (affichée désactivée).</summary>
-public sealed record MenuItem(string Label, string Icon, string? Page = null);
+public sealed record MenuItem(string Label, string Icon, string? Page = null, Func<ServerSettings, bool>? Visible = null)
+{
+    /// <summary>Entrée affichée selon les paramètres serveur (fonctionnalité désactivable).</summary>
+    public bool IsVisible => Visible?.Invoke(SettingsStore.Server) != false;
+}
 
 public sealed record MenuGroup(string Label, IReadOnlyList<MenuItem> Items);
 
@@ -16,7 +23,7 @@ public static class Menus
             new("Calculateur IP", "calculator", "/Tools/Calculator/Index"),
             new("Journal des modifications", "clock-history", "/Tools/Changelog/Index"),
             new("Sous-réseaux favoris", "star", "/Tools/Favorites/Index"),
-            new("Demandes d'adresses", "inbox", "/Tools/Requests/Index"),
+            new("Demandes d'adresses", "inbox", "/Tools/Requests/Index", s => s.EnableIpRequests),
             new("Instructions", "info-circle", "/Tools/Instructions/Index"),
         ]),
         new("Réseau",
@@ -35,6 +42,7 @@ public static class Menus
             new("Racks", "hdd-stack", "/Infrastructure/Racks/Index"),
             new("Emplacements", "geo-alt", "/Infrastructure/Locations/Index"),
             new("Circuits", "plug", "/Infrastructure/Circuits/Index"),
+            new("Circuits logiques", "diagram-2", "/Infrastructure/Circuits/Logical/Index"),
             new("Clients", "people", "/Infrastructure/Customers/Index"),
             new("Préfixes RTC", "telephone", "/Infrastructure/Pstn/Index"),
         ]),
@@ -44,16 +52,16 @@ public static class Menus
     [
         new("Serveur",
         [
-            new("Paramètres", "gear"),
-            new("Utilisateurs", "person"),
-            new("Groupes", "people"),
-            new("Méthodes d'authentification", "shield-lock"),
-            new("Messagerie", "envelope"),
-            new("API", "code-slash"),
-            new("Agents de scan", "broadcast-pin"),
+            new("Paramètres", "gear", "/Administration/Settings/Index"),
+            new("Utilisateurs", "person", "/Administration/Users/Index"),
+            new("Groupes", "people", "/Administration/Groups/Index"),
+            new("Méthodes d'authentification", "shield-lock", "/Administration/AuthMethods/Index"),
+            new("Messagerie", "envelope", "/Administration/Mail/Index"),
+            new("API", "code-slash", "/Administration/ApiKeys/Index"),
+            new("Agents de scan", "broadcast-pin", "/Administration/ScanAgents/Index"),
             new("Langues", "translate"),
-            new("Widgets", "grid"),
-            new("Étiquettes", "tags"),
+            new("Widgets", "grid", "/Administration/Widgets/Index"),
+            new("Étiquettes", "tags", "/Administration/Tags/Index"),
         ]),
         new("Gestion IP",
         [
@@ -63,12 +71,14 @@ public static class Menus
             new("Types d'équipements", "cpu", "/Infrastructure/DeviceTypes/Index"),
             new("Racks", "hdd-stack", "/Infrastructure/Racks/Index"),
             new("VLAN", "hdd-network", "/Network/Vlans/Index"),
+            new("Domaines L2", "bounding-box", "/Network/VlanDomains/Index"),
             new("VRF", "shuffle", "/Network/Vrfs/Index"),
             new("Serveurs de noms", "globe2", "/Network/Nameservers/Index"),
             new("Emplacements", "geo-alt", "/Infrastructure/Locations/Index"),
             new("NAT", "arrow-left-right", "/Network/Nat/Index"),
             new("Clients", "people", "/Infrastructure/Customers/Index"),
             new("Circuits", "plug", "/Infrastructure/Circuits/Index"),
+            new("Types de circuits", "palette", "/Infrastructure/Circuits/Types/Index"),
             new("Préfixes RTC", "telephone", "/Infrastructure/Pstn/Index"),
             new("Routage", "signpost-split", "/Network/Routing/Index"),
         ]),
@@ -78,6 +88,7 @@ public static class Menus
             new("Vérifier la base", "database-check", "/Administration/Verify/Index"),
             new("Remplacer des valeurs", "arrow-repeat", "/Administration/Replace/Index"),
             new("Import / export", "arrow-down-up", "/Administration/ImportExport/Index"),
+            new("Import phpIPAM", "box-arrow-in-down", "/Administration/PhpIpam/Index"),
             new("Journaux", "journal-text", "/Administration/Logs/Index"),
         ]),
     ];

@@ -13,7 +13,8 @@ public class IndexModel(AppDbContext db) : PageModel
     public async Task OnGetAsync()
     {
         int userId = User.UserId();
-        Subnets = await db.Subnets
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        Subnets = await access.Readable(db.Subnets)
             .Include(s => s.Section).Include(s => s.Vlan).Include(s => s.Vrf)
             .Where(s => db.FavoriteSubnets.Any(f => f.UserId == userId && f.SubnetId == s.Id))
             .OrderBy(s => s.Address).ThenBy(s => s.PrefixLength)

@@ -77,6 +77,55 @@ public static class Ip
         return string.Join('.', nibbles.Append("ip6.arpa"));
     }
 
+    /// <summary>Valeur numérique d'une adresse (pour comparer, compter, avancer).</summary>
+    public static BigInteger ToNumber(IPAddress address) =>
+        new(address.GetAddressBytes(), isUnsigned: true, isBigEndian: true);
+
+    public static IPAddress FromNumber(BigInteger value, bool ipv4)
+    {
+        byte[] raw = value.ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] bytes = new byte[ipv4 ? 4 : 16];
+        Array.Copy(raw, 0, bytes, bytes.Length - raw.Length, raw.Length);
+        return new IPAddress(bytes);
+    }
+
+    /// <summary>
+    /// Plage des adresses attribuables : en IPv4 (préfixe &lt; 31) sans l'adresse réseau ni la diffusion ;
+    /// en IPv6, sans l'adresse anycast du routeur (première adresse), comme phpIPAM.
+    /// </summary>
+    public static (BigInteger First, BigInteger Last) UsableRange(IPNetwork network)
+    {
+        BigInteger first = ToNumber(network.BaseAddress);
+        BigInteger last = ToNumber(LastAddress(network));
+        bool ipv4 = network.BaseAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork;
+        if (ipv4 && network.PrefixLength >= 31)
+        {
+            return (first, last);
+        }
+        return ipv4 ? (first + 1, last - 1) : (first + 1, last);
+    }
+
+    public static BigInteger UsableCount(IPNetwork network)
+    {
+        (BigInteger first, BigInteger last) = UsableRange(network);
+        return last >= first ? last - first + 1 : 0;
+    }
+
+    /// <summary>Première adresse attribuable absente de <paramref name="used"/> (recherche bornée à 65 536 candidats).</summary>
+    public static IPAddress? FirstFree(IPNetwork network, IReadOnlySet<BigInteger> used)
+    {
+        (BigInteger first, BigInteger last) = UsableRange(network);
+        bool ipv4 = network.BaseAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork;
+        for (BigInteger candidate = first; candidate <= last && candidate - first < 65536; candidate++)
+        {
+            if (!used.Contains(candidate))
+            {
+                return FromNumber(candidate, ipv4);
+            }
+        }
+        return null;
+    }
+
     public static BigInteger AddressCount(IPNetwork network) =>
         BigInteger.One << (network.BaseAddress.GetAddressBytes().Length * 8 - network.PrefixLength);
 

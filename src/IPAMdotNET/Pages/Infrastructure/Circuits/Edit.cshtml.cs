@@ -15,6 +15,8 @@ public class EditModel(AppDbContext db) : PageModel
     public Circuit Circuit { get; set; } = new();
 
     public List<SelectListItem> Providers { get; private set; } = [];
+    public List<SelectListItem> Types { get; private set; } = [];
+    public List<SelectListItem> Devices { get; private set; } = [];
     public List<SelectListItem> Locations { get; private set; } = [];
     public List<SelectListItem> Customers { get; private set; } = [];
 
@@ -76,6 +78,8 @@ public class EditModel(AppDbContext db) : PageModel
     private async Task LoadListsAsync()
     {
         Providers = await db.CircuitProviders.OrderBy(p => p.Name).Select(p => new SelectListItem(p.Name, p.Id.ToString())).ToListAsync();
+        Types = await db.CircuitTypes.OrderBy(t => t.Name).Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToListAsync();
+        Devices = await db.Devices.OrderBy(d => d.Hostname).Select(d => new SelectListItem(d.Hostname, d.Id.ToString())).ToListAsync();
         Locations = await db.Locations.OrderBy(l => l.Name).Select(l => new SelectListItem(l.Name, l.Id.ToString())).ToListAsync();
         Customers = await db.Customers.OrderBy(c => c.Name).Select(c => new SelectListItem(c.Name, c.Id.ToString())).ToListAsync();
     }

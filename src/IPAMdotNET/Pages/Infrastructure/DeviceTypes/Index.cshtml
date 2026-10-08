@@ -1,26 +1,26 @@
 @page
 @model IPAMdotNet.Pages.Infrastructure.DeviceTypes.IndexModel
 @{
-    ViewData["Title"] = "Types d'équipements";
+    ViewData["Title"] = L.T("Types d'équipements");
     bool admin = User.IsInRole("Admin");
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-cpu"></i> Types d'équipements</span>
+        <span><i class="bi bi-cpu"></i> @L.T("Types d'équipements")</span>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter</a>
+            <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
     @if (Model.Types.Count == 0)
     {
-        <p class="ipam-empty">Aucun type d'équipement.</p>
+        <p class="ipam-empty">@L.T("Aucun type d'équipement.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Nom</th><th>Description</th><th class="text-end">Équipements</th>@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Description")</th><th class="text-end">@L.T("Équipements")</th>@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (DeviceTypeRow row in Model.Types)
                 {
@@ -30,7 +30,7 @@
                         <td class="text-end">@row.DeviceCount</td>
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Type.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Type.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                         }
                     </tr>
                 }

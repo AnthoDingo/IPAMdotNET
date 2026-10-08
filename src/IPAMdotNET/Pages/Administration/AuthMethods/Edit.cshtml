@@ -1,0 +1,106 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Administration.AuthMethods.EditModel
+@{
+    ViewData["Title"] = Model.Method.Id == 0 ? "Nouvel annuaire LDAP / AD" : $"Annuaire {Model.Method.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Method.Name" class="form-label"></label>
+                <input asp-for="Method.Name" class="form-control" />
+                <span asp-validation-for="Method.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Method.Host" class="form-label"></label>
+                <input asp-for="Method.Host" class="form-control font-monospace" placeholder="@L.T("dc01.corp.local")" />
+                <span asp-validation-for="Method.Host" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Method.Port" class="form-label"></label>
+                <input asp-for="Method.Port" class="form-control" min="1" max="65535" />
+                <span asp-validation-for="Method.Port" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Method.TimeoutSeconds" class="form-label"></label>
+                <input asp-for="Method.TimeoutSeconds" class="form-control" min="1" max="60" />
+                <span asp-validation-for="Method.TimeoutSeconds" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch mb-2">
+                    <input asp-for="Method.UseSsl" class="form-check-input" role="switch" />
+                    <label asp-for="Method.UseSsl" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label asp-for="Method.BindTemplate" class="form-label"></label>
+                <input asp-for="Method.BindTemplate" class="form-control font-monospace" />
+                <div class="form-text">« {0} » est remplacé par le nom d'utilisateur. Active Directory : <code>{0}@@corp.local</code> @L.T("; OpenLDAP :") <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
+                <span asp-validation-for="Method.BindTemplate" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Method.Description" class="form-label"></label>
+                <input asp-for="Method.Description" class="form-control" />
+            </div>
+        </div>
+        <fieldset class="row g-3 mb-3">
+            <legend class="fs-6 fw-semibold border-bottom pb-1 mb-0">@L.T("Lecture de l'annuaire")</legend>
+            <div class="col-md-7">
+                <label asp-for="Method.SearchBase" class="form-label"></label>
+                <input asp-for="Method.SearchBase" class="form-control font-monospace" placeholder="DC=corp,DC=local" />
+                <span asp-validation-for="Method.SearchBase" class="text-danger"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Method.UserFilter" class="form-label"></label>
+                <input asp-for="Method.UserFilter" class="form-control font-monospace" placeholder="@IPAMdotNet.Data.AuthMethod.DefaultUserFilter" />
+                <span asp-validation-for="Method.UserFilter" class="text-danger"></span>
+            </div>
+            <div class="col-12 form-text mt-1">@L.T("Après la connexion, le compte est recherché avec ses propres droits pour lire son nom, son e-mail et ses groupes (memberOf). OpenLDAP : filtre (uid={0}) et module memberof.")</div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="Method.AutoCreateUsers" class="form-check-input" role="switch" />
+                    <label asp-for="Method.AutoCreateUsers" class="form-check-label"></label>
+                    <div class="form-text">@L.T("Un utilisateur inconnu ici mais accepté par l'annuaire est créé à sa première connexion (sans droits d'administration).")</div>
+                </div>
+                <div class="form-check form-switch mt-2">
+                    <input asp-for="Method.SyncGroups" class="form-check-input" role="switch" />
+                    <label asp-for="Method.SyncGroups" class="form-check-label"></label>
+                    <div class="form-text">@L.T("À chaque connexion, l'utilisateur est membre des groupes IPAMdotNet qui portent le nom d'un de ses groupes dans l'annuaire, et seulement de ceux-là.")</div>
+                </div>
+            </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+
+        <fieldset class="mt-4 pt-3 border-top">
+            <legend class="fs-6 fw-semibold">@L.T("Tester la configuration")</legend>
+            @if (Model.TestResult is not null)
+            {
+                <div class="alert @(Model.TestSucceeded ? "alert-success" : "alert-warning")">@Model.TestResult</div>
+            }
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="TestUserName" class="form-label"></label>
+                    <input asp-for="TestUserName" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="TestPassword" class="form-label"></label>
+                    <input asp-for="TestPassword" class="form-control" autocomplete="off" />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" asp-page-handler="Test" asp-route-id="@(Model.Method.Id == 0 ? null : Model.Method.Id)" class="btn btn-outline-primary">@L.T("Tester")</button>
+                </div>
+            </div>
+            <div class="form-text">@L.T("Le test utilise les valeurs saisies ci-dessus, même non enregistrées. Rien n'est conservé.")</div>
+        </fieldset>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, "cet annuaire"))" />
+</div>
+
+@if (Model.Method.Id != 0)
+{
+    <vc:history entity-type="AuthMethod" entity-id="@Model.Method.Id" />
+}

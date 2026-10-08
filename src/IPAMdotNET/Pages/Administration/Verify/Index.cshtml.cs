@@ -30,6 +30,7 @@ public class IndexModel(AppDbContext db) : PageModel
         Checks =
         [
             await CheckSubnetsAsync(),
+            await CheckAddressesAsync(),
             await CheckRackPositionsAsync(),
             await CheckPstnNumbersAsync(),
             await CheckRequestsAsync(),
@@ -74,6 +75,27 @@ public class IndexModel(AppDbContext db) : PageModel
         return new CheckResult("Sous-réseaux", "Adresses réseau valides et alignées sur leur préfixe.", problems);
     }
 
+    /// <summary>Adresses comprises dans leur sous-réseau (un import ou une modification en base peut les en faire sortir).</summary>
+    private async Task<CheckResult> CheckAddressesAsync()
+    {
+        List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Subnet).ToListAsync();
+        List<string> problems = [];
+        foreach (IpAddress address in addresses.Where(a => a.Subnet is { Address.Length: 16 }))
+        {
+            if (address.Address.Length != 16)
+            {
+                problems.Add($"Adresse n°{address.Id} : valeur stockée invalide.");
+                continue;
+            }
+            IPNetwork network = address.Subnet!.Network;
+            if (!Ip.Contains(network, new IPNetwork(address.Value, address.Value.GetAddressBytes().Length * 8)))
+            {
+                problems.Add($"{address.Value} : hors de son sous-réseau {network}.");
+            }
+        }
+        return new CheckResult("Adresses IP", "Adresses comprises dans leur sous-réseau.", problems);
+    }
+
     private async Task<CheckResult> CheckRackPositionsAsync()
     {
         List<Device> devices = await db.Devices.Include(d => d.Rack).ToListAsync();
@@ -88,12 +110,16 @@ public class IndexModel(AppDbContext db) : PageModel
             {
                 problems.Add($"{device.Hostname} : dans le rack {device.Rack.Name} sans position.");
             }
+            else if (device.Rack is not null && device.RackFace == RackFace.Back && !device.Rack.HasBack)
+            {
+                problems.Add($"{device.Hostname} : en face arrière du rack {device.Rack.Name}, qui n'en a pas.");
+            }
             else if (device.Rack is not null && device.RackEnd > device.Rack.Size)
             {
                 problems.Add($"{device.Hostname} : dépasse le rack {device.Rack.Name} ({device.Rack.Size} U).");
             }
         }
-        foreach (IGrouping<int?, Device> rack in devices.Where(d => d.RackId is not null && d.RackStart is not null && d.RackSize is not null).GroupBy(d => d.RackId))
+        foreach (IGrouping<(int?, RackFace), Device> rack in devices.Where(d => d.RackId is not null && d.RackStart is not null && d.RackSize is not null).GroupBy(d => (d.RackId, d.RackFace)))
         {
             List<Device> placed = rack.OrderBy(d => d.RackStart).ToList();
             for (int i = 1; i < placed.Count; i++)
@@ -161,6 +187,7 @@ public class IndexModel(AppDbContext db) : PageModel
     private Task<List<int>> ExistingIdsAsync(string entityType) => entityType switch
     {
         nameof(Subnet) => db.Subnets.Select(x => x.Id).ToListAsync(),
+        nameof(IpAddress) => db.IpAddresses.Select(x => x.Id).ToListAsync(),
         nameof(Vlan) => db.Vlans.Select(x => x.Id).ToListAsync(),
         nameof(Vrf) => db.Vrfs.Select(x => x.Id).ToListAsync(),
         nameof(Device) => db.Devices.Select(x => x.Id).ToListAsync(),
@@ -168,6 +195,11 @@ public class IndexModel(AppDbContext db) : PageModel
         nameof(Customer) => db.Customers.Select(x => x.Id).ToListAsync(),
         nameof(Rack) => db.Racks.Select(x => x.Id).ToListAsync(),
         nameof(Circuit) => db.Circuits.Select(x => x.Id).ToListAsync(),
+        nameof(Section) => db.Sections.Select(x => x.Id).ToListAsync(),
+        nameof(NatRule) => db.NatRules.Select(x => x.Id).ToListAsync(),
+        nameof(BgpPeer) => db.BgpPeers.Select(x => x.Id).ToListAsync(),
+        nameof(PstnPrefix) => db.PstnPrefixes.Select(x => x.Id).ToListAsync(),
+        nameof(PstnNumber) => db.PstnNumbers.Select(x => x.Id).ToListAsync(),
         _ => Task.FromResult(new List<int>()),
     };
 }

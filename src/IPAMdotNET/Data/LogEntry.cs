@@ -14,6 +14,10 @@ public class LogEntry
 {
     public const string Authentication = "Connexion";
     public const string Maintenance = "Maintenance";
+    public const string Mail = "Messagerie";
+    public const string Application = "Application";
+    public const string LoginSucceeded = "Connexion réussie.";
+    public const string LoginFailed = "Échec de connexion.";
 
     public int Id { get; set; }
 

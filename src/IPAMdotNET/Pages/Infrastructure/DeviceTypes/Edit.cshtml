@@ -18,8 +18,8 @@
             <textarea asp-for="DeviceType.Description" class="form-control" rows="2"></textarea>
             <span asp-validation-for="DeviceType.Description" class="text-danger"></span>
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.DeviceType.Id, "ce type"))" />
 </div>

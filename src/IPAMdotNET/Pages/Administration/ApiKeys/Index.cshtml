@@ -1,0 +1,115 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.ApiKeys.IndexModel
+@{
+    ViewData["Title"] = L.T("API");
+    string baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api";
+}
+
+@if (Model.CreatedKey is not null)
+{
+    <div class="alert alert-warning">
+        <div class="fw-semibold mb-1">@L.T("Clé créée : copiez-la maintenant, elle ne sera plus jamais affichée.")</div>
+        <code class="user-select-all fs-6">@Model.CreatedKey</code>
+    </div>
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-code-slash"></i> @L.T("Clés d'API")</div>
+    @if (Model.Keys.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucune clé.")</p>
+    }
+    else
+    {
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>@L.T("Nom")</th><th>@L.T("Début de la clé")</th><th>@L.T("Droits")</th><th>@L.T("Créée le")</th><th>@L.T("Dernière utilisation")</th><th>@L.T("État")</th><th></th></tr></thead>
+            <tbody>
+                @foreach (ApiKey key in Model.Keys)
+                {
+                    <tr>
+                        <td>@key.Name <div class="small text-body-secondary">@key.Description</div></td>
+                        <td class="font-monospace">@key.KeyPrefix…</td>
+                        <td class="small">
+                            @(key.User is null ? L.T("Toutes les sections") : L.T("Comme {0}", key.User.UserName))
+                            · @(key.CanWrite ? L.T("lecture et écriture") : L.T("lecture seule"))
+                        </td>
+                        <td>@key.CreatedAt.ToLocalTime().ToString("g")</td>
+                        <td>@(key.LastUsedAt?.ToLocalTime().ToString("g") ?? "Jamais")</td>
+                        <td>@if (key.Enabled) { <span class="badge text-bg-success">@L.T("Active")</span> } else { <span class="badge text-bg-secondary">@L.T("Désactivée")</span> }</td>
+                        <td class="text-end text-nowrap">
+                            <form method="post" asp-page-handler="Toggle" asp-route-id="@key.Id" class="d-inline">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">@(key.Enabled ? "Désactiver" : "Activer")</button>
+                            </form>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@key.Id" class="d-inline" onsubmit="return confirm('Supprimer cette clé ?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="@L.T("Supprimer")"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-5">
+        <div class="ipam-panel h-100">
+            <div class="ipam-panel-title"><i class="bi bi-plus-lg"></i> @L.T("Nouvelle clé")</div>
+            <form method="post" asp-page-handler="Create">
+                <div class="mb-2">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="@L.T("Supervision, inventaire…")" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="mb-2">
+                    <label asp-for="Description" class="form-label"></label>
+                    <input asp-for="Description" class="form-control" />
+                </div>
+                <div class="mb-2">
+                    <label asp-for="UserId" class="form-label"></label>
+                    <select asp-for="UserId" asp-items="Model.Users" class="form-select"><option value="">@L.T("Aucun : toutes les sections (droits d'administration)")</option></select>
+                    <div class="form-text">@L.T("La clé voit et modifie ce que voit et modifie ce compte (sections de ses groupes). Supprimer le compte supprime la clé.")</div>
+                    <span asp-validation-for="UserId" class="text-danger"></span>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input asp-for="CanWrite" class="form-check-input" role="switch" />
+                    <label asp-for="CanWrite" class="form-check-label"></label>
+                </div>
+                <button type="submit" class="btn btn-primary">@L.T("Créer la clé")</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-7">
+        <div class="ipam-panel h-100 small">
+            <div class="ipam-panel-title"><i class="bi bi-book"></i> @L.T("Utilisation")</div>
+            <p>@L.T("API REST, réponses JSON. Authentification par en-tête :")</p>
+            <pre class="bg-body-tertiary p-2 rounded mb-2"><code>curl -H "X-Api-Key: &lt;clé&gt;" @baseUrl/subnets</code></pre>
+            <p class="mb-1">(<code>@L.T("Authorization: Bearer <clé>")</code> @L.T("est aussi accepté.) Points d'accès :")</p>
+            <ul class="mb-0 font-monospace">
+                <li>@L.T("GET /api/sections")</li>
+                <li>GET /api/subnets ?section=id &amp; ip=adresse</li>
+                <li>GET /api/subnets/{id} · /api/subnets/{id}/addresses</li>
+                <li>GET /api/addresses ?ip=adresse &amp; hostname=texte</li>
+                <li>@L.T("GET /api/vlans · /api/vrfs")</li>
+                <li>@L.T("GET /api/devices · /api/locations · /api/customers")</li>
+                <li>GET /api/racks · /api/nameservers · /api/vlan-domains · /api/device-types · /api/circuits · /api/circuit-providers</li>
+                <li>GET /api/nat · /api/bgp · /api/pstn-prefixes · /api/pstn-numbers @L.T("(et /{id})")</li>
+                <li>GET /api/tags · /api/custom-fields · /api/users · /api/groups @L.T("(utilisateurs et groupes : droits d'administration)")</li>
+                <li>GET /api/addresses/{id} · /api/subnets/{id}/first-free</li>
+                <li>GET /api/search ?q=adresse, réseau ou texte</li>
+            </ul>
+            <p class="mt-2 mb-1">@L.T("Écriture (clé « écriture ») : POST pour créer, PATCH pour modifier, DELETE pour supprimer :")</p>
+            <ul class="mb-0 font-monospace">
+                <li>/api/subnets · /api/subnets/{id}</li>
+                <li>/api/addresses · /api/addresses/{id}</li>
+                <li>@L.T("/api/sections, /api/vlans, /api/vrfs, /api/devices et tous les objets ci-dessus (droits d'administration)")</li>
+            </ul>
+            <pre class="bg-body-tertiary p-2 rounded my-2"><code>curl -X POST -H "X-Api-Key: &lt;clé&gt;" -H "Content-Type: application/json" \
+  -d '{"subnetId": 12, "hostname": "srv-01"}' @baseUrl/addresses</code></pre>
+            <p class="mb-1">@L.T("Utilisateurs : « password » en écriture seule, « groupIds » (liste). Groupes : « memberIds » (liste) et « permissions » ({ \"idSection\": \"Read\" | \"Write\" | \"None\" }), remplacés en bloc quand ils sont envoyés.")</p>
+            <p class="mb-0">@L.T("Sans « address », la première adresse libre est attribuée. En PATCH, un champ absent reste inchangé, une chaîne vide l'efface et l'identifiant 0 retire une référence. Erreurs de validation : 400 (détail par champ), doublon : 409, droits : 403.")</p>
+            <p class="mt-2 mb-0">@L.T("Champs personnalisés : objet") <code>customFields</code> @L.T("(nom → valeur), en lecture comme en écriture, sur les objets qui en portent. En création, les champs obligatoires sont exigés ; en modification, seuls les champs envoyés changent.")</p>
+        </div>
+    </div>
+</div>

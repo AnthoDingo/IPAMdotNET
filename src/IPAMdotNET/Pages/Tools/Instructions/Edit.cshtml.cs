@@ -12,6 +12,15 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty, MaxLength(20000), Display(Name = "Texte des instructions")]
     public string? Text { get; set; }
 
+    /// <summary>Rendu de l'aperçu (texte non enregistré).</summary>
+    public string? Preview { get; private set; }
+
+    public IActionResult OnPostPreview()
+    {
+        Preview = Maintenance.MarkdownText.ToHtml(Text);
+        return Page();
+    }
+
     public async Task OnGetAsync()
     {
         Text = (await db.AppSettings.FindAsync(AppSetting.InstructionsKey))?.Value;

@@ -1,5 +1,6 @@
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,18 +10,26 @@ public sealed record VlanRow(Vlan Vlan, int SubnetCount);
 
 public class IndexModel(AppDbContext db) : PageModel
 {
-    public List<CustomField> CustomFields { get; private set; } = [];
-    public Dictionary<int, Dictionary<int, string>> CustomValues { get; private set; } = [];
+    [BindProperty(SupportsGet = true, Name = CustomFieldList.Prefix)]
+    public CustomFieldList Custom { get; set; } = new();
 
     public List<VlanRow> Vlans { get; private set; } = [];
+    public List<VlanDomain> Domains { get; private set; } = [];
+
+    /// <summary>Domaine affiché ; null = tous.</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? Domain { get; set; }
 
     public async Task OnGetAsync()
     {
-        CustomFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
-        CustomValues = await CustomFieldForm.ValuesForAsync(db, nameof(Vlan));
-        Vlans = await db.Vlans
-            .OrderBy(v => v.Number)
-            .Select(v => new VlanRow(v, db.Subnets.Count(s => s.VlanId == v.Id)))
+        // Nombre de sous-réseaux limité aux sections lisibles.
+        IQueryable<Subnet> readable = (await SectionAccess.ForAsync(db, User)).Readable(db.Subnets);
+        await Custom.LoadAsync(db, nameof(Vlan));
+        Domains = await db.VlanDomains.OrderBy(d => d.Name).ToListAsync();
+        Vlans = await Custom.Apply(db, db.Vlans).Include(v => v.Domain)
+            .Where(v => Domain == null || v.DomainId == Domain)
+            .OrderBy(v => v.Number).ThenBy(v => v.Domain!.Name)
+            .Select(v => new VlanRow(v, readable.Count(s => s.VlanId == v.Id)))
             .ToListAsync();
     }
 }

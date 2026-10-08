@@ -9,6 +9,11 @@
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <div class="mb-3">
+            <label asp-for="Vlan.DomainId" class="form-label"></label>
+            <select asp-for="Vlan.DomainId" asp-items="Model.Domains" class="form-select"></select>
+            <span asp-validation-for="Vlan.DomainId" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
             <label asp-for="Vlan.Number" class="form-label"></label>
             <input asp-for="Vlan.Number" class="form-control" min="1" max="4094" />
             <span asp-validation-for="Vlan.Number" class="text-danger"></span>
@@ -23,9 +28,13 @@
             <textarea asp-for="Vlan.Description" class="form-control" rows="2"></textarea>
             <span asp-validation-for="Vlan.Description" class="text-danger"></span>
         </div>
+        <div class="mb-3">
+            <label asp-for="Vlan.CustomerId" class="form-label"></label>
+            <select asp-for="Vlan.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
+        </div>
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Vlan.Id, "ce VLAN"))" />
 </div>

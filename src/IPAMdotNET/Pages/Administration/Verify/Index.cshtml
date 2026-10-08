@@ -1,7 +1,7 @@
 @page
 @model IPAMdotNet.Pages.Administration.Verify.IndexModel
 @{
-    ViewData["Title"] = "Vérifier la base";
+    ViewData["Title"] = L.T("Vérifier la base");
 }
 
 @if (Model.Message is not null)
@@ -10,23 +10,23 @@
 }
 
 <div class="ipam-panel mb-3">
-    <div class="ipam-panel-title"><i class="bi bi-database-check"></i> Schéma</div>
+    <div class="ipam-panel-title"><i class="bi bi-database-check"></i> @L.T("Schéma")</div>
     <dl class="row mb-0 ipam-details">
-        <dt class="col-sm-4 col-xl-3">Moteur</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Moteur")</dt>
         <dd class="col-sm-8 col-xl-9 font-monospace">@Model.Provider</dd>
-        <dt class="col-sm-4 col-xl-3">Migrations appliquées</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Migrations appliquées")</dt>
         <dd class="col-sm-8 col-xl-9">
             @Model.AppliedMigrations.Count
             @if (Model.AppliedMigrations.Count > 0)
             {
-                <span class="text-body-secondary font-monospace">(dernière : @Model.AppliedMigrations[^1])</span>
+                <span class="text-body-secondary font-monospace">@(L.T("(dernière : {0})", Model.AppliedMigrations[^1]))</span>
             }
         </dd>
-        <dt class="col-sm-4 col-xl-3">Migrations en attente</dt>
+        <dt class="col-sm-4 col-xl-3">@L.T("Migrations en attente")</dt>
         <dd class="col-sm-8 col-xl-9">
             @if (Model.PendingMigrations.Count == 0)
             {
-                <span class="text-success"><i class="bi bi-check-circle"></i>Aucune, le schéma est à jour.</span>
+                <span class="text-success"><i class="bi bi-check-circle"></i>@L.T("Aucune, le schéma est à jour.")</span>
             }
             else
             {
@@ -48,7 +48,7 @@
             else
             {
                 <span><i class="bi bi-exclamation-triangle text-warning"></i> @check.Title</span>
-                <span class="badge text-bg-warning ms-auto">@check.Problems.Count anomalie(s)</span>
+                <span class="badge text-bg-warning ms-auto">@(L.T("{0} anomalie(s)", check.Problems.Count))</span>
             }
         </div>
         <p class="text-body-secondary mb-2">@check.Description</p>
@@ -63,7 +63,7 @@
             @if (check.FixHandler is not null)
             {
                 <form method="post" asp-page-handler="@check.FixHandler" onsubmit="return confirm('Corriger automatiquement ?');">
-                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-wrench"></i>Corriger</button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-wrench"></i>@L.T("Corriger")</button>
                 </form>
             }
         }

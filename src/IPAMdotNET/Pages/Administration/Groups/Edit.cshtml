@@ -1,0 +1,83 @@
+@page "{id:int?}"
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.Groups.EditModel
+@{
+    ViewData["Title"] = Model.Group.Id == 0 ? "Nouveau groupe" : $"Groupe {Model.Group.Name}";
+    IEnumerable<SelectListItem> levels = Html.GetEnumSelectList<SectionAccessLevel>();
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Group.Name" class="form-label"></label>
+                <input asp-for="Group.Name" class="form-control" />
+                <span asp-validation-for="Group.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Group.Description" class="form-label"></label>
+                <input asp-for="Group.Description" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <div class="fw-semibold mb-1">@L.T("Membres")</div>
+                <div class="form-text mb-2">@L.T("Les administrateurs ont accès à tout et n'apparaissent pas ici.")</div>
+                @if (Model.Users.Count == 0)
+                {
+                    <p class="ipam-empty small">@L.T("Aucun utilisateur non administrateur.")</p>
+                }
+                @foreach (User user in Model.Users)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="member-@user.Id" name="MemberIds" value="@user.Id" checked="@Model.MemberIds.Contains(user.Id)" />
+                        <label class="form-check-label" for="member-@user.Id">@user.Label <span class="text-body-secondary font-monospace small">@user.UserName</span></label>
+                    </div>
+                }
+            </div>
+            <div class="col-md-7">
+                <div class="fw-semibold mb-1">@L.T("Permissions par section")</div>
+                <div class="form-text mb-2">@L.T("S'ajoutent à l'accès par défaut de chaque section : le niveau le plus élevé l'emporte.")</div>
+                @if (Model.Sections.Count == 0)
+                {
+                    <p class="ipam-empty small">@L.T("Aucune section.")</p>
+                }
+                else
+                {
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>@L.T("Section")</th><th>@L.T("Accès par défaut")</th><th>@L.T("Accès du groupe")</th></tr></thead>
+                        <tbody>
+                            @foreach (Section item in Model.Sections)
+                            {
+                                SectionAccessLevel current = Model.Permissions.GetValueOrDefault(item.Id);
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td class="text-body-secondary">@Html.DisplayFor(_ => item.DefaultAccess)</td>
+                                    <td>
+                                        <select name="Permissions[@item.Id]" class="form-select form-select-sm" aria-label="Accès du groupe à @item.Name">
+                                            @foreach (SelectListItem level in levels)
+                                            {
+                                                <option value="@level.Value" selected="@(level.Value == ((int)current).ToString())">@level.Text</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Group.Id, "ce groupe"))" />
+</div>
+
+@if (Model.Group.Id != 0)
+{
+    <vc:history entity-type="Group" entity-id="@Model.Group.Id" />
+}

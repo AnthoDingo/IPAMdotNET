@@ -1,0 +1,82 @@
+@page
+@model IPAMdotNet.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = L.T("Mon compte");
+}
+
+@section Breadcrumb {
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@L.T("Mon compte")</li>
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="ipam-form">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-person-circle"></i> @Model.Account.UserName</div>
+        <dl class="row ipam-details">
+            <dt class="col-sm-4">@L.T("Rôle")</dt>
+            <dd class="col-sm-8">@(Model.Account.IsAdmin ? "Administrateur" : "Utilisateur")</dd>
+            <dt class="col-sm-4">@L.T("Authentification")</dt>
+            <dd class="col-sm-8">@(Model.Account.AuthMethod?.Name ?? "Locale")</dd>
+        </dl>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Language" class="form-label"></label>
+                <select asp-for="Language" class="form-select">
+                    <option value="">@L.T("Par défaut du serveur ({0})", L.Languages.First(l => l.Code == IPAMdotNet.Maintenance.SettingsStore.Server.Language).Name)</option>
+                    @foreach ((string code, string name) in L.Languages)
+                    {
+                        <option value="@code">@name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="MacFormat" class="form-label"></label>
+                <select asp-for="MacFormat" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>()" class="form-select">
+                    <option value="">Par défaut du serveur (@(Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>().First(i => i.Value == ((int)IPAMdotNet.Maintenance.SettingsStore.Server.MacFormat).ToString()).Text))</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsLocal)
+    {
+        <div class="ipam-panel mb-3">
+            <div class="ipam-panel-title"><i class="bi bi-key"></i> @L.T("Changer de mot de passe")</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="CurrentPassword" class="form-label"></label>
+                    <input asp-for="CurrentPassword" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NewPassword" class="form-label"></label>
+                    <input asp-for="NewPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NewPasswordConfirm" class="form-label"></label>
+                    <input asp-for="NewPasswordConfirm" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="NewPasswordConfirm" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-text">@L.T("Laisser vide pour conserver le mot de passe actuel.")</div>
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+</form>

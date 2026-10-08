@@ -1,0 +1,78 @@
+@page
+@model IPAMdotNet.Pages.Administration.Mail.IndexModel
+@{
+    ViewData["Title"] = L.T("Messagerie");
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert @(Model.MessageIsError ? "alert-danger" : "alert-success")">@Model.Message</div>
+}
+
+<div class="ipam-panel mb-3 ipam-form">
+    <div class="ipam-panel-title"><i class="bi bi-envelope"></i> @L.T("Serveur SMTP")</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="form-check form-switch mb-3">
+            <input asp-for="Settings.Enabled" class="form-check-input" role="switch" />
+            <label asp-for="Settings.Enabled" class="form-check-label"></label>
+            <div class="form-text">@L.T("Notifications : nouvelle demande d'adresse (aux administrateurs), demande traitée (au demandeur).")</div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label asp-for="Settings.Host" class="form-label"></label>
+                <input asp-for="Settings.Host" class="form-control font-monospace" placeholder="@L.T("smtp.example.com")" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Settings.Port" class="form-label"></label>
+                <input asp-for="Settings.Port" class="form-control" min="1" max="65535" />
+                <span asp-validation-for="Settings.Port" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input asp-for="Settings.UseTls" class="form-check-input" role="switch" />
+                    <label asp-for="Settings.UseTls" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.UserName" class="form-label"></label>
+                <input asp-for="Settings.UserName" class="form-control" autocomplete="off" placeholder="@L.T("Vide = sans authentification")" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.Password" class="form-label"></label>
+                <input asp-for="Settings.Password" type="password" class="form-control" autocomplete="new-password" placeholder="@(Model.HasPassword ? "•••••••• (inchangé)" : "")" />
+                <div class="form-text">@L.T("Chiffré avant stockage. Laisser vide pour conserver le mot de passe actuel.")</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.FromAddress" class="form-label"></label>
+                <input asp-for="Settings.FromAddress" class="form-control" placeholder="ipam@example.com" />
+                <span asp-validation-for="Settings.FromAddress" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.FromName" class="form-label"></label>
+                <input asp-for="Settings.FromName" class="form-control" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+    </form>
+    @if (Model.HasPassword)
+    {
+        <form method="post" asp-page-handler="ClearPassword" class="mt-2">
+            <button type="submit" class="btn btn-link btn-sm p-0">@L.T("Effacer le mot de passe SMTP")</button>
+        </form>
+    }
+</div>
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title"><i class="bi bi-send"></i> @L.T("E-mail de test")</div>
+    <form method="post" asp-page-handler="Test" class="row g-2 align-items-end">
+        <div class="col-md-8">
+            <label asp-for="TestRecipient" class="form-label"></label>
+            <input asp-for="TestRecipient" class="form-control" />
+        </div>
+        <div class="col-md-4 d-grid">
+            <button type="submit" class="btn btn-outline-primary">@L.T("Envoyer")</button>
+        </div>
+    </form>
+    <div class="form-text">@L.T("Utilise la configuration enregistrée.")</div>
+</div>

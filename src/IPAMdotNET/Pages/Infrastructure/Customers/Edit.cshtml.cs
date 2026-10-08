@@ -37,6 +37,22 @@ public class EditModel(AppDbContext db) : PageModel
     public async Task<IActionResult> OnPostAsync(int? id)
     {
         Customer.Id = id ?? 0;
+        if (Location.TryNormalizeCoordinate(Customer.Latitude, 90, out string? latitude))
+        {
+            Customer.Latitude = latitude;
+        }
+        else
+        {
+            ModelState.AddModelError("Customer.Latitude", "Latitude invalide (nombre entre -90 et 90).");
+        }
+        if (Location.TryNormalizeCoordinate(Customer.Longitude, 180, out string? longitude))
+        {
+            Customer.Longitude = longitude;
+        }
+        else
+        {
+            ModelState.AddModelError("Customer.Longitude", "Longitude invalide (nombre entre -180 et 180).");
+        }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Customer));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)

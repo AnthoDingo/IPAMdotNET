@@ -1,5 +1,8 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
+using System.Numerics;
 using IPAMdotNet.Navigation;
+using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,18 +21,23 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<IpRequest> PendingRequests { get; private set; } = [];
     public int PendingRequestCount { get; private set; }
     public List<ChangeLog> LastChanges { get; private set; } = [];
+    public WidgetSettings Widgets { get; private set; } = new();
 
     public async Task OnGetAsync()
     {
-        SectionCount = await db.Sections.CountAsync();
-        SubnetCount = await db.Subnets.CountAsync();
+        Widgets = await SettingsStore.LoadAsync<WidgetSettings>(db, SettingsStore.WidgetsPrefix);
+        // Statistiques limitées aux sections lisibles.
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        SectionCount = access.ReadableIds?.Count ?? await db.Sections.CountAsync();
+        SubnetCount = await access.Readable(db.Subnets).CountAsync();
         VlanCount = await db.Vlans.CountAsync();
         VrfCount = await db.Vrfs.CountAsync();
-        DeviceCount = await db.Devices.CountAsync();
+        DeviceCount = await access.Readable(db.Devices).CountAsync();
         UserCount = await db.Users.CountAsync();
 
         int userId = User.UserId();
-        Favorites = await db.FavoriteSubnets.Where(f => f.UserId == userId).Select(f => f.Subnet!)
+        Favorites = await access.Readable(db.Subnets)
+            .Where(s => db.FavoriteSubnets.Any(f => f.UserId == userId && f.SubnetId == s.Id))
             .OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).Take(10).ToListAsync();
 
         // Un admin voit toutes les demandes en attente, un utilisateur les siennes.
@@ -41,6 +49,19 @@ public class IndexModel(AppDbContext db) : PageModel
         PendingRequestCount = await pending.CountAsync();
         PendingRequests = await pending.OrderBy(r => r.RequestedAt).Take(5).ToListAsync();
 
-        LastChanges = await db.ChangeLogs.OrderByDescending(c => c.Date).ThenByDescending(c => c.Id).Take(8).ToListAsync();
+        LastChanges = await access.Visible(db.ChangeLogs).OrderByDescending(c => c.Date).ThenByDescending(c => c.Id).Take(8).ToListAsync();
+
+        // Top 10 : IPv4 par taux d'occupation, IPv6 par nombre d'adresses (un pourcentage n'y a pas de sens).
+        AddressCount = await db.IpAddresses.CountAsync(a => access.Readable(db.Subnets).Any(s => s.Id == a.SubnetId));
+        Dictionary<int, int> usage = await SubnetTree.UsageAsync(db.IpAddresses);
+        List<Subnet> readable = await access.Readable(db.Subnets).ToListAsync();
+        List<SubnetNode> used = readable.Where(s => usage.ContainsKey(s.Id)).Select(s => new SubnetNode(s, 0, null, usage[s.Id])).ToList();
+        TopIpv4 = used.Where(n => n.Subnet.IsIPv4)
+            .OrderByDescending(n => (double)n.Used / (double)BigInteger.Max(1, Ip.UsableCount(n.Subnet.Network))).Take(10).ToList();
+        TopIpv6 = used.Where(n => !n.Subnet.IsIPv4).OrderByDescending(n => n.Used).Take(10).ToList();
     }
+
+    public int AddressCount { get; private set; }
+    public List<SubnetNode> TopIpv4 { get; private set; } = [];
+    public List<SubnetNode> TopIpv6 { get; private set; } = [];
 }

@@ -1,0 +1,40 @@
+@using IPAMdotNet.Maintenance
+@model (string Name, LinkedLinesForm Form, bool SubnetsOnly)
+@* Objet lié à chaque ligne : conservé en champ caché, ou à choisir quand plusieurs objets correspondent. *@
+@{
+    List<string> lines = NatLinks.Lines(Model.Form.Text);
+}
+<ul class="list-unstyled form-text mb-0">
+    @for (int i = 0; i < lines.Count; i++)
+    {
+        <li>
+            @if (Model.Form.Candidates.TryGetValue(i, out List<NatCandidate>? candidates))
+            {
+                <span class="font-monospace">@lines[i]</span>
+                <select name="@(Model.Name).Choices[@i]" class="form-select form-select-sm mt-1">
+                    @foreach (NatCandidate candidate in candidates)
+                    {
+                        <option value="@candidate.Key">@candidate.Label</option>
+                    }
+                    @if (!Model.SubnetsOnly)
+                    {
+                        <option value="@NatLinks.None">@L.T("Aucun objet (adresse externe)")</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input type="hidden" name="@(Model.Name).Choices[@i]" value="@Model.Form.Choices.ElementAtOrDefault(i)" />
+                @if (Model.Form.Linked.TryGetValue(i, out string? linked))
+                {
+                    <i class="bi bi-link-45deg"></i> @linked
+                }
+                else if (!Model.SubnetsOnly)
+                {
+                    <span class="font-monospace">@lines[i]</span> <span class="text-body-secondary">— @L.T("adresse externe")</span>
+                }
+            }
+        </li>
+    }
+</ul>
+<div class="form-text">@(Model.SubnetsOnly ? L.T("Un sous-réseau de l'IPAM par ligne (ex. 10.0.0.0/24).") : L.T("Une adresse ou un réseau par ligne, lié automatiquement à l'objet correspondant s'il existe dans l'IPAM."))</div>

@@ -1,0 +1,31 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.Users.IndexModel
+@{
+    ViewData["Title"] = L.T("Utilisateurs");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-person"></i> @L.T("Utilisateurs")</span>
+        <a asp-page="Edit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
+    </div>
+    <table class="table table-sm table-hover align-middle mb-0">
+        <thead><tr><th>@L.T("Nom d'utilisateur")</th><th>@L.T("Nom affiché")</th><th>@L.T("E-mail")</th><th>@L.T("Rôle")</th><th>@L.T("Authentification")</th><th>@L.T("Groupes")</th><th>@L.T("État")</th><th></th></tr></thead>
+        <tbody>
+            @foreach (User user in Model.Users)
+            {
+                <tr>
+                    <td class="font-monospace">@user.UserName</td>
+                    <td>@user.DisplayName</td>
+                    <td>@user.Email</td>
+                    <td>@if (user.IsAdmin) { <span class="badge text-bg-primary">@L.T("Admin")</span> } else { <text>@L.T("Utilisateur")</text> }</td>
+                    <td>@(user.AuthMethod?.Name ?? "Locale")</td>
+                    <td>@string.Join(", ", user.Groups.OrderBy(g => g.Name).Select(g => g.Name))</td>
+                    <td>@if (user.Enabled) { <span class="badge text-bg-success">@L.T("Actif")</span> } else { <span class="badge text-bg-secondary">@L.T("Désactivé")</span> }</td>
+                    <td class="text-end"><a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

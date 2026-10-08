@@ -21,27 +21,32 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.DeviceTypeId" class="form-label"></label>
-                <select asp-for="Device.DeviceTypeId" asp-items="Model.Types" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.DeviceTypeId" asp-items="Model.Types" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.LocationId" class="form-label"></label>
-                <select asp-for="Device.LocationId" asp-items="Model.Locations" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.LocationId" asp-items="Model.Locations" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
             <div class="col-md-4">
                 <label asp-for="Device.CustomerId" class="form-label"></label>
-                <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.CustomerId" asp-items="Model.Customers" class="form-select"><option value="">@L.T("Aucun")</option></select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <label asp-for="Device.RackId" class="form-label"></label>
-                <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">Aucun</option></select>
+                <select asp-for="Device.RackId" asp-items="Model.Racks" class="form-select"><option value="">@L.T("Aucun")</option></select>
                 <span asp-validation-for="Device.RackId" class="text-danger"></span>
             </div>
             <div class="col-md-3">
+                <label asp-for="Device.RackFace" class="form-label"></label>
+                <select asp-for="Device.RackFace" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.RackFace>()" class="form-select"></select>
+                <span asp-validation-for="Device.RackFace" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
                 <label asp-for="Device.RackStart" class="form-label"></label>
                 <input asp-for="Device.RackStart" class="form-control" min="1" max="60" />
                 <span asp-validation-for="Device.RackStart" class="text-danger"></span>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label asp-for="Device.RackSize" class="form-label"></label>
                 <input asp-for="Device.RackSize" class="form-control" min="1" max="60" />
                 <span asp-validation-for="Device.RackSize" class="text-danger"></span>
@@ -53,9 +58,23 @@
             </div>
         </div>
         <p class="form-text">Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).</p>
+        @if (Model.AllSections.Count > 0)
+        {
+            <fieldset class="mb-3">
+                <legend class="fs-6 fw-semibold border-bottom pb-1 mb-2">@L.T("Sections")</legend>
+                @foreach (IPAMdotNet.Data.Section visible in Model.AllSections)
+                {
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="section-@visible.Id" name="SectionIds" value="@visible.Id" checked="@Model.SectionIds.Contains(visible.Id)" />
+                        <label class="form-check-label" for="section-@visible.Id">@visible.Name</label>
+                    </div>
+                }
+                <div class="form-text">@L.T("Seuls les utilisateurs qui lisent l'une de ces sections voient l'équipement. Aucune : visible de tous.")</div>
+            </fieldset>
+        }
         <partial name="_CustomFieldsEdit" model="Model.CustomInputs" />
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
     <partial name="_DeleteForm" model="@(new DeleteForm(Model.Device.Id, "cet équipement"))" />
 </div>

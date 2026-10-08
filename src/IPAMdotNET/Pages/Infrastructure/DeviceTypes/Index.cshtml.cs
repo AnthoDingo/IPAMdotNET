@@ -12,9 +12,10 @@ public class IndexModel(AppDbContext db) : PageModel
 
     public async Task OnGetAsync()
     {
+        IQueryable<Device> devices = (await SectionAccess.ForAsync(db, User)).Readable(db.Devices);
         Types = await db.DeviceTypes
             .OrderBy(t => t.Name)
-            .Select(t => new DeviceTypeRow(t, db.Devices.Count(d => d.DeviceTypeId == t.Id)))
+            .Select(t => new DeviceTypeRow(t, devices.Count(d => d.DeviceTypeId == t.Id)))
             .ToListAsync();
     }
 }

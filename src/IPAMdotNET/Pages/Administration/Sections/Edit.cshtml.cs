@@ -1,4 +1,5 @@
 using IPAMdotNet.Data;
+using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -10,18 +11,23 @@ public class EditModel(AppDbContext db) : PageModel
     [BindProperty]
     public Section Section { get; set; } = new();
 
+    [BindProperty(Name = CustomFieldForm.Prefix)]
+    public Dictionary<int, string?> Custom { get; set; } = [];
+
+    public List<CustomFieldInput> CustomInputs { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync(int? id)
     {
-        if (id is null)
+        if (id is not null)
         {
-            return Page();
+            Section? section = await db.Sections.FindAsync(id);
+            if (section is null)
+            {
+                return NotFound();
+            }
+            Section = section;
         }
-        Section? section = await db.Sections.FindAsync(id);
-        if (section is null)
-        {
-            return NotFound();
-        }
-        Section = section;
+        CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Section), id ?? 0);
         return Page();
     }
 
@@ -32,12 +38,16 @@ public class EditModel(AppDbContext db) : PageModel
         {
             ModelState.AddModelError("Section.Name", "Une section porte déjà ce nom.");
         }
+        List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Section));
+        Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
         if (!ModelState.IsValid)
         {
+            CustomInputs = CustomFieldForm.FromPosted(customFields, Custom);
             return Page();
         }
         db.Update(Section);
         await db.SaveChangesAsync();
+        await CustomFieldForm.SaveAsync(db, Section.Id, customValues);
         return RedirectToPage("Index");
     }
 
@@ -51,6 +61,7 @@ public class EditModel(AppDbContext db) : PageModel
         if (await db.Subnets.AnyAsync(s => s.SectionId == id))
         {
             Section = section;
+            CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Section), id);
             ModelState.AddModelError(string.Empty, "Impossible de supprimer une section qui contient des sous-réseaux.");
             return Page();
         }

@@ -2,33 +2,39 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Tools.Changelog.IndexModel
 @{
-    ViewData["Title"] = "Journal des modifications";
+    ViewData["Title"] = L.T("Journal des modifications");
 }
 
 <div class="ipam-panel">
-    <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> Journal des modifications</div>
+    <div class="ipam-panel-title"><i class="bi bi-clock-history"></i> @L.T("Journal des modifications")</div>
+    @if (Model.Id is not null && Model.Type is not null)
+    {
+        <div class="alert alert-info py-2">
+            @L.T("Historique d'un seul objet.") <a asp-page="Index">@L.T("Tout le journal")</a>
+        </div>
+    }
     <form method="get" class="row g-2 mb-3">
         <div class="col-md-4">
-            <select asp-for="Type" asp-items="Model.Types" class="form-select" aria-label="Type d'objet">
-                <option value="">Tous les types</option>
+            <select asp-for="Type" asp-items="Model.Types" class="form-select" aria-label="@L.T("Type d'objet")">
+                <option value="">@L.T("Tous les types")</option>
             </select>
         </div>
         <div class="col-md-6">
-            <input asp-for="Q" class="form-control" placeholder="Utilisateur ou objet" aria-label="Filtre" />
+            <input asp-for="Q" class="form-control" placeholder="@L.T("Utilisateur ou objet")" aria-label="@L.T("Filtre")" />
         </div>
         <div class="col-md-2 d-grid">
-            <button type="submit" class="btn btn-primary">Filtrer</button>
+            <button type="submit" class="btn btn-primary">@L.T("Filtrer")</button>
         </div>
     </form>
 
     @if (Model.Rows.Count == 0)
     {
-        <p class="ipam-empty">Aucune modification enregistrée.</p>
+        <p class="ipam-empty">@L.T("Aucune modification enregistrée.")</p>
     }
     else
     {
         <table class="table table-sm align-middle mb-2">
-            <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Type</th><th>Objet</th><th>Détail</th></tr></thead>
+            <thead><tr><th>@L.T("Date")</th><th>@L.T("Utilisateur")</th><th>@L.T("Action")</th><th>@L.T("Type")</th><th>@L.T("Objet")</th><th>@L.T("Détail")</th></tr></thead>
             <tbody>
                 @foreach (ChangeRow row in Model.Rows)
                 {
@@ -61,23 +67,7 @@
                             }
                         </td>
                         <td>
-                            @if (row.Changes.Count > 0)
-                            {
-                                <details>
-                                    <summary>@row.Changes.Count champ(s)</summary>
-                                    <table class="table table-sm table-borderless small mb-0">
-                                        @foreach (KeyValuePair<string, string?[]> change in row.Changes)
-                                        {
-                                            <tr>
-                                                <th scope="row">@change.Key</th>
-                                                <td class="text-danger">@(change.Value.ElementAtOrDefault(0) ?? "—")</td>
-                                                <td><i class="bi bi-arrow-right"></i></td>
-                                                <td class="text-success">@(change.Value.ElementAtOrDefault(1) ?? "—")</td>
-                                            </tr>
-                                        }
-                                    </table>
-                                </details>
-                            }
+                            <partial name="_ChangeDetails" model="row.Changes" />
                         </td>
                     </tr>
                 }
@@ -85,14 +75,14 @@
         </table>
         @if (Model.PageCount > 1)
         {
-            <nav aria-label="Pages">
+            <nav aria-label="@L.T("Pages")">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                        <a class="page-link" asp-route-p="@(Model.PageNumber - 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q">Précédent</a>
+                        <a class="page-link" asp-route-p="@(Model.PageNumber - 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q" asp-route-id="@Model.Id">@L.T("Précédent")</a>
                     </li>
-                    <li class="page-item disabled"><span class="page-link">Page @Model.PageNumber / @Model.PageCount</span></li>
+                    <li class="page-item disabled"><span class="page-link">@(L.T("Page {0} / {1}", Model.PageNumber, Model.PageCount))</span></li>
                     <li class="page-item @(Model.PageNumber == Model.PageCount ? "disabled" : "")">
-                        <a class="page-link" asp-route-p="@(Model.PageNumber + 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q">Suivant</a>
+                        <a class="page-link" asp-route-p="@(Model.PageNumber + 1)" asp-route-type="@Model.Type" asp-route-q="@Model.Q" asp-route-id="@Model.Id">@L.T("Suivant")</a>
                     </li>
                 </ul>
             </nav>

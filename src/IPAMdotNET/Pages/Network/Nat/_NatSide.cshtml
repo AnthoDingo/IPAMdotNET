@@ -1,0 +1,23 @@
+@using IPAMdotNet.Data
+@model (IEnumerable<NatRuleObject> Objects, int? Port)
+@* Côté d'une règle NAT : chaque objet lié (valeur actuelle, lien vers sa fiche) ou le texte libre. *@
+@{
+    string port = Model.Port is null ? "" : $":{Model.Port}";
+}
+@foreach (NatRuleObject item in Model.Objects)
+{
+    <div>
+        @if (item.Address is not null)
+        {
+            <a asp-page="/Network/Addresses/Edit" asp-route-id="@item.Address.Id" title="@L.T("Adresse IP")">@item.Address.Value</a>@port
+        }
+        else if (item.Subnet is not null)
+        {
+            <a asp-page="/Network/Subnets/Details" asp-route-id="@item.Subnet.Id" title="@L.T("Sous-réseau")">@item.Subnet.Network</a>@port
+        }
+        else
+        {
+            @item.Text@port
+        }
+    </div>
+}

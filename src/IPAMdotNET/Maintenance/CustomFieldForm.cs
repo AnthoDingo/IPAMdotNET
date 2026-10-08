@@ -86,7 +86,8 @@ public static class CustomFieldForm
                 {
                     return false;
                 }
-                value = number.ToString(CultureInfo.InvariantCulture);
+                // Forme canonique sans zéros finaux (« 12,0 » = « 12 ») : le filtre des listes compare les valeurs exactes.
+                value = (number / 1.000000000000000000000000000000000m).ToString(CultureInfo.InvariantCulture);
                 return true;
             case CustomFieldType.Date:
                 if (!DateOnly.TryParse(raw, CultureInfo.InvariantCulture, out DateOnly date)
@@ -158,5 +159,87 @@ public static class CustomFieldForm
             CustomFieldType.Number when decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal number) => number.ToString(CultureInfo.CurrentCulture),
             _ => value,
         };
+    }
+}
+
+/// <summary>
+/// Champs personnalisés d'une page de liste : colonnes et filtre (paramètres « cf.Field » et « cf.Value », vue partielle <c>_CustomFieldFilter</c>).
+/// Filtre texte : contient, sans tenir compte de la casse ; nombre, date, liste : valeur exacte ; oui / non : « non » inclut les objets sans valeur.
+/// </summary>
+public sealed class CustomFieldList
+{
+    public const string Prefix = "cf";
+
+    public int? Field { get; set; }
+
+    public string? Value { get; set; }
+
+    /// <summary>Champs du type listé (colonnes, choix du filtre).</summary>
+    [BindNever]
+    public List<CustomField> Fields { get; set; } = [];
+
+    /// <summary>Valeurs : objet → (champ → valeur).</summary>
+    [BindNever]
+    public Dictionary<int, Dictionary<int, string>> Values { get; set; } = [];
+
+    public CustomField? Selected => Fields.FirstOrDefault(f => f.Id == Field);
+
+    public bool Active => Selected is not null && !string.IsNullOrWhiteSpace(Value);
+
+    public async Task LoadAsync(AppDbContext db, string entityType)
+    {
+        Fields = await CustomFieldForm.DefinitionsAsync(db, entityType);
+        Values = Fields.Count == 0 ? [] : await CustomFieldForm.ValuesForAsync(db, entityType);
+    }
+
+    /// <summary>Valeur affichable d'un objet pour une colonne.</summary>
+    public string Display(int entityId, CustomField field) =>
+        CustomFieldForm.Display(field, Values.GetValueOrDefault(entityId)?.GetValueOrDefault(field.Id));
+
+    /// <summary>Restreint une requête d'objets (clé « Id ») à ceux dont le champ choisi correspond.</summary>
+    public IQueryable<T> Apply<T>(AppDbContext db, IQueryable<T> query) where T : class
+    {
+        if (!Active)
+        {
+            return query;
+        }
+        CustomField field = Selected!;
+        string raw = Value!.Trim();
+        IQueryable<CustomFieldValue> values = db.CustomFieldValues.Where(v => v.FieldId == field.Id);
+        if (field.Type == CustomFieldType.Boolean)
+        {
+            CustomFieldForm.TryNormalize(field, raw.ToLowerInvariant(), out string? flag);
+            IQueryable<int> yes = values.Where(v => v.Value == "true").Select(v => v.EntityId);
+            return flag == "true"
+                ? query.Where(x => yes.Contains(EF.Property<int>(x, "Id")))
+                : query.Where(x => !yes.Contains(EF.Property<int>(x, "Id")));
+        }
+        if (field.Type is CustomFieldType.Number or CustomFieldType.Date or CustomFieldType.List)
+        {
+            if (!CustomFieldForm.TryNormalize(field, raw, out string? exact) || exact is null)
+            {
+                // Valeur non conforme au type : aucun résultat.
+                return query.Where(x => false);
+            }
+            values = values.Where(v => v.Value == exact);
+        }
+        else
+        {
+            string text = raw.ToLower();
+            values = values.Where(v => v.Value.ToLower().Contains(text));
+        }
+        IQueryable<int> ids = values.Select(v => v.EntityId);
+        return query.Where(x => ids.Contains(EF.Property<int>(x, "Id")));
+    }
+
+    /// <summary>Variante en mémoire, pour une liste déjà chargée.</summary>
+    public async Task<List<TRow>> ApplyAsync<T, TRow>(AppDbContext db, List<TRow> rows, Func<TRow, int> id) where T : class
+    {
+        if (!Active)
+        {
+            return rows;
+        }
+        HashSet<int> kept = (await Apply(db, db.Set<T>()).Select(x => EF.Property<int>(x, "Id")).ToListAsync()).ToHashSet();
+        return rows.Where(r => kept.Contains(id(r))).ToList();
     }
 }

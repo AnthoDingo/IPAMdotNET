@@ -1,13 +1,14 @@
 @page
 @model IPAMdotNet.Pages.Account.LoginModel
 @{
-    ViewData["Title"] = "Connexion";
+    ViewData["Title"] = L.T("Connexion");
 }
 
 <div class="row justify-content-center">
     <div class="col-sm-8 col-md-6 col-lg-4 mt-4">
         <div class="ipam-panel">
-        <div class="ipam-panel-title">Connexion</div>
+        <div class="text-center mb-3"><img src="~/img/logo.svg" alt="" width="64" height="64" /><h1 class="h4 mt-2 mb-0">@IPAMdotNet.Maintenance.SettingsStore.Server.SiteTitle</h1></div>
+        <div class="ipam-panel-title">@L.T("Connexion")</div>
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
             <input type="hidden" asp-for="ReturnUrl" />
@@ -25,7 +26,7 @@
                 <input asp-for="RememberMe" class="form-check-input" />
                 <label asp-for="RememberMe" class="form-check-label"></label>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+            <button type="submit" class="btn btn-primary w-100">@L.T("Se connecter")</button>
         </form>
         </div>
     </div>

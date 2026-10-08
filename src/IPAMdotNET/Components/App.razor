@@ -5,7 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="@($"{HttpContext?.Request.PathBase}/")" />
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg" />
     <HeadOutlet @rendermode="InteractiveServer" />
+    <style>
+        html, body { margin: 0; }
+        .ipam-update-logo { display: inline-block; width: 3.5rem; height: 3.5rem; background: url("img/logo.svg") center / contain no-repeat; }
+    </style>
 </head>
 <body>
     <Routes @rendermode="InteractiveServer" />

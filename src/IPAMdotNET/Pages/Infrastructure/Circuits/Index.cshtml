@@ -3,27 +3,49 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Infrastructure.Circuits.IndexModel
 @{
-    ViewData["Title"] = "Circuits";
+    ViewData["Title"] = L.T("Circuits");
     bool admin = User.IsInRole("Admin");
+
+    async Task End(Device? device, Location? location)
+    {
+        if (device is not null)
+        {
+            if (Model.VisibleDevices.Contains(device.Id))
+            {
+                <div><i class="bi bi-hdd text-body-secondary"></i> <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@device.Id">@device.Hostname</a></div>
+            }
+            else
+            {
+                <div class="text-body-secondary"><i class="bi bi-hdd"></i> @L.T("Équipement masqué")</div>
+            }
+        }
+        if (location is not null)
+        {
+            <div><i class="bi bi-geo-alt text-body-secondary"></i> <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@location.Id">@location.Name</a></div>
+        }
+    }
 }
 
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center gap-2">
-        <span><i class="bi bi-plug"></i> Circuits</span>
-        <a asp-page="Providers/Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-building"></i> Fournisseurs</a>
+        <span><i class="bi bi-plug"></i> @L.T("Circuits")</span>
+        <a asp-page="Logical/Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-diagram-2"></i> @L.T("Circuits logiques")</a>
+        <a asp-page="Types/Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-palette"></i> @L.T("Types")</a>
+        <a asp-page="Providers/Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-building"></i> @L.T("Fournisseurs")</a>
         @if (admin)
         {
-            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Ajouter</a>
+            <a asp-page="Edit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> @L.T("Ajouter")</a>
         }
     </div>
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
     @if (Model.Circuits.Count == 0)
     {
-        <p class="ipam-empty">Aucun circuit.</p>
+        <p class="ipam-empty">@L.T("Aucun circuit.")</p>
     }
     else
     {
         <table class="table table-sm table-hover align-middle mb-0">
-            <thead><tr><th>Identifiant</th><th>Fournisseur</th><th>Type</th><th>Capacité</th><th>Statut</th><th>Extrémité A</th><th>Extrémité B</th><th>Client</th>@foreach (CustomField field in Model.CustomFields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
+            <thead><tr><th>@L.T("Identifiant")</th><th>@L.T("Fournisseur")</th><th>@L.T("Type")</th><th>@L.T("Capacité")</th><th>@L.T("Statut")</th><th>@L.T("Extrémité A")</th><th>@L.T("Extrémité B")</th><th>@L.T("Client")</th><th>@L.T("Circuits logiques")</th>@foreach (CustomField field in Model.Custom.Fields) { <th>@field.Name</th> }@if (admin) { <th></th> }</tr></thead>
             <tbody>
                 @foreach (Circuit circuit in Model.Circuits)
                 {
@@ -36,34 +58,30 @@
                     <tr id="circuit-@circuit.Id">
                         <td class="font-monospace">@circuit.Cid</td>
                         <td>@circuit.Provider?.Name</td>
-                        <td>@circuit.Type</td>
+                        <td>@if (circuit.Type is not null) { <span class="ipam-swatch" style="background-color: @circuit.Type.Color"></span>@circuit.Type.Name }</td>
                         <td>@circuit.Capacity</td>
                         <td><span class="badge @badge">@Html.DisplayFor(_ => circuit.Status)</span></td>
-                        <td>
-                            @if (circuit.LocationA is not null)
-                            {
-                                <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@circuit.LocationA.Id">@circuit.LocationA.Name</a>
-                            }
-                        </td>
-                        <td>
-                            @if (circuit.LocationB is not null)
-                            {
-                                <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@circuit.LocationB.Id">@circuit.LocationB.Name</a>
-                            }
-                        </td>
+                        <td>@{ await End(circuit.DeviceA, circuit.LocationA); }</td>
+                        <td>@{ await End(circuit.DeviceB, circuit.LocationB); }</td>
                         <td>
                             @if (circuit.Customer is not null)
                             {
                                 <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@circuit.Customer.Id">@circuit.Customer.Name</a>
                             }
                         </td>
-                        @foreach (CustomField field in Model.CustomFields)
+                        <td>
+                            @foreach (LogicalCircuit logical in Model.Logical[circuit.Id])
+                            {
+                                <div><a asp-page="Logical/Index" asp-fragment="logical-@logical.Id" class="font-monospace">@logical.Cid</a></div>
+                            }
+                        </td>
+                        @foreach (CustomField field in Model.Custom.Fields)
                         {
-                            <td>@CustomFieldForm.Display(field, Model.CustomValues.GetValueOrDefault(circuit.Id)?.GetValueOrDefault(field.Id))</td>
+                            <td>@Model.Custom.Display(circuit.Id, field)</td>
                         }
                         @if (admin)
                         {
-                            <td class="text-end"><a asp-page="Edit" asp-route-id="@circuit.Id" class="btn btn-outline-secondary btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a></td>
+                            <td class="text-end"><a asp-page="Edit" asp-route-id="@circuit.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                         }
                     </tr>
                 }

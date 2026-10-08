@@ -22,11 +22,16 @@ public class DetailsModel(AppDbContext db) : PageModel
             return NotFound();
         }
         Customer = customer;
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
         Linked = new LinkedObjects(
-            await db.Subnets.Where(s => s.CustomerId == id).OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync(),
-            await db.Devices.Where(d => d.CustomerId == id).OrderBy(d => d.Hostname).ToListAsync(),
+            await access.Readable(db.Subnets).Where(s => s.CustomerId == id).OrderBy(s => s.Address).ThenBy(s => s.PrefixLength).ToListAsync(),
+            await access.Readable(db.Devices).Where(d => d.CustomerId == id).OrderBy(d => d.Hostname).ToListAsync(),
             await db.Racks.Where(r => r.CustomerId == id).OrderBy(r => r.Name).ToListAsync(),
-            await db.Circuits.Include(c => c.Provider).Where(c => c.CustomerId == id).OrderBy(c => c.Cid).ToListAsync());
+            await db.Circuits.Include(c => c.Provider).Where(c => c.CustomerId == id).OrderBy(c => c.Cid).ToListAsync(),
+            await db.Vlans.Include(v => v.Domain).Where(v => v.CustomerId == id).OrderBy(v => v.Number).ThenBy(v => v.Domain!.Name).ToListAsync(),
+            // Adresses des sous-réseaux lisibles uniquement.
+            await db.IpAddresses.Include(a => a.Subnet).Where(a => a.CustomerId == id && access.Readable(db.Subnets).Any(s => s.Id == a.SubnetId))
+                .OrderBy(a => a.Address).ToListAsync());
         CustomFieldValues = await CustomFieldForm.LoadAsync(db, nameof(Customer), id);
         return Page();
     }

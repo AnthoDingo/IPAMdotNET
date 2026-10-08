@@ -10,8 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AnthoDingo.Setup" Version="2.1.1" />
+    <PackageReference Include="AnthoDingo.Setup" Version="2.1.3" />
     <PackageReference Include="AnthoDingo.Update" Version="1.0.0" />
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -19,10 +20,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
     <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.9" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="System.DirectoryServices.Protocols" Version="10.0.12" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
-    <Content Update="appsettings.local.json" CopyToPublishDirectory="Never" />
+    <EmbeddedResource Include="Localization\i18n\*.json" LogicalName="i18n/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

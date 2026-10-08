@@ -19,6 +19,10 @@ public class IndexModel(AppDbContext db) : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Q { get; set; }
 
+    /// <summary>Historique d'un seul objet (avec <see cref="Type"/>).</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? Id { get; set; }
+
     [BindProperty(SupportsGet = true, Name = "p")]
     public int PageNumber { get; set; } = 1;
 
@@ -26,17 +30,25 @@ public class IndexModel(AppDbContext db) : PageModel
     public int TotalCount { get; private set; }
     public int PageCount => Math.Max(1, (TotalCount + PageSize - 1) / PageSize);
 
-    public List<SelectListItem> Types { get; } = ChangeLog.Types
-        .OrderBy(t => t.Value.Label)
-        .Select(t => new SelectListItem(t.Value.Label, t.Key))
-        .ToList();
+    public List<SelectListItem> Types { get; private set; } = [];
 
+    /// <summary>Entrées filtrées selon les droits (<see cref="SectionAccess.Visible"/>).</summary>
     public async Task OnGetAsync()
     {
-        IQueryable<ChangeLog> query = db.ChangeLogs;
+        SectionAccess access = await SectionAccess.ForAsync(db, User);
+        Types = ChangeLog.Types
+            .Where(t => access.IsAdmin || !ChangeLog.AdminOnlyTypes.Contains(t.Key))
+            .OrderBy(t => t.Value.Label)
+            .Select(t => new SelectListItem(t.Value.Label, t.Key))
+            .ToList();
+        IQueryable<ChangeLog> query = access.Visible(db.ChangeLogs);
         if (!string.IsNullOrEmpty(Type))
         {
             query = query.Where(c => c.EntityType == Type);
+            if (Id is not null)
+            {
+                query = query.Where(c => c.EntityId == Id);
+            }
         }
         if (!string.IsNullOrWhiteSpace(Q))
         {

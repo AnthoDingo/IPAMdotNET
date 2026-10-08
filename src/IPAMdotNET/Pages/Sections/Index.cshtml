@@ -6,7 +6,7 @@
 }
 
 @section Breadcrumb {
-    <li class="breadcrumb-item"><a asp-page="/Index">Tableau de bord</a></li>
+    <li class="breadcrumb-item"><a asp-page="/Index">@L.T("Tableau de bord")</a></li>
     <li class="breadcrumb-item active" aria-current="page">@Model.Section.Name</li>
 }
 
@@ -17,21 +17,33 @@
 <div class="ipam-panel">
     <div class="ipam-panel-title d-flex align-items-center">
         <span><i class="bi bi-collection"></i> @Model.Section.Name</span>
-        @if (User.IsInRole("Admin"))
+        @if (Model.CanWrite)
         {
-            <a asp-page="/Network/Subnets/Edit" asp-route-sectionId="@Model.Section.Id" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> Ajouter un sous-réseau</a>
+            <a asp-page="/Network/Subnets/Edit" asp-route-sectionId="@Model.Section.Id" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Ajouter un sous-réseau")</a>
         }
     </div>
     @if (!string.IsNullOrEmpty(Model.Section.Description))
     {
         <p class="text-body-secondary">@Model.Section.Description</p>
     }
-    @if (Model.Tree.Count == 0)
+    @if (Model.CustomFieldValues.Count > 0)
     {
-        <p class="ipam-empty">Aucun sous-réseau dans cette section.</p>
+        <dl class="row ipam-details">
+            <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
+        </dl>
+    }
+    <partial name="_CustomFieldFilter" model="Model.Custom" />
+    @if (Model.Listed.Count == 0)
+    {
+        <p class="ipam-empty">@(Model.Custom.Active ? L.T("Aucun sous-réseau ne correspond au filtre.") : L.T("Aucun sous-réseau dans cette section."))</p>
     }
     else
     {
-        <partial name="_SubnetTable" model="Model.Tree" />
+        <partial name="_SubnetTable" model="Model.Listed" />
     }
 </div>
+
+@if (Model.Section.Id != 0)
+{
+    <vc:history entity-type="Section" entity-id="@Model.Section.Id" />
+}

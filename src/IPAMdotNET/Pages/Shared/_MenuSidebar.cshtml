@@ -9,12 +9,12 @@
     <div class="ipam-side-group">
         <div class="ipam-side-title">@group.Label</div>
         <ul class="nav flex-column">
-            @foreach (MenuItem item in group.Items)
+            @foreach (MenuItem item in group.Items.Where(i => i.IsVisible))
             {
                 <li class="nav-item">
                     @if (item.Page is null)
                     {
-                        <span class="nav-link disabled" title="Bientôt disponible"><i class="bi bi-@item.Icon"></i> @item.Label</span>
+                        <span class="nav-link disabled" title="@L.T("Bientôt disponible")"><i class="bi bi-@item.Icon"></i> @item.Label</span>
                     }
                     else
                     {

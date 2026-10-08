@@ -22,9 +22,23 @@ jobs:
       - name: Publish
         run: |
           version="${GITHUB_REF_NAME#v}"
+          # Agents de scan distants d'abord : leurs paquets sont embarqués par le serveur (« agent/ »), qui les distribue
+          # aux agents installés (mise à jour automatique).
+          mkdir -p publish/agent-packages
+          for rid in win-x64 linux-x64; do
+            agent="publish/IPAMdotNet-ScanAgent-$GITHUB_REF_NAME-$rid"
+            dotnet publish src/IPAMdotNet.ScanAgent -c Release -r "$rid" --self-contained -p:Version="$version" -p:PublishSingleFile=true -o "$agent"
+            (cd "$agent" && zip -qr "../agent-packages/IPAMdotNet.ScanAgent-$rid.zip" .)
+            if [ "$rid" = win-x64 ]; then
+              (cd publish && zip -qr "../$(basename "$agent").zip" "$(basename "$agent")")
+            else
+              tar -czf "$(basename "$agent").tar.gz" -C publish "$(basename "$agent")"
+            fi
+          done
           for rid in win-x64 linux-x64; do
             out="publish/IPAMdotNet-$GITHUB_REF_NAME-$rid"
             dotnet publish src/IPAMdotNET -c Release -r "$rid" --self-contained -p:Version="$version" -o "$out"
+            mkdir -p "$out/agent" && cp publish/agent-packages/*.zip "$out/agent/"
             if [ "$rid" = win-x64 ]; then
               (cd publish && zip -qr "../$(basename "$out").zip" "$(basename "$out")")
             else

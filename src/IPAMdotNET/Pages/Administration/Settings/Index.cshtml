@@ -1,0 +1,113 @@
+@page
+@model IPAMdotNet.Pages.Administration.Settings.IndexModel
+@{
+    ViewData["Title"] = L.T("Paramètres");
+}
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="ipam-form">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-gear"></i> @L.T("Site")</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Settings.SiteTitle" class="form-label"></label>
+                <input asp-for="Settings.SiteTitle" class="form-control" />
+                <span asp-validation-for="Settings.SiteTitle" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.SiteUrl" class="form-label"></label>
+                <input asp-for="Settings.SiteUrl" class="form-control" placeholder="@L.T("https://ipam.example.com")" />
+                <div class="form-text">@L.T("Utilisée dans les liens des e-mails.")</div>
+                <span asp-validation-for="Settings.SiteUrl" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.AdminName" class="form-label"></label>
+                <input asp-for="Settings.AdminName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.AdminEmail" class="form-label"></label>
+                <input asp-for="Settings.AdminEmail" class="form-control" />
+                <div class="form-text">@L.T("Affiché en pied de page comme contact.")</div>
+                <span asp-validation-for="Settings.AdminEmail" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Settings.Language" class="form-label"></label>
+                <select asp-for="Settings.Language" class="form-select">
+                    @foreach ((string code, string name) in L.Languages)
+                    {
+                        <option value="@code">@name</option>
+                    }
+                </select>
+                <div class="form-text">@L.T("Chaque utilisateur peut choisir la sienne dans « Mon compte ».")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-toggles"></i> @L.T("Fonctionnalités")</div>
+        <div class="form-check form-switch mb-2">
+            <input asp-for="Settings.EnableIpRequests" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableIpRequests" class="form-check-label"></label>
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input asp-for="Settings.EnableChangelog" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableChangelog" class="form-check-label"></label>
+            <div class="form-text">@L.T("Désactivé, les modifications ne sont plus enregistrées dans le journal.")</div>
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input asp-for="Settings.EnableMaps" class="form-check-input" role="switch" />
+            <label asp-for="Settings.EnableMaps" class="form-check-label"></label>
+            <div class="form-text">@L.T("Carte intégrée sur les fiches et la liste des emplacements (tuiles OpenStreetMap chargées par le navigateur). Désactivée, seul un lien vers OpenStreetMap est proposé.")</div>
+        </div>
+        <div class="form-check form-switch">
+            <input asp-for="Settings.HideFreeRanges" class="form-check-input" role="switch" />
+            <label asp-for="Settings.HideFreeRanges" class="form-check-label"></label>
+            <div class="form-text">@L.T("La page d'un sous-réseau n'intercale plus les plages d'adresses libres entre les adresses utilisées.")</div>
+        </div>
+        <div class="mt-3 col-md-6">
+            <label asp-for="Settings.MacFormat" class="form-label"></label>
+            <select asp-for="Settings.MacFormat" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>()" class="form-select"></select>
+            <div class="form-text">@L.T("Affichage uniquement : la saisie accepte tous ces formats.")</div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-shield-lock"></i> @L.T("Sécurité")</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Settings.MaxFailedLogins" class="form-label"></label>
+                <input asp-for="Settings.MaxFailedLogins" class="form-control" min="0" max="100" />
+                <div class="form-text">0 = pas de verrouillage.</div>
+                <span asp-validation-for="Settings.MaxFailedLogins" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Settings.LockoutMinutes" class="form-label"></label>
+                <input asp-for="Settings.LockoutMinutes" class="form-control" min="1" max="1440" />
+                <span asp-validation-for="Settings.LockoutMinutes" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Settings.SessionMinutes" class="form-label"></label>
+                <input asp-for="Settings.SessionMinutes" class="form-control" min="5" max="43200" />
+                <div class="form-text">@L.T("Hors « Se souvenir de moi » (30 jours). S'applique aux connexions suivantes.")</div>
+                <span asp-validation-for="Settings.SessionMinutes" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="ipam-panel mb-3">
+        <div class="ipam-panel-title"><i class="bi bi-journal-text"></i> @L.T("Journaux")</div>
+        <div class="col-md-4">
+            <label asp-for="Settings.LogRetentionDays" class="form-label"></label>
+            <input asp-for="Settings.LogRetentionDays" class="form-control" min="0" max="3650" />
+            <div class="form-text">@L.T("0 = conservation illimitée. Les entrées plus anciennes sont supprimées automatiquement.")</div>
+            <span asp-validation-for="Settings.LogRetentionDays" class="text-danger"></span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+</form>

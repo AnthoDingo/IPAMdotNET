@@ -1,14 +1,14 @@
 @page
 @model IPAMdotNet.Pages.Tools.Requests.NewModel
 @{
-    ViewData["Title"] = "Nouvelle demande d'adresse";
+    ViewData["Title"] = L.T("Nouvelle demande d'adresse");
 }
 
 <div class="ipam-panel ipam-form">
     <div class="ipam-panel-title">@ViewData["Title"]</div>
     @if (Model.Subnets.Count == 0)
     {
-        <p class="ipam-empty">Aucun sous-réseau n'est ouvert aux demandes. Un administrateur peut l'activer dans la fiche d'un sous-réseau.</p>
+        <p class="ipam-empty">@L.T("Aucun sous-réseau n'est ouvert aux demandes. Un administrateur peut l'activer dans la fiche d'un sous-réseau.")</p>
     }
     else
     {
@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-5">
                     <label asp-for="IpRequest.RequestedAddress" class="form-label"></label>
-                    <input asp-for="IpRequest.RequestedAddress" class="form-control font-monospace" placeholder="Facultatif" />
+                    <input asp-for="IpRequest.RequestedAddress" class="form-control font-monospace" placeholder="@L.T("Facultatif")" />
                     <span asp-validation-for="IpRequest.RequestedAddress" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -39,8 +39,8 @@
                     <span asp-validation-for="IpRequest.Description" class="text-danger"></span>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Envoyer la demande</button>
-            <a asp-page="Index" class="btn btn-outline-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">@L.T("Envoyer la demande")</button>
+            <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
     }
 </div>

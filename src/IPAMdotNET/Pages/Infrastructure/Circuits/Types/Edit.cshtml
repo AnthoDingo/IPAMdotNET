@@ -1,0 +1,32 @@
+@page "{id:int?}"
+@model IPAMdotNet.Pages.Infrastructure.Circuits.Types.EditModel
+@{
+    ViewData["Title"] = Model.Type.Id == 0 ? "Nouveau type de circuit" : $"Type de circuit {Model.Type.Name}";
+}
+
+<div class="ipam-panel ipam-form">
+    <div class="ipam-panel-title">@ViewData["Title"]</div>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-9">
+                <label asp-for="Type.Name" class="form-label"></label>
+                <input asp-for="Type.Name" class="form-control" />
+                <span asp-validation-for="Type.Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Type.Color" class="form-label"></label>
+                <input asp-for="Type.Color" type="color" class="form-control form-control-color w-100" />
+                <span asp-validation-for="Type.Color" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Type.Description" class="form-label"></label>
+                <textarea asp-for="Type.Description" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Type.Description" class="text-danger"></span>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+    </form>
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Type.Id, "ce type (les circuits concernés n'auront plus de type)"))" />
+</div>
