@@ -149,9 +149,10 @@ else
                 </ul>
             </div>
         }
-        <form method="post" asp-page-handler="Import">
+        <form method="post" asp-page-handler="Import" data-ipam-confirm="@L.T("Importer ces données ? L'opération est faite en une fois (tout ou rien).")"
+              onsubmit="this.querySelector('button[type=submit]').disabled = true;">
             <input type="hidden" asp-for="Ticket" />
-            <button type="submit" class="btn btn-success" disabled="@(!Model.TargetEmpty)" onclick="if (!confirm('Importer ces données ? L\'opération est faite en une fois (tout ou rien).')) return false; this.disabled = true; this.form.submit();">
+            <button type="submit" class="btn btn-success" disabled="@(!Model.TargetEmpty)">
                 <i class="bi bi-box-arrow-in-down"></i>@L.T("Importer")
             </button>
             <span class="small text-body-secondary ms-2">@L.T("Les données sont relues au moment de l'import.")</span>

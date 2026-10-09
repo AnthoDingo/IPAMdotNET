@@ -62,7 +62,7 @@
             </ul>
             @if (check.FixHandler is not null)
             {
-                <form method="post" asp-page-handler="@check.FixHandler" onsubmit="return confirm('Corriger automatiquement ?');">
+                <form method="post" asp-page-handler="@check.FixHandler" data-ipam-confirm="@L.T("Corriger automatiquement ?")">
                     <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-wrench"></i>@L.T("Corriger")</button>
                 </form>
             }

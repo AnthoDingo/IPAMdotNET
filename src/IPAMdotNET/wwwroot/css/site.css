@@ -96,6 +96,38 @@ body {
     box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ipam-accent) 45%, transparent);
 }
 
+/* Titre centré sur la largeur du bandeau (colonnes latérales égales), outils à droite */
+.ipam-header-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ipam-header-bar > .ipam-brand {
+    grid-column: 2;
+}
+
+.ipam-header-tools {
+    grid-column: 3;
+    justify-self: end;
+}
+
+/* Téléphone : pas la place de centrer, titre à gauche */
+@media (max-width: 575.98px) {
+    .ipam-header-bar {
+        grid-template-columns: auto 1fr;
+    }
+
+    .ipam-header-bar > .ipam-brand {
+        grid-column: 1;
+    }
+
+    .ipam-header-tools {
+        grid-column: 2;
+    }
+}
+
 .ipam-brand,
 .ipam-brand:hover {
     color: var(--ipam-header-fg);
@@ -798,4 +830,31 @@ a.ipam-tile:hover {
     border: 1px solid var(--bs-border-color);
     border-radius: var(--bs-border-radius);
     z-index: 0;
+}
+
+/* Graphique d'utilisation d'un sous-réseau (anneau en conic-gradient) */
+.ipam-usage-chart {
+    width: 8rem;
+    height: 8rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    mask: radial-gradient(circle, transparent 54%, black 55%);
+}
+
+.ipam-usage-swatch {
+    display: inline-block;
+    width: .75rem;
+    height: .75rem;
+    border-radius: 2px;
+    vertical-align: -.1em;
+    margin-right: .25rem;
+}
+
+/* Confirmation (site.js) : au-dessus d'une fenêtre modale déjà ouverte */
+.ipam-confirm {
+    z-index: 1070;
+}
+
+.modal-backdrop + .modal-backdrop {
+    z-index: 1065;
 }

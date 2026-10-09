@@ -1,0 +1,72 @@
+@page
+@using IPAMdotNet.Data
+@model IPAMdotNet.Pages.Administration.Logs.IndexModel
+@{
+    ViewData["Title"] = L.T("Journaux");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title"><i class="bi bi-journal-text"></i> @L.T("Journal système")</div>
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-3">
+            <select asp-for="Severity" asp-items="Html.GetEnumSelectList<LogSeverity>()" class="form-select" aria-label="@L.T("Niveau")">
+                <option value="">@L.T("Tous les niveaux")</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select asp-for="Category" asp-items="@(new SelectList(Model.Categories))" class="form-select" aria-label="@L.T("Catégorie")">
+                <option value="">@L.T("Toutes les catégories")</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input asp-for="Q" class="form-control" placeholder="@L.T("Message, utilisateur ou adresse IP")" aria-label="@L.T("Filtre")" />
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">@L.T("Filtrer")</button>
+        </div>
+    </form>
+
+    @if (Model.Entries.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucune entrée.")</p>
+    }
+    else
+    {
+        <table class="table table-sm align-middle mb-2">
+            <thead><tr><th>@L.T("Date")</th><th>@L.T("Niveau")</th><th>@L.T("Catégorie")</th><th>@L.T("Utilisateur")</th><th>@L.T("Adresse IP")</th><th>@L.T("Message")</th></tr></thead>
+            <tbody>
+                @foreach (LogEntry entry in Model.Entries)
+                {
+                    string badge = entry.Severity switch
+                    {
+                        LogSeverity.Error => "text-bg-danger",
+                        LogSeverity.Warning => "text-bg-warning",
+                        _ => "text-bg-secondary",
+                    };
+                    <tr>
+                        <td class="text-nowrap">@entry.Date.ToLocalTime().ToString("g")</td>
+                        <td><span class="badge @badge">@Html.DisplayFor(_ => entry.Severity)</span></td>
+                        <td>@entry.Category</td>
+                        <td>@entry.UserName</td>
+                        <td class="font-monospace">@entry.IpAddress</td>
+                        <td>@entry.Message</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (Model.PageCount > 1)
+        {
+            <nav aria-label="@L.T("Pages")">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-route-p="@(Model.PageNumber - 1)" asp-route-severity="@Model.Severity" asp-route-category="@Model.Category" asp-route-q="@Model.Q">@L.T("Précédent")</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">@(L.T("Page {0} / {1}", Model.PageNumber, Model.PageCount))</span></li>
+                    <li class="page-item @(Model.PageNumber == Model.PageCount ? "disabled" : "")">
+                        <a class="page-link" asp-route-p="@(Model.PageNumber + 1)" asp-route-severity="@Model.Severity" asp-route-category="@Model.Category" asp-route-q="@Model.Q">@L.T("Suivant")</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>

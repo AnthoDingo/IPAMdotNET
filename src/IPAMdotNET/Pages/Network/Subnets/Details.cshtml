@@ -121,6 +121,41 @@
     </dl>
 </div>
 
+@{
+    // Graphique d'utilisation (comme phpIPAM) : une part par étiquette, le reste est libre.
+    System.Numerics.BigInteger usable = Ip.UsableCount(network);
+    List<(string Label, string Color, double Percent, string Count)> slices = Model.UsageByTag
+        .Select(u => (u.Tag?.Name ?? L.T("Sans étiquette"), u.Tag?.BackgroundColor ?? "var(--bs-secondary-color)",
+            usable.IsZero ? 0 : u.Count * 100 / (double)usable, u.Count.ToString("N0")))
+        .ToList();
+    slices.Add((L.T("Libre"), "var(--ipam-border)", Math.Max(0, 100 - slices.Sum(s => s.Percent)),
+        System.Numerics.BigInteger.Max(0, usable - Model.AddressCount).ToString("N0")));
+    double start = 0;
+    List<string> stops = [];
+    foreach ((string Label, string Color, double Percent, string Count) slice in slices)
+    {
+        stops.Add(FormattableString.Invariant($"{slice.Color} {start:0.###}% {start + slice.Percent:0.###}%"));
+        start += slice.Percent;
+    }
+}
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-pie-chart"></i> @L.T("Utilisation")</div>
+    <div class="d-flex flex-wrap align-items-center gap-4">
+        <div class="ipam-usage-chart" style="background: conic-gradient(@string.Join(", ", stops))" role="img"
+             aria-label="@L.T("{0} adresse(s) utilisée(s) sur {1}", Model.AddressCount.ToString("N0"), usable.ToString("N0"))"></div>
+        <ul class="list-unstyled mb-0 small">
+            @foreach ((string Label, string Color, double Percent, string Count) slice in slices)
+            {
+                <li>
+                    <span class="ipam-usage-swatch" style="background: @slice.Color"></span>
+                    @slice.Label : @slice.Count
+                    <span class="text-body-secondary">(@(slice.Percent > 0 && slice.Percent < 0.1 ? "< " + 0.1.ToString("0.#") : slice.Percent.ToString("0.#")) %)</span>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
 @if (Model.Grid.Count > 0)
 {
     <div class="ipam-panel mb-3">
@@ -279,7 +314,7 @@
             <form method="post" id="address-bulk" asp-page="/Network/Addresses/Bulk" asp-route-subnetId="@Model.Subnet.Id" class="d-flex gap-2 mt-2">
                 <span class="small text-body-secondary align-self-center">@L.T("Sélection :")</span>
                 <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i>@L.T("Modifier")</button>
-                <button type="submit" asp-page-handler="Delete" class="btn btn-outline-danger btn-sm" onclick="return confirm('Supprimer les adresses sélectionnées ?')"><i class="bi bi-trash"></i>@L.T("Supprimer")</button>
+                <button type="submit" asp-page-handler="Delete" class="btn btn-outline-danger btn-sm" data-ipam-confirm="@L.T("Supprimer les adresses sélectionnées ?")"><i class="bi bi-trash"></i>@L.T("Supprimer")</button>
             </form>
         }
     }

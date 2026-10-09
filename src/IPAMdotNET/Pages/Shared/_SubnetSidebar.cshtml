@@ -25,3 +25,31 @@
         </ul>
     }
 </div>
+@{
+    // VLAN des sous-réseaux de la section (comme le menu de gauche de phpIPAM), avec leurs sous-réseaux.
+    List<IGrouping<int, SubnetNode>> vlans = Model.Nodes.Where(n => n.Subnet.Vlan is not null)
+        .GroupBy(n => n.Subnet.Vlan!.Id).OrderBy(g => g.First().Subnet.Vlan!.Number).ToList();
+}
+@if (vlans.Count > 0)
+{
+    <div class="ipam-side-group">
+        <div class="ipam-side-title">VLAN</div>
+        <ul class="nav flex-column ipam-subnet-tree">
+            @foreach (IGrouping<int, SubnetNode> vlan in vlans)
+            {
+                IPAMdotNet.Data.Vlan first = vlan.First().Subnet.Vlan!;
+                <li class="nav-item">
+                    <span class="nav-link fw-semibold" title="@first.Description"><i class="bi bi-hdd-network"></i> @first.Number – @first.Name</span>
+                </li>
+                @foreach (SubnetNode node in vlan)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link font-monospace ps-4 @(node.Subnet.Id == Model.SelectedId ? "active" : "")"
+                           asp-page="/Network/Subnets/Details" asp-route-id="@node.Subnet.Id"
+                           title="@node.Subnet.Description">@node.Subnet.Network</a>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+}

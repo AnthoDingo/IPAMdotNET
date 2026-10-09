@@ -41,7 +41,7 @@
                             <form method="post" asp-page-handler="Toggle" asp-route-id="@key.Id" class="d-inline">
                                 <button type="submit" class="btn btn-outline-secondary btn-sm">@(key.Enabled ? "Désactiver" : "Activer")</button>
                             </form>
-                            <form method="post" asp-page-handler="Delete" asp-route-id="@key.Id" class="d-inline" onsubmit="return confirm('Supprimer cette clé ?');">
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@key.Id" class="d-inline" data-ipam-confirm="@L.T("Supprimer cette clé ?")">
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="@L.T("Supprimer")"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>

@@ -65,7 +65,7 @@
                     }
                 </tbody>
             </table>
-            <form method="post" onsubmit="return confirm('Appliquer le remplacement ?');">
+            <form method="post" data-ipam-confirm="@L.T("Appliquer le remplacement ?")">
                 <input type="hidden" asp-for="Type" />
                 <input type="hidden" asp-for="Field" />
                 <input type="hidden" asp-for="Search" />
