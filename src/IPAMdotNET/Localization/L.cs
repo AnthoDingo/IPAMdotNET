@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.Localization;
 
@@ -48,9 +47,6 @@ public static class L
 
     /// <summary>Texte traduit puis mis en forme (<c>{0}</c>, <c>{1}</c>… dans la clé française).</summary>
     public static string T(string text, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(text), args);
-
-    /// <summary>Texte traduit échappé pour une chaîne JavaScript entre apostrophes (ex. <c>confirm('…')</c> dans un attribut).</summary>
-    public static string Js(string text, params object?[] args) => JavaScriptEncoder.Default.Encode(args.Length == 0 ? T(text) : T(text, args));
 
     public static string Translate(string text, string culture)
     {

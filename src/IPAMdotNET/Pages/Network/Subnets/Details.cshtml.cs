@@ -73,6 +73,7 @@ public class DetailsModel(AppDbContext db) : PageModel
         List<IpAddress> addresses = await db.IpAddresses.Include(a => a.Tag).Include(a => a.Device)
             .Where(a => a.SubnetId == id).OrderBy(a => a.Address).ToListAsync();
         AddressCount = addresses.Count;
+        UsageByTag = addresses.GroupBy(a => a.TagId).Select(g => (g.First().Tag, g.Count())).OrderByDescending(u => u.Item2).ToList();
         AddressFields = await CustomFieldForm.DefinitionsAsync(db, nameof(IpAddress));
         if (AddressFields.Count > 0)
         {
@@ -112,6 +113,9 @@ public class DetailsModel(AppDbContext db) : PageModel
     /// <summary>Légende de l'affichage visuel : étiquettes présentes (null = adresse sans étiquette).</summary>
     public IEnumerable<Tag?> GridTags => Grid.Select(c => c.Entry).OfType<IpAddress>().Select(a => a.Tag).DistinctBy(t => t?.Id).OrderBy(t => t?.Name);
     public int AddressCount { get; private set; }
+
+    /// <summary>Graphique d'utilisation : nombre d'adresses par étiquette (null = sans étiquette).</summary>
+    public List<(Tag? Tag, int Count)> UsageByTag { get; private set; } = [];
 
     /// <summary>Champs personnalisés des adresses (colonnes de la liste) et leurs valeurs : adresse → (champ → valeur).</summary>
     public List<CustomField> AddressFields { get; private set; } = [];

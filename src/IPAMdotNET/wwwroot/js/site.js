@@ -90,7 +90,7 @@ function fillModal(html) {
 
 async function submitModal(e) {
     if (e.defaultPrevented) {
-        return; // confirm() de suppression refusé
+        return; // confirmation demandée (data-ipam-confirm)
     }
     e.preventDefault();
     const form = e.target;
@@ -122,6 +122,34 @@ document.addEventListener("click", async e => {
         location.href = link.href;
     }
 });
+
+// Confirmation : un formulaire ou son bouton d'envoi [data-ipam-confirm="message"] demande confirmation dans la fenêtre
+// #ipam-confirm (_Layout) au lieu de confirm() ; confirmé, il est renvoyé avec le même bouton (même handler, même formaction).
+// Écoute en capture : passe avant les autres gestionnaires d'envoi (fenêtre modale, onsubmit), qui ne voient que l'envoi confirmé.
+const confirmModal = document.getElementById("ipam-confirm");
+let confirmedForm = null;
+document.addEventListener("submit", e => {
+    const form = e.target;
+    const source = e.submitter?.closest("[data-ipam-confirm]") ?? form.closest("[data-ipam-confirm]");
+    if (!source || !confirmModal) {
+        return;
+    }
+    if (confirmedForm === form) {
+        confirmedForm = null;
+        return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const submitter = e.submitter;
+    confirmModal.querySelector(".modal-body").textContent = source.dataset.ipamConfirm;
+    confirmModal.querySelector("[data-ipam-confirm-ok]").onclick = () => {
+        bootstrap.Modal.getInstance(confirmModal).hide();
+        confirmedForm = form;
+        form.requestSubmit(submitter);
+    };
+    bootstrap.Modal.getOrCreateInstance(confirmModal).show();
+}, true);
+confirmModal?.addEventListener("shown.bs.modal", () => confirmModal.querySelector("[data-ipam-confirm-ok]").focus());
 
 // Cartes (vue partielle _Map) : marqueurs avec un lien vers la fiche, popups construites en DOM (pas de HTML injecté).
 document.querySelectorAll("[data-ipam-map]").forEach(element => {

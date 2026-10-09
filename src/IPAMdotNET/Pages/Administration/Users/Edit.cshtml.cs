@@ -152,6 +152,8 @@ public class EditModel(AppDbContext db) : PageModel
             return NotFound();
         }
         UserId = id;
+        // Input est lié (et validé) sur ce POST aussi, vide : ses erreurs bloqueraient toute suppression.
+        ModelState.Clear();
         if (IsSelf)
         {
             ModelState.AddModelError(string.Empty, "Vous ne pouvez pas supprimer votre propre compte.");

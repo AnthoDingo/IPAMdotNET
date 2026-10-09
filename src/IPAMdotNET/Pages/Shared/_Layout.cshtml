@@ -40,13 +40,13 @@
 </head>
 <body>
     <header class="ipam-header">
-        <div class="container-fluid d-flex align-items-center gap-3">
+        <div class="container-fluid ipam-header-bar">
             <a class="ipam-brand" asp-page="/Index">
                 <img src="~/img/logo.svg" alt="" class="ipam-brand-logo" />
                 <span class="ipam-brand-name">@settings.SiteTitle</span>
                 <span class="ipam-brand-sub d-none d-sm-inline">@L.T("Gestion d'adresses IP")</span>
             </a>
-            <div class="ms-auto d-flex align-items-center gap-2">
+            <div class="ipam-header-tools d-flex align-items-center gap-2">
                 @if (authenticated)
                 {
                     <form class="ipam-search d-none d-md-flex" role="search" method="get" asp-page="/Tools/Search/Index">
@@ -165,6 +165,23 @@
             }
         </div>
     </footer>
+
+    @* Confirmation des actions [data-ipam-confirm] (site.js), à la place de confirm() du navigateur. *@
+    <div class="modal fade ipam-confirm" id="ipam-confirm" tabindex="-1" aria-labelledby="ipam-confirm-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ipam-confirm-title">@L.T("Confirmation")</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L.T("Fermer")"></button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L.T("Annuler")</button>
+                    <button type="button" class="btn btn-primary" data-ipam-confirm-ok>@L.T("Confirmer")</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

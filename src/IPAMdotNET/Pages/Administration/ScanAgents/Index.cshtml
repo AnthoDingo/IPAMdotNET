@@ -149,7 +149,7 @@
                             <form method="post" asp-page-handler="ToggleAgent" asp-route-id="@agent.Id" class="d-inline">
                                 <button type="submit" class="btn btn-outline-secondary btn-sm">@(agent.Enabled ? "Désactiver" : "Activer")</button>
                             </form>
-                            <form method="post" asp-page-handler="DeleteAgent" asp-route-id="@agent.Id" class="d-inline" onsubmit="return confirm('Supprimer cet agent ? Ses sous-réseaux reviendront à l'agent intégré.')">
+                            <form method="post" asp-page-handler="DeleteAgent" asp-route-id="@agent.Id" class="d-inline" data-ipam-confirm="@L.T("Supprimer cet agent ? Ses sous-réseaux reviendront à l'agent intégré.")">
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="@L.T("Supprimer")"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
