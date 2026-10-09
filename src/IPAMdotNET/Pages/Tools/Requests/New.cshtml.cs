@@ -60,6 +60,7 @@ public class NewModel(AppDbContext db, IDataProtectionProvider protection) : Pag
         IpRequest.Id = 0;
         IpRequest.State = IpRequestState.Pending;
         IpRequest.RequestedById = User.UserId();
+        IpRequest.RequesterEmail = null;
         IpRequest.RequestedAt = DateTime.UtcNow;
         IpRequest.AssignedAddress = null;
         IpRequest.AdminComment = null;
@@ -67,12 +68,18 @@ public class NewModel(AppDbContext db, IDataProtectionProvider protection) : Pag
         IpRequest.ProcessedAt = null;
         db.IpRequests.Add(IpRequest);
         await db.SaveChangesAsync();
+        await NotifyAdminsAsync(db, protection, IpRequest, subnet!, User.Identity?.Name ?? "");
+        return RedirectToPage("Index");
+    }
+
+    /// <summary>Courriel aux admins (ayant une adresse) : nouvelle demande à traiter.</summary>
+    public static async Task NotifyAdminsAsync(AppDbContext db, IDataProtectionProvider protection, IpRequest request, Subnet subnet, string requester)
+    {
         List<string> admins = await db.Users.Where(u => u.IsAdmin && u.Enabled && u.Email != null).Select(u => u.Email!).ToListAsync();
         await Mailer.SendAsync(db, protection, admins, "Nouvelle demande d'adresse",
-            $"{User.Identity?.Name} demande une adresse dans {subnet!.Network}" +
-            (IpRequest.RequestedAddress is null ? "" : $" (souhaitée : {IpRequest.RequestedAddress})") +
-            $".\n\nMotif : {IpRequest.Description}\n\nTraiter la demande : {Mailer.Link($"/Tools/Requests/Process/{IpRequest.Id}")}");
-        return RedirectToPage("Index");
+            $"{requester} demande {(request.Count > 1 ? $"{request.Count} adresses" : "une adresse")} dans {subnet.Network}" +
+            (request.RequestedAddress is null ? "" : $" (souhaitée : {request.RequestedAddress})") +
+            $".\n\nMotif : {request.Description}\n\nTraiter la demande : {Mailer.Link($"/Tools/Requests/Process/{request.Id}")}");
     }
 
     private async Task LoadSubnetsAsync()

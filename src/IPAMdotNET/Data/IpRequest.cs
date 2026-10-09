@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace IPAMdotNet.Data;
@@ -39,16 +40,30 @@ public class IpRequest
     [Display(Name = "État")]
     public IpRequestState State { get; set; }
 
+    /// <summary>Compte du demandeur ; null pour une demande anonyme (page de connexion), identifiée par <see cref="RequesterEmail"/>.</summary>
     [Display(Name = "Demandeur")]
-    public int RequestedById { get; set; }
+    public int? RequestedById { get; set; }
 
     [ValidateNever]
     public User? RequestedBy { get; set; }
 
+    [MaxLength(200), EmailAddress(ErrorMessage = "Adresse e-mail invalide."), Display(Name = "E-mail du demandeur")]
+    public string? RequesterEmail { get; set; }
+
+    public const int MaxCount = 32;
+
+    [Range(1, MaxCount, ErrorMessage = "Entre 1 et 32 adresses."), Display(Name = "Nombre d'adresses")]
+    public int Count { get; set; } = 1;
+
+    /// <summary>Compte (nom affiché ou identifiant) ou, pour une demande anonyme, son e-mail.</summary>
+    [NotMapped]
+    public string? RequesterName => RequestedBy?.DisplayName ?? RequestedBy?.UserName ?? RequesterEmail;
+
     [Display(Name = "Demandée le")]
     public DateTime RequestedAt { get; set; }
 
-    [MaxLength(45), Display(Name = "Adresse attribuée")]
+    /// <summary>Adresses attribuées, séparées par « , » (une par adresse demandée).</summary>
+    [MaxLength(2000), Display(Name = "Adresse attribuée")]
     public string? AssignedAddress { get; set; }
 
     [MaxLength(500), Display(Name = "Commentaire")]

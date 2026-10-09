@@ -24,9 +24,9 @@
                 {
                     <tr>
                         <td class="text-nowrap">@request.RequestedAt.ToLocalTime().ToString("g")</td>
-                        <td>@(request.RequestedBy?.DisplayName ?? request.RequestedBy?.UserName)</td>
+                        <td>@request.RequesterName</td>
                         <td class="font-monospace"><a asp-page="/Network/Subnets/Details" asp-route-id="@request.SubnetId">@request.Subnet?.Network</a></td>
-                        <td class="font-monospace">@request.RequestedAddress</td>
+                        <td class="font-monospace">@request.RequestedAddress@if (request.Count > 1) { <span class="badge text-bg-secondary ms-1">× @request.Count</span> }</td>
                         <td>@request.Hostname</td>
                         <td>@request.Description</td>
                         @if (admin)
@@ -55,7 +55,7 @@
                 {
                     <tr>
                         <td class="text-nowrap">@request.ProcessedAt?.ToLocalTime().ToString("g")</td>
-                        <td>@(request.RequestedBy?.DisplayName ?? request.RequestedBy?.UserName)</td>
+                        <td>@request.RequesterName</td>
                         <td class="font-monospace">@request.Subnet?.Network</td>
                         <td><span class="badge @(request.State == IpRequestState.Approved ? "text-bg-success" : "text-bg-secondary")">@Html.DisplayFor(_ => request.State)</span></td>
                         <td class="font-monospace">@request.AssignedAddress</td>
