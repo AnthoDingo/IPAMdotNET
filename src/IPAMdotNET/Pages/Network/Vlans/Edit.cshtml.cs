@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -45,11 +46,11 @@ public class EditModel(AppDbContext db) : PageModel
         Vlan.Id = id ?? 0;
         if (!await db.VlanDomains.AnyAsync(d => d.Id == Vlan.DomainId))
         {
-            ModelState.AddModelError("Vlan.DomainId", "Domaine L2 inexistant.");
+            ModelState.AddModelError("Vlan.DomainId", L.T("Domaine L2 inexistant."));
         }
         else if (await db.Vlans.AnyAsync(v => v.DomainId == Vlan.DomainId && v.Number == Vlan.Number && v.Id != Vlan.Id))
         {
-            ModelState.AddModelError("Vlan.Number", "Ce numéro de VLAN existe déjà dans ce domaine.");
+            ModelState.AddModelError("Vlan.Number", L.T("Ce numéro de VLAN existe déjà dans ce domaine."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vlan));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

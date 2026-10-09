@@ -1,1 +1,18 @@
-{}
+{
+  "Ajouter aux favoris": "Add to favorites",
+  "Analyser": "Analyze",
+  "Aucun favori. Ajoutez-en depuis la fiche d'un sous-réseau avec l'étoile": "No favorites. Add some from a subnet's record with the star",
+  "Aucun sous-réseau favori.": "No favorite subnets.",
+  "Code postal": "ZIP code",
+  "Couleur": "Color",
+  "Couleur attendue au format #RRGGBB.": "Color expected in #RRGGBB format.",
+  "Couleur de fond": "Background color",
+  "Couleur du texte": "Text color",
+  "Favori": "Favorite",
+  "Import annulé, rien n'a été enregistré : {0}": "Import canceled, nothing was saved: {0}",
+  "La création des comptes et la synchronisation des groupes lisent l'annuaire : indiquez la base de recherche.": "Account creation and group synchronization read the directory: enter the search base.",
+  "Mes sous-réseaux favoris": "My favorite subnets",
+  "Retirer des favoris": "Remove from favorites",
+  "Sous-réseaux favoris": "Favorite subnets",
+  "Synchroniser les groupes": "Synchronize groups"
+}

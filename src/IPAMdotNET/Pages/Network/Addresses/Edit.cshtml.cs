@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Numerics;
@@ -87,7 +88,7 @@ public class EditModel(AppDbContext db) : PageModel
         IPNetwork network = Subnet.Network;
         if (!IPAddress.TryParse(Ip.Trim(), out IPAddress? address) || !Networking.Ip.Contains(network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
         {
-            ModelState.AddModelError(nameof(Ip), $"Adresse invalide ou hors de {network}.");
+            ModelState.AddModelError(nameof(Ip), L.T("Adresse invalide ou hors de {0}.", network));
         }
         else
         {
@@ -95,12 +96,12 @@ public class EditModel(AppDbContext db) : PageModel
             BigInteger value = Networking.Ip.ToNumber(address);
             if (Subnet.IsIPv4 && (value < first || value > last))
             {
-                ModelState.AddModelError(nameof(Ip), "L'adresse réseau et l'adresse de diffusion ne sont pas attribuables.");
+                ModelState.AddModelError(nameof(Ip), L.T("L'adresse réseau et l'adresse de diffusion ne sont pas attribuables."));
             }
             Entry.Address = Networking.Ip.ToBytes(address);
             if (await db.IpAddresses.AnyAsync(a => a.SubnetId == Entry.SubnetId && a.Address == Entry.Address && a.Id != Entry.Id))
             {
-                ModelState.AddModelError(nameof(Ip), "Cette adresse existe déjà dans le sous-réseau.");
+                ModelState.AddModelError(nameof(Ip), L.T("Cette adresse existe déjà dans le sous-réseau."));
             }
         }
         if (!string.IsNullOrWhiteSpace(Entry.MacAddress))
@@ -108,7 +109,7 @@ public class EditModel(AppDbContext db) : PageModel
             string? mac = IpAddress.NormalizeMac(Entry.MacAddress);
             if (mac is null)
             {
-                ModelState.AddModelError("Entry.MacAddress", "Adresse MAC invalide (ex. 00:11:22:aa:bb:cc).");
+                ModelState.AddModelError("Entry.MacAddress", L.T("Adresse MAC invalide (ex. 00:11:22:aa:bb:cc)."));
             }
             Entry.MacAddress = mac ?? Entry.MacAddress;
         }

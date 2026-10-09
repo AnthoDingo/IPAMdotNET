@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Net;
@@ -97,7 +98,7 @@ public static class CsvTransfer
         List<string> errors = [];
         if (rows.Count == 0)
         {
-            errors.Add("Le fichier est vide.");
+            errors.Add(L.T("Le fichier est vide."));
             return new CsvImportResult(entities, errors, 0);
         }
 
@@ -107,7 +108,7 @@ public static class CsvTransfer
         string[] missing = format.Columns.Where(c => !columns.ContainsKey(c) && format.Optional?.Contains(c) != true).ToArray();
         if (missing.Length > 0)
         {
-            errors.Add($"Colonnes manquantes dans l'en-tête : {string.Join(", ", missing)}. Attendu : {string.Join(";", format.Columns)}");
+            errors.Add(L.T("Colonnes manquantes dans l'en-tête : {0}. Attendu : {1}", string.Join(", ", missing), string.Join(";", format.Columns)));
             return new CsvImportResult(entities, errors, rows.Count - 1);
         }
 
@@ -146,15 +147,15 @@ public static class CsvTransfer
                 List<object> matches = await ExistingAsync(db, entity);
                 if (!keys.Add(NaturalKey(entity)))
                 {
-                    rowErrors.Add($"{Describe(entity)} figure déjà sur une ligne précédente du fichier.");
+                    rowErrors.Add(L.T("{0} figure déjà sur une ligne précédente du fichier.", Describe(entity)));
                 }
                 else if (matches.Count > 1)
                 {
-                    rowErrors.Add($"plusieurs objets correspondent à {Describe(entity)} : mise à jour impossible.");
+                    rowErrors.Add(L.T("plusieurs objets correspondent à {0} : mise à jour impossible.", Describe(entity)));
                 }
                 else if (matches.Count == 1 && !update)
                 {
-                    rowErrors.Add($"{Describe(entity)} existe déjà (cochez « Mettre à jour les objets existants »).");
+                    rowErrors.Add(L.T("{0} existe déjà (cochez « Mettre à jour les objets existants »).", Describe(entity)));
                 }
                 existing = matches.Count == 1 ? matches[0] : null;
             }
@@ -185,7 +186,7 @@ public static class CsvTransfer
                     result.CustomValues[target] = custom;
                 }
             }
-            errors.AddRange(rowErrors.Select(e => $"Ligne {line} : {e}"));
+            errors.AddRange(rowErrors.Select(e => L.T("Ligne {0} : {1}", line, e)));
         }
         return result;
     }
@@ -218,13 +219,13 @@ public static class CsvTransfer
 
     private static string Describe(object entity) => entity switch
     {
-        Vlan v => $"le VLAN {v.Number}",
-        Subnet s => $"le sous-réseau {s.Network}",
-        IpAddress a => $"l'adresse {a.Value}",
-        Vrf v => $"la VRF « {v.Name} »",
-        Device d => $"l'équipement « {d.Hostname} »",
-        Location l => $"l'emplacement « {l.Name} »",
-        Customer c => $"le client « {c.Name} »",
+        Vlan v => L.T("le VLAN {0}", v.Number),
+        Subnet s => L.T("le sous-réseau {0}", s.Network),
+        IpAddress a => L.T("l'adresse {0}", a.Value),
+        Vrf v => L.T("la VRF « {0} »", v.Name),
+        Device d => L.T("l'équipement « {0} »", d.Hostname),
+        Location l => L.T("l'emplacement « {0} »", l.Name),
+        Customer c => L.T("le client « {0} »", c.Name),
         _ => "l'objet",
     };
 
@@ -232,7 +233,7 @@ public static class CsvTransfer
     {
         if (!int.TryParse(cell("numero"), out int number) || number is < 1 or > 4094)
         {
-            errors.Add("numéro de VLAN entre 1 et 4094 attendu.");
+            errors.Add(L.T("numéro de VLAN entre 1 et 4094 attendu."));
             return null;
         }
         // Domaine L2 par nom ; vide = domaine par défaut.
@@ -240,7 +241,7 @@ public static class CsvTransfer
         VlanDomain? domain = domainName is null ? await db.VlanDomains.OrderBy(d => d.Id).FirstAsync() : await db.VlanDomains.SingleOrDefaultAsync(d => d.Name == domainName);
         if (domain is null)
         {
-            errors.Add($"domaine L2 « {domainName} » inconnu.");
+            errors.Add(L.T("domaine L2 « {0} » inconnu.", domainName));
             return null;
         }
         string? name = Required(cell("nom"), "nom", errors);
@@ -259,7 +260,7 @@ public static class CsvTransfer
         Section? section = sectionName is null ? null : await db.Sections.SingleOrDefaultAsync(s => s.Name == sectionName);
         if (sectionName is not null && section is null)
         {
-            errors.Add($"section « {sectionName} » inconnue.");
+            errors.Add(L.T("section « {0} » inconnue.", sectionName));
         }
         Subnet subnet = new() { Description = cell("description") };
         string? cidr = Required(cell("sous_reseau"), "sous_reseau", errors);
@@ -267,7 +268,7 @@ public static class CsvTransfer
         {
             if (!Ip.TryParseNetwork(cidr, out IPNetwork network))
             {
-                errors.Add($"« {cidr} » n'est pas un réseau valide (bits d'hôte à zéro).");
+                errors.Add(L.T("« {0} » n'est pas un réseau valide (bits d'hôte à zéro).", cidr));
             }
             else
             {
@@ -288,11 +289,12 @@ public static class CsvTransfer
             List<Vlan> matches = number is null ? [] : await candidates.Where(v => v.Number == number && (domainName == null || v.Domain!.Name == domainName)).Take(2).ToListAsync();
             if (matches.Count == 0)
             {
-                errors.Add($"VLAN « {vlanText} »{(domainName is null ? "" : $" du domaine « {domainName} »")} inconnu ou non proposé dans cette section.");
+                errors.Add(domainName is null ? L.T("VLAN « {0} » inconnu ou non proposé dans cette section.", vlanText)
+                    : L.T("VLAN « {0} » du domaine « {1} » inconnu ou non proposé dans cette section.", vlanText, domainName));
             }
             else if (matches.Count > 1)
             {
-                errors.Add($"VLAN {number} présent dans plusieurs domaines L2 : précisez la colonne « domaine_vlan ».");
+                errors.Add(L.T("VLAN {0} présent dans plusieurs domaines L2 : précisez la colonne « domaine_vlan ».", number));
             }
             subnet.VlanId = matches.Count == 1 ? matches[0].Id : null;
         }
@@ -301,7 +303,7 @@ public static class CsvTransfer
             Vrf? vrf = await db.Vrfs.SingleOrDefaultAsync(v => v.Name == vrfName);
             if (vrf is null)
             {
-                errors.Add($"VRF « {vrfName} » inconnue.");
+                errors.Add(L.T("VRF « {0} » inconnue.", vrfName));
             }
             subnet.VrfId = vrf?.Id;
         }
@@ -320,26 +322,26 @@ public static class CsvTransfer
         }
         if (!Ip.TryParseNetwork(cidr, out IPNetwork network))
         {
-            errors.Add($"« {cidr} » n'est pas un réseau valide.");
+            errors.Add(L.T("« {0} » n'est pas un réseau valide.", cidr));
             return null;
         }
         byte[] subnetBytes = Ip.ToBytes(network.BaseAddress);
         Subnet? subnet = await db.Subnets.SingleOrDefaultAsync(s => s.Section!.Name == sectionName && s.Address == subnetBytes && s.PrefixLength == network.PrefixLength);
         if (subnet is null)
         {
-            errors.Add($"sous-réseau {network} introuvable dans la section « {sectionName} ».");
+            errors.Add(L.T("sous-réseau {0} introuvable dans la section « {1} ».", network, sectionName));
             return null;
         }
         if (!IPAddress.TryParse(text, out IPAddress? address) || !Ip.Contains(network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
         {
-            errors.Add($"« {text} » : adresse invalide ou hors de {network}.");
+            errors.Add(L.T("« {0} » : adresse invalide ou hors de {1}.", text, network));
             return null;
         }
         (System.Numerics.BigInteger first, System.Numerics.BigInteger last) = Ip.UsableRange(network);
         System.Numerics.BigInteger value = Ip.ToNumber(address);
         if (subnet.IsIPv4 && (value < first || value > last))
         {
-            errors.Add($"{address} : adresse réseau ou de diffusion, non attribuable.");
+            errors.Add(L.T("{0} : adresse réseau ou de diffusion, non attribuable.", address));
         }
         IpAddress entry = new()
         {
@@ -354,7 +356,7 @@ public static class CsvTransfer
             entry.MacAddress = IpAddress.NormalizeMac(mac);
             if (entry.MacAddress is null)
             {
-                errors.Add($"adresse MAC « {mac} » invalide.");
+                errors.Add(L.T("adresse MAC « {0} » invalide.", mac));
             }
         }
         if (cell("etiquette") is { } tagName)
@@ -362,7 +364,7 @@ public static class CsvTransfer
             Tag? tag = await db.Tags.SingleOrDefaultAsync(t => t.Name == tagName);
             if (tag is null)
             {
-                errors.Add($"étiquette « {tagName} » inconnue.");
+                errors.Add(L.T("étiquette « {0} » inconnue.", tagName));
             }
             entry.TagId = tag?.Id;
         }
@@ -380,7 +382,7 @@ public static class CsvTransfer
             }
             else
             {
-                errors.Add($"adresse IP « {ip} » invalide.");
+                errors.Add(L.T("adresse IP « {0} » invalide.", ip));
             }
         }
         if (cell("type") is { } typeName)
@@ -388,7 +390,7 @@ public static class CsvTransfer
             DeviceType? type = await db.DeviceTypes.SingleOrDefaultAsync(t => t.Name == typeName);
             if (type is null)
             {
-                errors.Add($"type « {typeName} » inconnu.");
+                errors.Add(L.T("type « {0} » inconnu.", typeName));
             }
             device.DeviceTypeId = type?.Id;
         }
@@ -397,7 +399,7 @@ public static class CsvTransfer
             Location? location = await db.Locations.FirstOrDefaultAsync(l => l.Name == locationName);
             if (location is null)
             {
-                errors.Add($"emplacement « {locationName} » inconnu.");
+                errors.Add(L.T("emplacement « {0} » inconnu.", locationName));
             }
             device.LocationId = location?.Id;
         }
@@ -413,7 +415,7 @@ public static class CsvTransfer
         }
         else
         {
-            errors.Add("latitude invalide (nombre entre -90 et 90).");
+            errors.Add(L.T("latitude invalide (nombre entre -90 et 90)."));
         }
         if (Location.TryNormalizeCoordinate(cell("longitude"), 180, out string? longitude))
         {
@@ -421,7 +423,7 @@ public static class CsvTransfer
         }
         else
         {
-            errors.Add("longitude invalide (nombre entre -180 et 180).");
+            errors.Add(L.T("longitude invalide (nombre entre -180 et 180)."));
         }
         return location;
     }
@@ -445,7 +447,7 @@ public static class CsvTransfer
         }
         else
         {
-            errors.Add("latitude invalide (nombre entre -90 et 90).");
+            errors.Add(L.T("latitude invalide (nombre entre -90 et 90)."));
         }
         if (Location.TryNormalizeCoordinate(cell("longitude"), 180, out string? longitude))
         {
@@ -453,11 +455,11 @@ public static class CsvTransfer
         }
         else
         {
-            errors.Add("longitude invalide (nombre entre -180 et 180).");
+            errors.Add(L.T("longitude invalide (nombre entre -180 et 180)."));
         }
         if (customer.ContactMail is not null && !new EmailAddressAttribute().IsValid(customer.ContactMail))
         {
-            errors.Add($"e-mail « {customer.ContactMail} » invalide.");
+            errors.Add(L.T("e-mail « {0} » invalide.", customer.ContactMail));
         }
         return customer;
     }
@@ -466,7 +468,7 @@ public static class CsvTransfer
     {
         if (value is null)
         {
-            errors.Add($"la colonne « {column} » est obligatoire.");
+            errors.Add(L.T("la colonne « {0} » est obligatoire.", column));
         }
         return value;
     }
@@ -480,7 +482,7 @@ public static class CsvTransfer
             if (maxLength is not null && property.GetValue(entity) is string value && value.Length > maxLength.Length)
             {
                 string label = property.GetCustomAttribute<DisplayAttribute>()?.Name ?? property.Name;
-                errors.Add($"« {label} » dépasse {maxLength.Length} caractères.");
+                errors.Add(L.T("« {0} » dépasse {1} caractères.", L.T(label), maxLength.Length));
             }
         }
     }

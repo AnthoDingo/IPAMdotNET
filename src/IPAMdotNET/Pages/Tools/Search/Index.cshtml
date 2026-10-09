@@ -212,11 +212,11 @@
                             <li>
                                 @if (type.HasDetails)
                                 {
-                                    <a asp-page="@type.Page" asp-route-id="@value.EntityId">@type.Label n°@value.EntityId</a>
+                                    <a asp-page="@type.Page" asp-route-id="@value.EntityId">@L.T("{0} n°{1}", L.T(type.Label), value.EntityId)</a>
                                 }
                                 else
                                 {
-                                    <a asp-page="@type.Page">@type.Label n°@value.EntityId</a>
+                                    <a asp-page="@type.Page">@L.T("{0} n°{1}", L.T(type.Label), value.EntityId)</a>
                                 }
                                 <span class="text-body-secondary">@value.Field.Name : @value.Value</span>
                             </li>

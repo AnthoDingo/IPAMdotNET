@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ public class IndexModel(AppDbContext db) : PageModel
             Hidden = string.Join(',', WidgetSettings.All.Select(w => w.Key).Where(key => !Visible.Contains(key))),
         };
         await SettingsStore.SaveAsync(db, SettingsStore.WidgetsPrefix, settings);
-        Message = "Widgets enregistrés.";
+        Message = L.T("Widgets enregistrés.");
         return RedirectToPage();
     }
 }

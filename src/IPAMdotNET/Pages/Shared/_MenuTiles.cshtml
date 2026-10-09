@@ -3,7 +3,7 @@
 @foreach (MenuGroup group in Model)
 {
     <div class="ipam-panel mb-3">
-        <div class="ipam-panel-title">@group.Label</div>
+        <div class="ipam-panel-title">@L.T(group.Label)</div>
         <div class="ipam-tiles">
             @foreach (MenuItem item in group.Items.Where(i => i.IsVisible))
             {
@@ -11,7 +11,7 @@
                 {
                     <span class="ipam-tile disabled" title="@L.T("Bientôt disponible")">
                         <i class="bi bi-@item.Icon"></i>
-                        <span>@item.Label</span>
+                        <span>@L.T(item.Label)</span>
                         <small>@L.T("Bientôt disponible")</small>
                     </span>
                 }
@@ -19,7 +19,7 @@
                 {
                     <a class="ipam-tile" asp-page="@item.Page">
                         <i class="bi bi-@item.Icon"></i>
-                        <span>@item.Label</span>
+                        <span>@L.T(item.Label)</span>
                     </a>
                 }
             }

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -42,7 +43,7 @@ public class EditModel(AppDbContext db) : PageModel
             }
             else
             {
-                ModelState.AddModelError("Nameserver.Servers", $"Adresse IP invalide : {server}");
+                ModelState.AddModelError("Nameserver.Servers", L.T("Adresse IP invalide : {0}", server));
             }
         }
         Nameserver.Servers = string.Join(';', normalized);

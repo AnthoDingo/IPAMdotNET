@@ -20,9 +20,9 @@
         <div class="ipam-panel-title"><i class="bi bi-person-circle"></i> @Model.Account.UserName</div>
         <dl class="row ipam-details">
             <dt class="col-sm-4">@L.T("Rôle")</dt>
-            <dd class="col-sm-8">@(Model.Account.IsAdmin ? "Administrateur" : "Utilisateur")</dd>
+            <dd class="col-sm-8">@(Model.Account.IsAdmin ? L.T("Administrateur") : L.T("Utilisateur"))</dd>
             <dt class="col-sm-4">@L.T("Authentification")</dt>
-            <dd class="col-sm-8">@(Model.Account.AuthMethod?.Name ?? "Locale")</dd>
+            <dd class="col-sm-8">@(Model.Account.AuthMethod?.Name ?? L.T("Locale"))</dd>
         </dl>
         <div class="row g-3">
             <div class="col-md-6">
@@ -47,7 +47,7 @@
             <div class="col-md-6">
                 <label asp-for="MacFormat" class="form-label"></label>
                 <select asp-for="MacFormat" asp-items="Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>()" class="form-select">
-                    <option value="">Par défaut du serveur (@(Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>().First(i => i.Value == ((int)IPAMdotNet.Maintenance.SettingsStore.Server.MacFormat).ToString()).Text))</option>
+                    <option value="">@L.T("Par défaut du serveur") (@(Html.GetEnumSelectList<IPAMdotNet.Data.MacFormat>().First(i => i.Value == ((int)IPAMdotNet.Maintenance.SettingsStore.Server.MacFormat).ToString()).Text))</option>
                 </select>
             </div>
         </div>

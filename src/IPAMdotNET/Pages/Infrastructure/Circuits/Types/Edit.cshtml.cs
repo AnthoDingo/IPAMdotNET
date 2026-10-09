@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ public class EditModel(AppDbContext db) : PageModel
         Type.Id = id ?? 0;
         if (await db.CircuitTypes.AnyAsync(t => t.Name == Type.Name && t.Id != Type.Id))
         {
-            ModelState.AddModelError("Type.Name", "Un type porte déjà ce nom.");
+            ModelState.AddModelError("Type.Name", L.T("Un type porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {

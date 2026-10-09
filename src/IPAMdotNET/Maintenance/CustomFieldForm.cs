@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Globalization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -49,7 +50,7 @@ public static class CustomFieldForm
                 }
                 else if (field.Required)
                 {
-                    modelState.AddModelError(key, $"« {field.Name} » est obligatoire.");
+                    modelState.AddModelError(key, L.T("« {0} » est obligatoire.", field.Name));
                 }
                 else
                 {
@@ -65,10 +66,10 @@ public static class CustomFieldForm
             {
                 modelState.AddModelError(key, field.Type switch
                 {
-                    CustomFieldType.Number => $"« {field.Name} » doit être un nombre.",
-                    CustomFieldType.Date => $"« {field.Name} » doit être une date.",
-                    CustomFieldType.List => $"« {field.Name} » : choix inconnu.",
-                    _ => $"« {field.Name} » est trop long (2000 caractères maximum).",
+                    CustomFieldType.Number => L.T("« {0} » doit être un nombre.", field.Name),
+                    CustomFieldType.Date => L.T("« {0} » doit être une date.", field.Name),
+                    CustomFieldType.List => L.T("« {0} » : choix inconnu.", field.Name),
+                    _ => L.T("« {0} » est trop long (2000 caractères maximum).", field.Name),
                 });
             }
         }

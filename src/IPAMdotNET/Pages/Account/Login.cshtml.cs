@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.Security.Claims;
@@ -45,7 +46,7 @@ public class LoginModel(AppDbContext db) : PageModel
         if (await IsLockedOutAsync(userName, settings))
         {
             await TryLogAsync(LogSeverity.Warning, "Connexion refusée : compte verrouillé.", userName);
-            ModelState.AddModelError(string.Empty, $"Trop d'échecs de connexion : réessayez dans {settings.LockoutMinutes} minute(s).");
+            ModelState.AddModelError(string.Empty, L.T("Trop d'échecs de connexion : réessayez dans {0} minute(s).", settings.LockoutMinutes));
             return Page();
         }
 
@@ -69,7 +70,7 @@ public class LoginModel(AppDbContext db) : PageModel
             if (ldap == LdapResult.ServerError)
             {
                 await TryLogAsync(LogSeverity.Error, $"Annuaire injoignable : {error}", userName);
-                ModelState.AddModelError(string.Empty, "L'annuaire d'authentification est injoignable. Réessayez plus tard.");
+                ModelState.AddModelError(string.Empty, L.T("L'annuaire d'authentification est injoignable. Réessayez plus tard."));
                 return Page();
             }
             authenticated = ldap == LdapResult.Success;
@@ -93,13 +94,13 @@ public class LoginModel(AppDbContext db) : PageModel
         if (!authenticated || user is null)
         {
             await TryLogAsync(LogSeverity.Warning, LogEntry.LoginFailed, userName);
-            ModelState.AddModelError(string.Empty, "Nom d'utilisateur ou mot de passe incorrect.");
+            ModelState.AddModelError(string.Empty, L.T("Nom d'utilisateur ou mot de passe incorrect."));
             return Page();
         }
         if (!extras.Enabled)
         {
             await TryLogAsync(LogSeverity.Warning, "Connexion refusée : compte désactivé.", userName);
-            ModelState.AddModelError(string.Empty, "Ce compte est désactivé.");
+            ModelState.AddModelError(string.Empty, L.T("Ce compte est désactivé."));
             return Page();
         }
         await TryLogAsync(LogSeverity.Info, LogEntry.LoginSucceeded, user.UserName);

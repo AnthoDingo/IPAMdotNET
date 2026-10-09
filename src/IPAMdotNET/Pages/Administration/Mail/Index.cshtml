@@ -40,7 +40,7 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Settings.Password" class="form-label"></label>
-                <input asp-for="Settings.Password" type="password" class="form-control" autocomplete="new-password" placeholder="@(Model.HasPassword ? "•••••••• (inchangé)" : "")" />
+                <input asp-for="Settings.Password" type="password" class="form-control" autocomplete="new-password" placeholder="@(Model.HasPassword ? L.T("•••••••• (inchangé)") : "")" />
                 <div class="form-text">@L.T("Chiffré avant stockage. Laisser vide pour conserver le mot de passe actuel.")</div>
             </div>
             <div class="col-md-6">

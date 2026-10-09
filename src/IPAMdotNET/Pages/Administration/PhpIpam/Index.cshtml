@@ -127,7 +127,7 @@ else
 @if (Model.Preview is not null)
 {
     <div class="ipam-panel mb-3 ipam-form">
-        <div class="ipam-panel-title"><i class="bi bi-list-check"></i> Contenu lu (@(Model.Preview.FromDatabase ? "base de données" : "API"))</div>
+        <div class="ipam-panel-title"><i class="bi bi-list-check"></i> @L.T("Contenu lu") (@(Model.Preview.FromDatabase ? L.T("base de données") : "API"))</div>
         <table class="table table-sm mb-3" style="max-width: 30rem">
             <thead><tr><th>@L.T("Table phpIPAM")</th><th class="text-end">@L.T("Lignes")</th></tr></thead>
             <tbody>

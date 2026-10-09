@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Devices.EditModel
 @{
-    ViewData["Title"] = Model.Device.Id == 0 ? "Nouvel équipement" : $"Équipement {Model.Device.Hostname}";
+    ViewData["Title"] = Model.Device.Id == 0 ? L.T("Nouvel équipement") : L.T("Équipement {0}", Model.Device.Hostname);
 }
 
 <div class="ipam-panel ipam-form">
@@ -57,7 +57,7 @@
                 <span asp-validation-for="Device.Description" class="text-danger"></span>
             </div>
         </div>
-        <p class="form-text">Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).</p>
+        <p class="form-text">@L.T("Dans un rack, la position est l'unité la plus basse occupée (U1 = bas du rack).")</p>
         @if (Model.AllSections.Count > 0)
         {
             <fieldset class="mb-3">
@@ -76,5 +76,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Device.Id, "cet équipement"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Device.Id, L.T("cet équipement")))" />
 </div>

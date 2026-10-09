@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Globalization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -45,7 +46,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (await db.LogicalCircuits.AnyAsync(l => l.Cid == Logical.Cid && l.Id != Logical.Id))
         {
-            ModelState.AddModelError("Logical.Cid", "Un circuit logique porte déjà cet identifiant.");
+            ModelState.AddModelError("Logical.Cid", L.T("Un circuit logique porte déjà cet identifiant."));
         }
         // Ordre saisi (entier positif), puis identifiant du circuit pour départager deux positions égales.
         List<(int CircuitId, int Order)> chosen = [];
@@ -57,17 +58,17 @@ public class EditModel(AppDbContext db) : PageModel
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "L'ordre d'un circuit doit être un entier positif.");
+                ModelState.AddModelError(string.Empty, L.T("L'ordre d'un circuit doit être un entier positif."));
             }
         }
         List<int> circuitIds = [.. chosen.OrderBy(c => c.Order).ThenBy(c => c.CircuitId).Select(c => c.CircuitId)];
         if (circuitIds.Count == 0)
         {
-            ModelState.AddModelError(string.Empty, "Choisissez au moins un circuit (indiquez sa position).");
+            ModelState.AddModelError(string.Empty, L.T("Choisissez au moins un circuit (indiquez sa position)."));
         }
         else if (await db.Circuits.CountAsync(c => circuitIds.Contains(c.Id)) != circuitIds.Count)
         {
-            ModelState.AddModelError(string.Empty, "Circuit inexistant.");
+            ModelState.AddModelError(string.Empty, L.T("Circuit inexistant."));
         }
         if (!ModelState.IsValid)
         {

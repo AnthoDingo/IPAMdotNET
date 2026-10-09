@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ public class EditModel(AppDbContext db) : PageModel
         Section.Id = id ?? 0;
         if (await db.Sections.AnyAsync(s => s.Name == Section.Name && s.Id != Section.Id))
         {
-            ModelState.AddModelError("Section.Name", "Une section porte déjà ce nom.");
+            ModelState.AddModelError("Section.Name", L.T("Une section porte déjà ce nom."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Section));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);
@@ -62,7 +63,7 @@ public class EditModel(AppDbContext db) : PageModel
         {
             Section = section;
             CustomInputs = await CustomFieldForm.LoadAsync(db, nameof(Section), id);
-            ModelState.AddModelError(string.Empty, "Impossible de supprimer une section qui contient des sous-réseaux.");
+            ModelState.AddModelError(string.Empty, L.T("Impossible de supprimer une section qui contient des sous-réseaux."));
             return Page();
         }
         db.Sections.Remove(section);

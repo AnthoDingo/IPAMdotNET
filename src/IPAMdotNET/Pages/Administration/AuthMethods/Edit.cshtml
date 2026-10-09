@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Administration.AuthMethods.EditModel
 @{
-    ViewData["Title"] = Model.Method.Id == 0 ? "Nouvel annuaire LDAP / AD" : $"Annuaire {Model.Method.Name}";
+    ViewData["Title"] = Model.Method.Id == 0 ? L.T("Nouvel annuaire LDAP / AD") : L.T("Annuaire {0}", Model.Method.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -38,7 +38,7 @@
             <div class="col-12">
                 <label asp-for="Method.BindTemplate" class="form-label"></label>
                 <input asp-for="Method.BindTemplate" class="form-control font-monospace" />
-                <div class="form-text">« {0} » est remplacé par le nom d'utilisateur. Active Directory : <code>{0}@@corp.local</code> @L.T("; OpenLDAP :") <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
+                <div class="form-text">@L.T("« {0} » est remplacé par le nom d'utilisateur. Active Directory :") <code>{0}@@corp.local</code> @L.T("; OpenLDAP :") <code>uid={0},ou=people,dc=example,dc=com</code>.</div>
                 <span asp-validation-for="Method.BindTemplate" class="text-danger"></span>
             </div>
             <div class="col-12">
@@ -97,7 +97,7 @@
             <div class="form-text">@L.T("Le test utilise les valeurs saisies ci-dessus, même non enregistrées. Rien n'est conservé.")</div>
         </fieldset>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, "cet annuaire"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Method.Id, L.T("cet annuaire")))" />
 </div>
 
 @if (Model.Method.Id != 0)

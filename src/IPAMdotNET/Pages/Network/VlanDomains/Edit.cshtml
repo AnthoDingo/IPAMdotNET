@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Network.VlanDomains.EditModel
 @{
-    ViewData["Title"] = Model.Domain.Id == 0 ? "Nouveau domaine L2" : $"Domaine L2 {Model.Domain.Name}";
+    ViewData["Title"] = Model.Domain.Id == 0 ? L.T("Nouveau domaine L2") : L.T("Domaine L2 {0}", Model.Domain.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -35,5 +35,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Domain.Id, "ce domaine L2"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Domain.Id, L.T("ce domaine L2")))" />
 </div>

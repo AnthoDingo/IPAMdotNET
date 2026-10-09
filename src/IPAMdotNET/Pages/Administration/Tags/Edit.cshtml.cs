@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -36,7 +37,7 @@ public class EditModel(AppDbContext db) : PageModel
         Tag.TextColor = Tag.TextColor.ToLowerInvariant();
         if (await db.Tags.AnyAsync(t => t.Name == Tag.Name && t.Id != Tag.Id))
         {
-            ModelState.AddModelError("Tag.Name", "Une étiquette porte déjà ce nom.");
+            ModelState.AddModelError("Tag.Name", L.T("Une étiquette porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {
@@ -57,7 +58,7 @@ public class EditModel(AppDbContext db) : PageModel
         if (tag.Locked)
         {
             Tag = tag;
-            ModelState.AddModelError(string.Empty, "Une étiquette système ne peut pas être supprimée.");
+            ModelState.AddModelError(string.Empty, L.T("Une étiquette système ne peut pas être supprimée."));
             return Page();
         }
         db.Tags.Remove(tag);

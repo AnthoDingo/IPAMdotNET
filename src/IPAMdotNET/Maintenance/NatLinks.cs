@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using IPAMdotNet.Networking;
@@ -27,14 +28,14 @@ public static class NatLinks
             if (kind == 'a')
             {
                 byte[]? address = await db.IpAddresses.Where(a => a.Id == id).Select(a => a.Address).SingleOrDefaultAsync();
-                return address is null ? new NatSide(text ?? "", null, null, "Adresse inexistante.") : new NatSide(Ip.FromBytes(address).ToString(), null, id);
+                return address is null ? new NatSide(text ?? "", null, null, L.T("Adresse inexistante.")) : new NatSide(Ip.FromBytes(address).ToString(), null, id);
             }
             Subnet? subnet = await db.Subnets.AsNoTracking().SingleOrDefaultAsync(s => s.Id == id);
-            return subnet is null ? new NatSide(text ?? "", null, null, "Sous-réseau inexistant.") : new NatSide(subnet.Network.ToString(), id, null);
+            return subnet is null ? new NatSide(text ?? "", null, null, L.T("Sous-réseau inexistant.")) : new NatSide(subnet.Network.ToString(), id, null);
         }
         if (!Ip.TryNormalize(text, out string normalized))
         {
-            return new NatSide(text ?? "", null, null, "Adresse ou réseau invalide (ex. 10.0.0.1 ou 10.0.0.0/24).");
+            return new NatSide(text ?? "", null, null, L.T("Adresse ou réseau invalide (ex. 10.0.0.1 ou 10.0.0.0/24)."));
         }
         if (choice == None)
         {
@@ -45,7 +46,7 @@ public static class NatLinks
         {
             0 => new NatSide(normalized, null, null),
             1 => await ResolveAsync(db, normalized, candidates[0].Key),
-            _ => new NatSide(normalized, null, null, "Plusieurs objets correspondent : choisissez celui à lier.", candidates),
+            _ => new NatSide(normalized, null, null, L.T("Plusieurs objets correspondent : choisissez celui à lier."), candidates),
         };
     }
 

@@ -20,7 +20,7 @@
                     @foreach (CsvFormat format in CsvTransfer.Formats)
                     {
                         <tr>
-                            <td>@format.Label</td>
+                            <td>@L.T(format.Label)</td>
                             <td class="text-end text-nowrap">
                                 <a asp-page-handler="Export" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv"></i> CSV</a>
                                 <a asp-page-handler="Excel" asp-route-format="@format.Key" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
@@ -60,7 +60,7 @@
                 <div class="fw-semibold mb-1">@L.T("Colonnes attendues (première ligne)")</div>
                 @foreach (CsvFormat format in CsvTransfer.Formats)
                 {
-                    <div><strong>@format.Label</strong> : <span class="font-monospace">@string.Join(";", format.Columns)</span></div>
+                    <div><strong>@L.T(format.Label)</strong> : <span class="font-monospace">@string.Join(";", format.Columns)</span></div>
                 }
                 <div class="mt-1">@L.T("Les références (section, VLAN, VRF, type, emplacement) doivent déjà exister. L'import est refusé en entier à la moindre erreur.")</div>
                 <div class="mt-1">@L.T("Champs personnalisés : une colonne supplémentaire par champ, intitulée de son nom (comme à l'export) ; facultative sauf pour un champ obligatoire.")</div>

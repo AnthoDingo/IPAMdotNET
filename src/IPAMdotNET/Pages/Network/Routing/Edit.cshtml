@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Network.Routing.EditModel
 @{
-    ViewData["Title"] = Model.Peer.Id == 0 ? "Nouveau pair BGP" : $"Pair BGP {Model.Peer.Name}";
+    ViewData["Title"] = Model.Peer.Id == 0 ? L.T("Nouveau pair BGP") : L.T("Pair BGP {0}", Model.Peer.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -63,5 +63,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Peer.Id, "ce pair"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Peer.Id, L.T("ce pair")))" />
 </div>

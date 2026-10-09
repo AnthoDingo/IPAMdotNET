@@ -23,10 +23,10 @@
                 @foreach (CustomFieldRow row in Model.Fields)
                 {
                     <tr>
-                        <td>@ChangeLog.Types[row.Field.EntityType].Label</td>
+                        <td>@L.T(ChangeLog.Types[row.Field.EntityType].Label)</td>
                         <td>@row.Field.Name</td>
                         <td>@Html.DisplayFor(_ => row.Field.Type)</td>
-                        <td>@(row.Field.Required ? "Oui" : "Non")</td>
+                        <td>@(row.Field.Required ? L.T("Oui") : L.T("Non"))</td>
                         <td class="text-end">@row.Field.Order</td>
                         <td class="text-end">@row.ValueCount</td>
                         <td class="text-end"><a asp-page="Edit" asp-route-id="@row.Field.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>

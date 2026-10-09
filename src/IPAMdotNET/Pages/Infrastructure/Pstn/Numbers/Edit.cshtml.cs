@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -50,11 +51,11 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (Number.Number < Prefix.Start || Number.Number > Prefix.Stop)
         {
-            ModelState.AddModelError("Number.Number", $"Le numéro doit être compris entre {Prefix.Start} et {Prefix.Stop}.");
+            ModelState.AddModelError("Number.Number", L.T("Le numéro doit être compris entre {0} et {1}.", Prefix.Start, Prefix.Stop));
         }
         else if (await db.PstnNumbers.AnyAsync(n => n.PrefixId == Number.PrefixId && n.Number == Number.Number && n.Id != Number.Id))
         {
-            ModelState.AddModelError("Number.Number", "Ce numéro existe déjà dans le préfixe.");
+            ModelState.AddModelError("Number.Number", L.T("Ce numéro existe déjà dans le préfixe."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(PstnNumber));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

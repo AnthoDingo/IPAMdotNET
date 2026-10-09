@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Locations.EditModel
 @{
-    ViewData["Title"] = Model.Location.Id == 0 ? "Nouvel emplacement" : $"Emplacement {Model.Location.Name}";
+    ViewData["Title"] = Model.Location.Id == 0 ? L.T("Nouvel emplacement") : L.T("Emplacement {0}", Model.Location.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -39,5 +39,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Location.Id, "cet emplacement"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Location.Id, L.T("cet emplacement")))" />
 </div>

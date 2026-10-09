@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Administration.Sections.EditModel
 @{
-    ViewData["Title"] = Model.Section.Id == 0 ? "Nouvelle section" : $"Section {Model.Section.Name}";
+    ViewData["Title"] = Model.Section.Id == 0 ? L.T("Nouvelle section") : L.T("Section {0}", Model.Section.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -27,5 +27,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Section.Id, "cette section"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Section.Id, L.T("cette section")))" />
 </div>

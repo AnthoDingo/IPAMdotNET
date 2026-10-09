@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Infrastructure.Circuits.EditModel
 @{
-    ViewData["Title"] = Model.Circuit.Id == 0 ? "Nouveau circuit" : $"Circuit {Model.Circuit.Cid}";
+    ViewData["Title"] = Model.Circuit.Id == 0 ? L.T("Nouveau circuit") : L.T("Circuit {0}", Model.Circuit.Cid);
 }
 
 <div class="ipam-panel ipam-form">
@@ -70,6 +70,6 @@
             <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
             <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
-        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Circuit.Id, "ce circuit"))" />
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Circuit.Id, L.T("ce circuit")))" />
     }
 </div>

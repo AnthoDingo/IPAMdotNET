@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using IPAMdotNet.Data;
@@ -70,12 +71,12 @@ public class IndexModel(AppDbContext db) : PageModel
     {
         if (Upload is null || Upload.Length == 0)
         {
-            ModelState.AddModelError(nameof(Upload), "Choisissez un fichier CSV.");
+            ModelState.AddModelError(nameof(Upload), L.T("Choisissez un fichier CSV."));
             return Page();
         }
         if (Upload.Length > MaxFileSize)
         {
-            ModelState.AddModelError(nameof(Upload), "Fichier trop volumineux (1 Mo maximum).");
+            ModelState.AddModelError(nameof(Upload), L.T("Fichier trop volumineux (1 Mo maximum)."));
             return Page();
         }
         using StreamReader reader = new(Upload.OpenReadStream(), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
@@ -102,7 +103,7 @@ public class IndexModel(AppDbContext db) : PageModel
         string summary = $"{Result.Entities.Count} objet(s) « {label} » créé(s), {Result.Updated.Count} mis à jour";
         await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Import CSV : {summary}.",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());
-        Message = $"Import terminé : {summary}.";
+        Message = L.T("Import terminé : {0} objet(s) « {1} » créé(s), {2} mis à jour.", Result.Entities.Count, L.T(label), Result.Updated.Count);
         return RedirectToPage();
     }
 
@@ -111,7 +112,7 @@ public class IndexModel(AppDbContext db) : PageModel
         CsvFormat? csv = CsvTransfer.Formats.FirstOrDefault(f => f.Key == Format);
         if (csv is null || CsvText is null)
         {
-            ModelState.AddModelError(string.Empty, "Import incomplet : rechargez le fichier.");
+            ModelState.AddModelError(string.Empty, L.T("Import incomplet : rechargez le fichier."));
             return Page();
         }
         List<string[]> rows = Csv.Parse(CsvText);

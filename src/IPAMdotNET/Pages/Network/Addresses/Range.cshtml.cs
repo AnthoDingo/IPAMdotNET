@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Numerics;
@@ -70,11 +71,11 @@ public class RangeModel(AppDbContext db) : PageModel
         {
             if (end < start)
             {
-                ModelState.AddModelError(nameof(Last), "La dernière adresse doit suivre la première.");
+                ModelState.AddModelError(nameof(Last), L.T("La dernière adresse doit suivre la première."));
             }
             else if (end - start + 1 > MaxAddresses)
             {
-                ModelState.AddModelError(nameof(Last), $"{MaxAddresses} adresses au plus par ajout.");
+                ModelState.AddModelError(nameof(Last), L.T("{0} adresses au plus par ajout.", MaxAddresses));
             }
         }
         if (!ModelState.IsValid)
@@ -103,7 +104,7 @@ public class RangeModel(AppDbContext db) : PageModel
         }
         await db.SaveChangesAsync();
         int skipped = (int)(end.Value - start.Value + 1) - added;
-        Message = $"{added} adresse(s) ajoutée(s)" + (skipped > 0 ? $", {skipped} déjà présente(s) ignorée(s)." : ".");
+        Message = L.T("{0} adresse(s) ajoutée(s)", added) + (skipped > 0 ? L.T(", {0} déjà présente(s) ignorée(s).", skipped) : ".");
         return RedirectToPage("/Network/Subnets/Details", new { id = Subnet.Id });
     }
 
@@ -112,13 +113,13 @@ public class RangeModel(AppDbContext db) : PageModel
     {
         if (!IPAddress.TryParse(text.Trim(), out IPAddress? address) || (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) != Subnet.IsIPv4)
         {
-            ModelState.AddModelError(field, "Adresse invalide.");
+            ModelState.AddModelError(field, L.T("Adresse invalide."));
             return null;
         }
         BigInteger value = Ip.ToNumber(address);
         if (value < usableFirst || value > usableLast)
         {
-            ModelState.AddModelError(field, $"Hors de la plage attribuable de {Subnet.Network}.");
+            ModelState.AddModelError(field, L.T("Hors de la plage attribuable de {0}.", Subnet.Network));
             return null;
         }
         return value;

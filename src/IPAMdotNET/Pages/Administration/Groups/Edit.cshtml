@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.Groups.EditModel
 @{
-    ViewData["Title"] = Model.Group.Id == 0 ? "Nouveau groupe" : $"Groupe {Model.Group.Name}";
+    ViewData["Title"] = Model.Group.Id == 0 ? L.T("Nouveau groupe") : L.T("Groupe {0}", Model.Group.Name);
     IEnumerable<SelectListItem> levels = Html.GetEnumSelectList<SectionAccessLevel>();
 }
 
@@ -74,7 +74,7 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Group.Id, "ce groupe"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Group.Id, L.T("ce groupe")))" />
 </div>
 
 @if (Model.Group.Id != 0)

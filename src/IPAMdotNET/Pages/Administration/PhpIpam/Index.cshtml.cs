@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.Text.Json;
@@ -93,12 +94,12 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         }
         catch (Exception exception) when (exception is System.Security.Cryptography.CryptographicException or JsonException)
         {
-            Error = "Analyse expirée : relancez l'analyse avant d'importer.";
+            Error = L.T("Analyse expirée : relancez l'analyse avant d'importer.");
             return Page();
         }
         if (!TargetEmpty)
         {
-            Error = "L'import n'est possible que dans une installation sans données (sections, sous-réseaux, VLAN, équipements…).";
+            Error = L.T("L'import n'est possible que dans une installation sans données (sections, sous-réseaux, VLAN, équipements…).");
             return Page();
         }
         PhpIpamData? data = await ReadAsync(cancellationToken);
@@ -112,7 +113,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         }
         catch (Exception exception) when (exception is DbException or Microsoft.EntityFrameworkCore.DbUpdateException)
         {
-            Error = $"Import annulé, rien n'a été enregistré : {exception.GetBaseException().Message}";
+            Error = L.T("Import annulé, rien n'a été enregistré : {0}", exception.GetBaseException().Message);
             return Page();
         }
         await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance,
@@ -131,7 +132,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
                 if (string.IsNullOrWhiteSpace(Connection.ApiUrl) || string.IsNullOrWhiteSpace(Connection.ApiApp)
                     || !Uri.TryCreate(Connection.ApiUrl, UriKind.Absolute, out Uri? url) || url.Scheme is not ("http" or "https"))
                 {
-                    Error = "Renseignez l'adresse de phpIPAM (http(s)://…) et l'identifiant de l'application d'API.";
+                    Error = L.T("Renseignez l'adresse de phpIPAM (http(s)://…) et l'identifiant de l'application d'API.");
                     return null;
                 }
                 return await PhpIpamSource.ReadApiAsync(Connection.ApiUrl, Connection.ApiApp, Connection.ApiUser, Connection.ApiPassword, Connection.ApiCode,
@@ -139,7 +140,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
             }
             if (string.IsNullOrWhiteSpace(Connection.DbHost) || string.IsNullOrWhiteSpace(Connection.DbName) || string.IsNullOrWhiteSpace(Connection.DbUser))
             {
-                Error = "Renseignez le serveur, la base et l'utilisateur MySQL.";
+                Error = L.T("Renseignez le serveur, la base et l'utilisateur MySQL.");
                 return null;
             }
             // Construite par le builder (pas de concaténation) : les valeurs saisies ne peuvent pas injecter d'options.
@@ -158,7 +159,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         }
         catch (Exception exception) when (exception is DbException or HttpRequestException or InvalidOperationException or JsonException or TaskCanceledException or UriFormatException)
         {
-            Error = $"Lecture de phpIPAM impossible : {exception.GetBaseException().Message}";
+            Error = L.T("Lecture de phpIPAM impossible : {0}", exception.GetBaseException().Message);
             return null;
         }
     }

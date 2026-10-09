@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Pstn.EditModel
 @{
-    ViewData["Title"] = Model.Prefix.Id == 0 ? "Nouveau préfixe RTC" : $"Préfixe {Model.Prefix.Prefix}";
+    ViewData["Title"] = Model.Prefix.Id == 0 ? L.T("Nouveau préfixe RTC") : L.T("Préfixe {0}", Model.Prefix.Prefix);
 }
 
 <div class="ipam-panel ipam-form">
@@ -44,5 +44,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Prefix.Id, "ce préfixe et tous ses numéros"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Prefix.Id, L.T("ce préfixe et tous ses numéros")))" />
 </div>

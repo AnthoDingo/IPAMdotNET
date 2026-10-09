@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Circuits.Types.EditModel
 @{
-    ViewData["Title"] = Model.Type.Id == 0 ? "Nouveau type de circuit" : $"Type de circuit {Model.Type.Name}";
+    ViewData["Title"] = Model.Type.Id == 0 ? L.T("Nouveau type de circuit") : L.T("Type de circuit {0}", Model.Type.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -28,5 +28,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Type.Id, "ce type (les circuits concernés n'auront plus de type)"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Type.Id, L.T("ce type (les circuits concernés n'auront plus de type)")))" />
 </div>

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -43,7 +44,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         else
         {
-            ModelState.AddModelError("Customer.Latitude", "Latitude invalide (nombre entre -90 et 90).");
+            ModelState.AddModelError("Customer.Latitude", L.T("Latitude invalide (nombre entre -90 et 90)."));
         }
         if (Location.TryNormalizeCoordinate(Customer.Longitude, 180, out string? longitude))
         {
@@ -51,7 +52,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         else
         {
-            ModelState.AddModelError("Customer.Longitude", "Longitude invalide (nombre entre -180 et 180).");
+            ModelState.AddModelError("Customer.Longitude", L.T("Longitude invalide (nombre entre -180 et 180)."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Customer));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

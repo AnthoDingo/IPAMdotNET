@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,7 +13,7 @@ public class EditModel(AppDbContext db) : PageModel
     public CustomField Field { get; set; } = new();
 
     public List<SelectListItem> EntityTypes { get; } = CustomField.SupportedTypes
-        .Select(t => new SelectListItem(ChangeLog.Types[t].Label, t))
+        .Select(t => new SelectListItem(L.T(ChangeLog.Types[t].Label), t))
         .ToList();
 
     public async Task<IActionResult> OnGetAsync(int? id)
@@ -35,18 +36,18 @@ public class EditModel(AppDbContext db) : PageModel
         Field.Id = id ?? 0;
         if (!CustomField.SupportedTypes.Contains(Field.EntityType))
         {
-            ModelState.AddModelError("Field.EntityType", "Type d'objet inconnu.");
+            ModelState.AddModelError("Field.EntityType", L.T("Type d'objet inconnu."));
         }
         if (await db.CustomFields.AnyAsync(f => f.EntityType == Field.EntityType && f.Name == Field.Name && f.Id != Field.Id))
         {
-            ModelState.AddModelError("Field.Name", "Ce type d'objet a déjà un champ de ce nom.");
+            ModelState.AddModelError("Field.Name", L.T("Ce type d'objet a déjà un champ de ce nom."));
         }
         if (Field.Type == CustomFieldType.List)
         {
             Field.Options = string.Join('\n', Field.OptionList.Distinct());
             if (Field.OptionList.Length == 0)
             {
-                ModelState.AddModelError("Field.Options", "Une liste doit proposer au moins un choix.");
+                ModelState.AddModelError("Field.Options", L.T("Une liste doit proposer au moins un choix."));
             }
         }
         else
@@ -55,7 +56,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (Field.Id != 0 && await db.CustomFields.AnyAsync(f => f.Id == Field.Id && f.EntityType != Field.EntityType))
         {
-            ModelState.AddModelError("Field.EntityType", "Le type d'objet d'un champ existant ne peut pas changer.");
+            ModelState.AddModelError("Field.EntityType", L.T("Le type d'objet d'un champ existant ne peut pas changer."));
         }
         if (!ModelState.IsValid)
         {

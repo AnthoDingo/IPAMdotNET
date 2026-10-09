@@ -25,9 +25,9 @@
                     <tr>
                         <td><partial name="_TagBadge" model="tag" /></td>
                         <td>@tag.Description</td>
-                        <td>@(tag.ShowTag ? "Oui" : "Non")</td>
-                        <td>@(tag.Compress ? "Oui" : "Non")</td>
-                        <td>@(tag.UpdateByScan ? "Oui" : "Non")</td>
+                        <td>@(tag.ShowTag ? L.T("Oui") : L.T("Non"))</td>
+                        <td>@(tag.Compress ? L.T("Oui") : L.T("Non"))</td>
+                        <td>@(tag.UpdateByScan ? L.T("Oui") : L.T("Non"))</td>
                         <td>@if (tag.Locked) { <span class="text-body-secondary" title="@L.T("Étiquette système")"><i class="bi bi-lock"></i>@L.T("Système")</span> }</td>
                         <td class="text-end"><a asp-page="Edit" asp-route-id="@tag.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>
                     </tr>

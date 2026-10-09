@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -53,12 +54,12 @@ public class EditModel(AppDbContext db) : PageModel
             return NotFound();
         }
         List<NatRuleObject> objects = [
-            .. await ObjectsAsync(Source, NatSideKind.Source, "Source.Text", "Au moins une source est requise."),
-            .. await ObjectsAsync(Destination, NatSideKind.Destination, "Destination.Text", "Au moins une destination est requise."),
+            .. await ObjectsAsync(Source, NatSideKind.Source, "Source.Text", L.T("Au moins une source est requise.")),
+            .. await ObjectsAsync(Destination, NatSideKind.Destination, "Destination.Text", L.T("Au moins une destination est requise.")),
         ];
         if (Rule.DeviceId is int deviceId && !await db.Devices.AnyAsync(d => d.Id == deviceId))
         {
-            ModelState.AddModelError("Rule.DeviceId", "Équipement inexistant.");
+            ModelState.AddModelError("Rule.DeviceId", L.T("Équipement inexistant."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(NatRule));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Diagnostics;
 using System.Formats.Tar;
 using System.IO.Compression;
@@ -54,11 +55,11 @@ public static class SelfUpdate
     {
         if (environment.IsDevelopment())
         {
-            return "Environnement de développement : la mise à jour ne s'applique qu'à une version publiée.";
+            return L.T("Environnement de développement : la mise à jour ne s'applique qu'à une version publiée.");
         }
         if (!File.Exists(Path.Combine(InstallDirectory, AppHost)))
         {
-            return $"Installation non issue d'une release (pas de {AppHost} dans {InstallDirectory}).";
+            return L.T("Installation non issue d'une release (pas de {0} dans {1}).", AppHost, InstallDirectory);
         }
         try
         {
@@ -69,7 +70,7 @@ public static class SelfUpdate
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            return $"Le compte du service ne peut pas écrire dans {InstallDirectory}.";
+            return L.T("Le compte du service ne peut pas écrire dans {0}.", InstallDirectory);
         }
     }
 
@@ -126,7 +127,7 @@ public static class SelfUpdate
                 string actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(file, cancellationToken));
                 if (!string.Equals(actual, digest["sha256:".Length..], StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidDataException("L'empreinte SHA-256 de l'archive téléchargée ne correspond pas à celle publiée sur GitHub.");
+                    throw new InvalidDataException(L.T("L'empreinte SHA-256 de l'archive téléchargée ne correspond pas à celle publiée sur GitHub."));
                 }
             }
             return await InstallAsync(archive, asset.Name, cancellationToken);
@@ -145,7 +146,7 @@ public static class SelfUpdate
     {
         if (!await Running.WaitAsync(0, cancellationToken))
         {
-            throw new InvalidOperationException("Une mise à jour est déjà en cours.");
+            throw new InvalidOperationException(L.T("Une mise à jour est déjà en cours."));
         }
         // Dans le dossier d'installation : même volume, les déplacements sont de simples renommages.
         string staging = Path.Combine(InstallDirectory, $".update-{Guid.NewGuid():N}");
@@ -156,17 +157,16 @@ public static class SelfUpdate
             string dll = Path.Combine(root, "IPAMdotNet.dll");
             if (!File.Exists(dll))
             {
-                throw new InvalidDataException("Ce n'est pas une archive de release d'IPAMdotNet (IPAMdotNet.dll absent).");
+                throw new InvalidDataException(L.T("Ce n'est pas une archive de release d'IPAMdotNet (IPAMdotNet.dll absent)."));
             }
             if (!File.Exists(Path.Combine(root, AppHost)))
             {
-                throw new InvalidDataException($"Cette archive n'est pas pour cette plateforme ({Rid}) : {AppHost} absent.");
+                throw new InvalidDataException(L.T("Cette archive n'est pas pour cette plateforme ({0}) : {1} absent.", Rid, AppHost));
             }
             string version = AgentProtocol.CleanVersion(FileVersionInfo.GetVersionInfo(dll).ProductVersion) ?? "?";
             if (CompareVersions(version, Version) < 0)
             {
-                throw new InvalidOperationException($"La version {version} est antérieure à la version installée ({Version}) : "
-                    + "les migrations déjà appliquées à la base ne peuvent pas être annulées.");
+                throw new InvalidOperationException(L.T("La version {0} est antérieure à la version installée ({1}) : les migrations déjà appliquées à la base ne peuvent pas être annulées.", version, Version));
             }
             Replace(root);
             return version;
@@ -200,7 +200,7 @@ public static class SelfUpdate
         }
         else
         {
-            throw new InvalidDataException("Format attendu : archive de release .zip (Windows) ou .tar.gz (Linux).");
+            throw new InvalidDataException(L.T("Format attendu : archive de release .zip (Windows) ou .tar.gz (Linux)."));
         }
     }
 
