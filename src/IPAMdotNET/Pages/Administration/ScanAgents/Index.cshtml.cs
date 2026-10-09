@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -44,7 +45,7 @@ public class IndexModel(AppDbContext db) : PageModel
         ModelState.Remove(nameof(AgentName));
         if (Settings.TcpPortList.Length != (Settings.TcpPorts ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Length)
         {
-            ModelState.AddModelError("Settings.TcpPorts", "Ports entre 1 et 65535, sans doublon.");
+            ModelState.AddModelError("Settings.TcpPorts", L.T("Ports entre 1 et 65535, sans doublon."));
         }
         if (!ModelState.IsValid)
         {
@@ -55,7 +56,7 @@ public class IndexModel(AppDbContext db) : PageModel
         await db.LogAsync(LogSeverity.Info, SubnetScanner.LogCategory,
             Settings.Enabled ? $"Agent de scan activé (toutes les {Settings.IntervalMinutes} min)." : "Agent de scan désactivé.",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());
-        Message = "Configuration enregistrée.";
+        Message = L.T("Configuration enregistrée.");
         return RedirectToPage();
     }
 
@@ -64,11 +65,11 @@ public class IndexModel(AppDbContext db) : PageModel
     {
         if (!(await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix)).Enabled)
         {
-            Message = "L'agent est désactivé : activez-le d'abord.";
+            Message = L.T("L'agent est désactivé : activez-le d'abord.");
             return RedirectToPage();
         }
         ScanAgent.Wake(force: true);
-        Message = "Cycle lancé en arrière-plan : son résumé s'affichera ici une fois terminé.";
+        Message = L.T("Cycle lancé en arrière-plan : son résumé s'affichera ici une fois terminé.");
         return RedirectToPage();
     }
 
@@ -115,7 +116,7 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             db.RemoteAgents.Remove(agent);
             await db.SaveChangesAsync();
-            Message = $"Agent « {agent.Name} » supprimé ; ses sous-réseaux reviennent à l'agent intégré.";
+            Message = L.T("Agent « {0} » supprimé ; ses sous-réseaux reviennent à l'agent intégré.", agent.Name);
         }
         return RedirectToPage();
     }

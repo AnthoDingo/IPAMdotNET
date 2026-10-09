@@ -142,7 +142,7 @@
                     <ul class="list-unstyled mb-0 small">
                         @foreach (ChangeLog change in Model.LastChanges)
                         {
-                            string label = ChangeLog.Types.TryGetValue(change.EntityType, out (string Label, string Page, bool HasDetails) type) ? type.Label : change.EntityType;
+                            string label = ChangeLog.Types.TryGetValue(change.EntityType, out (string Label, string Page, bool HasDetails) type) ? L.T(type.Label) : change.EntityType;
                             <li>
                                 <span class="text-body-secondary">@change.Date.ToLocalTime().ToString("g")</span>
                                 @change.UserName · @Html.DisplayFor(_ => change.Action) · @label <strong>@change.EntityLabel</strong>

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using IPAMdotNet.Navigation;
@@ -87,11 +88,11 @@ public class EditModel(AppDbContext db) : PageModel
         string userName = Data.User.NormalizeUserName(Input.UserName);
         if (await db.Users.AnyAsync(u => u.UserName == userName && u.Id != UserId))
         {
-            ModelState.AddModelError("Input.UserName", "Ce nom d'utilisateur existe déjà.");
+            ModelState.AddModelError("Input.UserName", L.T("Ce nom d'utilisateur existe déjà."));
         }
         if (Input.AuthMethodId is not null && !await db.AuthMethods.AnyAsync(a => a.Id == Input.AuthMethodId))
         {
-            ModelState.AddModelError("Input.AuthMethodId", "Méthode d'authentification inconnue.");
+            ModelState.AddModelError("Input.AuthMethodId", L.T("Méthode d'authentification inconnue."));
         }
         bool local = Input.AuthMethodId is null;
         bool needsPassword = local && (user is null || string.IsNullOrEmpty(user.PasswordHash));
@@ -99,20 +100,20 @@ public class EditModel(AppDbContext db) : PageModel
         {
             if (string.IsNullOrEmpty(Input.Password) || Input.Password.Length < MinPasswordLength)
             {
-                ModelState.AddModelError("Input.Password", $"Le mot de passe doit faire au moins {MinPasswordLength} caractères.");
+                ModelState.AddModelError("Input.Password", L.T("Le mot de passe doit faire au moins {0} caractères.", MinPasswordLength));
             }
             else if (Input.Password != Input.PasswordConfirm)
             {
-                ModelState.AddModelError("Input.PasswordConfirm", "Les deux mots de passe ne correspondent pas.");
+                ModelState.AddModelError("Input.PasswordConfirm", L.T("Les deux mots de passe ne correspondent pas."));
             }
         }
         if (IsSelf && (!Input.IsAdmin || !Input.Enabled))
         {
-            ModelState.AddModelError(string.Empty, "Vous ne pouvez pas retirer vos propres droits d'administrateur ni désactiver votre compte.");
+            ModelState.AddModelError(string.Empty, L.T("Vous ne pouvez pas retirer vos propres droits d'administrateur ni désactiver votre compte."));
         }
         else if (user is not null && user.IsAdmin && user.Enabled && (!Input.IsAdmin || !Input.Enabled) && !await OtherActiveAdminExistsAsync(user.Id))
         {
-            ModelState.AddModelError(string.Empty, "Il doit rester au moins un administrateur actif.");
+            ModelState.AddModelError(string.Empty, L.T("Il doit rester au moins un administrateur actif."));
         }
         if (!ModelState.IsValid)
         {
@@ -156,15 +157,15 @@ public class EditModel(AppDbContext db) : PageModel
         ModelState.Clear();
         if (IsSelf)
         {
-            ModelState.AddModelError(string.Empty, "Vous ne pouvez pas supprimer votre propre compte.");
+            ModelState.AddModelError(string.Empty, L.T("Vous ne pouvez pas supprimer votre propre compte."));
         }
         else if (user.IsAdmin && user.Enabled && !await OtherActiveAdminExistsAsync(id))
         {
-            ModelState.AddModelError(string.Empty, "Il doit rester au moins un administrateur actif.");
+            ModelState.AddModelError(string.Empty, L.T("Il doit rester au moins un administrateur actif."));
         }
         else if (await db.IpRequests.AnyAsync(r => r.RequestedById == id || r.ProcessedById == id))
         {
-            ModelState.AddModelError(string.Empty, "Cet utilisateur a des demandes d'adresses : désactivez-le plutôt que de le supprimer.");
+            ModelState.AddModelError(string.Empty, L.T("Cet utilisateur a des demandes d'adresses : désactivez-le plutôt que de le supprimer."));
         }
         if (!ModelState.IsValid)
         {

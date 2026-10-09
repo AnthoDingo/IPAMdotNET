@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ public class EditModel(AppDbContext db) : PageModel
         DeviceType.Id = id ?? 0;
         if (await db.DeviceTypes.AnyAsync(t => t.Name == DeviceType.Name && t.Id != DeviceType.Id))
         {
-            ModelState.AddModelError("DeviceType.Name", "Ce type existe déjà.");
+            ModelState.AddModelError("DeviceType.Name", L.T("Ce type existe déjà."));
         }
         if (!ModelState.IsValid)
         {

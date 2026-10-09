@@ -52,7 +52,7 @@
     <div class="ipam-panel-title d-flex align-items-center">
         <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
         <form method="post" asp-page-handler="ToggleFavorite" asp-route-id="@Model.Subnet.Id" class="ms-auto me-2">
-            <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? "Retirer des favoris" : "Ajouter aux favoris")">
+            <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? L.T("Retirer des favoris") : L.T("Ajouter aux favoris"))">
                 <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>@L.T("Favori")
             </button>
         </form>
@@ -92,8 +92,8 @@
                     }
                     else
                     {
-                        @string.Join(" + ", new[] { Model.Subnet.PingCheck ? "état des hôtes" : null, Model.Subnet.Discover ? "découverte" : null }.Where(s => s is not null))
-                        <span class="text-body-secondary">— @(Model.Subnet.ScanAgent is null ? "agent intégré" : $"agent « {Model.Subnet.ScanAgent.Name} »"), dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
+                        @string.Join(" + ", new[] { Model.Subnet.PingCheck ? L.T("état des hôtes") : null, Model.Subnet.Discover ? L.T("découverte") : null }.Where(s => s is not null))
+                        <span class="text-body-secondary">— @(Model.Subnet.ScanAgent is null ? L.T("agent intégré") : L.T("agent « {0} »", Model.Subnet.ScanAgent.Name)), @L.T("dernier scan : {0}", Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? L.T("jamais"))</span>
                         @if (!Model.ScanEnabled)
                         {
                             <span class="badge text-bg-warning">@L.T("agent désactivé")</span>
@@ -247,7 +247,7 @@
                                     <text>– </text>@free.Last
                                 }
                             </td>
-                            <td colspan="@(7 + Model.AddressFields.Count)" class="text-body-secondary fst-italic">@free.Count.ToString("N0") @(free.Count > 1 ? "adresses libres" : "adresse libre")</td>
+                            <td colspan="@(7 + Model.AddressFields.Count)" class="text-body-secondary fst-italic">@free.Count.ToString("N0") @(free.Count > 1 ? L.T("adresses libres") : L.T("adresse libre"))</td>
                             @if (Model.CanWrite)
                             {
                                 <td class="text-end">

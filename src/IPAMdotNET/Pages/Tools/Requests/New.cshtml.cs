@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -32,7 +33,7 @@ public class NewModel(AppDbContext db, IDataProtectionProvider protection) : Pag
         Subnet? subnet = await db.Subnets.FindAsync(IpRequest.SubnetId);
         if (subnet is null || !subnet.AllowRequests || !access.CanRead(subnet.SectionId))
         {
-            ModelState.AddModelError("IpRequest.SubnetId", "Ce sous-réseau n'accepte pas les demandes.");
+            ModelState.AddModelError("IpRequest.SubnetId", L.T("Ce sous-réseau n'accepte pas les demandes."));
         }
         else if (!string.IsNullOrWhiteSpace(IpRequest.RequestedAddress))
         {
@@ -43,12 +44,12 @@ public class NewModel(AppDbContext db, IDataProtectionProvider protection) : Pag
                 byte[] bytes = Ip.ToBytes(address);
                 if (await db.IpAddresses.AnyAsync(a => a.SubnetId == subnet.Id && a.Address == bytes))
                 {
-                    ModelState.AddModelError("IpRequest.RequestedAddress", "Cette adresse est déjà utilisée : laissez le champ vide pour qu'un administrateur en choisisse une.");
+                    ModelState.AddModelError("IpRequest.RequestedAddress", L.T("Cette adresse est déjà utilisée : laissez le champ vide pour qu'un administrateur en choisisse une."));
                 }
             }
             else
             {
-                ModelState.AddModelError("IpRequest.RequestedAddress", $"Adresse invalide ou hors de {subnet.Network}.");
+                ModelState.AddModelError("IpRequest.RequestedAddress", L.T("Adresse invalide ou hors de {0}.", subnet.Network));
             }
         }
         if (!ModelState.IsValid)

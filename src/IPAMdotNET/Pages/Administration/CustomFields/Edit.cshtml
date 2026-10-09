@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.CustomFields.EditModel
 @{
-    ViewData["Title"] = Model.Field.Id == 0 ? "Nouveau champ personnalisé" : $"Champ {Model.Field.Name}";
+    ViewData["Title"] = Model.Field.Id == 0 ? L.T("Nouveau champ personnalisé") : L.T("Champ {0}", Model.Field.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -51,5 +51,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Field.Id, "ce champ et toutes ses valeurs"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Field.Id, L.T("ce champ et toutes ses valeurs")))" />
 </div>

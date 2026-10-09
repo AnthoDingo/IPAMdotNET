@@ -2,7 +2,7 @@
 @model IPAMdotNet.Pages.Network.Addresses.BulkModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = $"Modifier {Model.Addresses.Count} adresse(s)";
+    ViewData["Title"] = L.T("Modifier {0} adresse(s)", Model.Addresses.Count);
 }
 
 @section Breadcrumb {

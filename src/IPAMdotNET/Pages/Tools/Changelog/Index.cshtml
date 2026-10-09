@@ -51,7 +51,7 @@
                         <td class="text-nowrap">@log.Date.ToLocalTime().ToString("g")</td>
                         <td>@log.UserName</td>
                         <td><span class="badge @badge">@Html.DisplayFor(_ => log.Action)</span></td>
-                        <td>@type.Label</td>
+                        <td>@L.T(type.Label)</td>
                         <td>
                             @if (log.Action == ChangeAction.Deleted)
                             {

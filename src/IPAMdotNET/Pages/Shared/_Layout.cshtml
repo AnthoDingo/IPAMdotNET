@@ -17,7 +17,7 @@
     string? version = typeof(Menus).Assembly.GetName().Version?.ToString(3);
 }
 <!DOCTYPE html>
-<html lang="fr" data-bs-theme="light">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -38,7 +38,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body data-text-expand="@L.T("Déplier")" data-text-collapse="@L.T("Replier")" data-text-close="@L.T("Fermer")">
     <header class="ipam-header">
         <div class="container-fluid ipam-header-bar">
             <a class="ipam-brand" asp-page="/Index">

@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Administration.Tags.EditModel
 @{
-    ViewData["Title"] = Model.Tag.Id == 0 ? "Nouvelle étiquette" : $"Étiquette {Model.Tag.Name}";
+    ViewData["Title"] = Model.Tag.Id == 0 ? L.T("Nouvelle étiquette") : L.T("Étiquette {0}", Model.Tag.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -60,7 +60,7 @@
     </form>
     @if (!Model.Tag.Locked)
     {
-        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Tag.Id, "cette étiquette"))" />
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Tag.Id, L.T("cette étiquette")))" />
     }
 </div>
 

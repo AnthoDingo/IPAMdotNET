@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -107,7 +108,7 @@ public class EditModel(AppDbContext db) : PageModel
         {
             return address.ToString();
         }
-        ModelState.AddModelError(field, "Adresse IP invalide.");
+        ModelState.AddModelError(field, L.T("Adresse IP invalide."));
         return value;
     }
 

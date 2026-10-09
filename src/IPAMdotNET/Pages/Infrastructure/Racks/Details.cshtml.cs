@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,7 @@ public class DetailsModel(AppDbContext db) : PageModel
         SectionAccess access = await SectionAccess.ForAsync(db, User);
         // Un équipement non visible occupe quand même ses unités : affiché sans ses informations.
         foreach (Device device in rack.Devices.Select(d => access.CanSee(d) ? d
-            : new Device { Hostname = "Équipement masqué", RackStart = d.RackStart, RackSize = d.RackSize, RackFace = d.RackFace }))
+            : new Device { Hostname = L.T("Équipement masqué"), RackStart = d.RackStart, RackSize = d.RackSize, RackFace = d.RackFace }))
         {
             if (device.RackStart is null || device.RackEnd is null || !Units.TryGetValue(device.RackFace, out Device?[]? units))
             {

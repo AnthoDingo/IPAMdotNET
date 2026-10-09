@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ public class IndexModel(AppDbContext db) : PageModel
         }
         if (UserId is not null && !await db.Users.AnyAsync(u => u.Id == UserId))
         {
-            ModelState.AddModelError(nameof(UserId), "Utilisateur inconnu.");
+            ModelState.AddModelError(nameof(UserId), L.T("Utilisateur inconnu."));
             await OnGetAsync();
             return Page();
         }

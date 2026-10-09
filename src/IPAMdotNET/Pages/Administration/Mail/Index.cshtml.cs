@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -39,7 +40,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         MailSettings current = await SettingsStore.LoadAsync<MailSettings>(db, SettingsStore.MailPrefix);
         if (Settings.Enabled && (string.IsNullOrWhiteSpace(Settings.Host) || string.IsNullOrWhiteSpace(Settings.FromAddress)))
         {
-            ModelState.AddModelError(string.Empty, "Le serveur et l'adresse d'expédition sont requis pour activer l'envoi.");
+            ModelState.AddModelError(string.Empty, L.T("Le serveur et l'adresse d'expédition sont requis pour activer l'envoi."));
         }
         if (!ModelState.IsValid)
         {
@@ -49,7 +50,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         // Mot de passe vide = inchangé ; il n'est jamais renvoyé au navigateur.
         Settings.Password = string.IsNullOrEmpty(Settings.Password) ? current.Password : Mailer.Protect(protection, Settings.Password);
         await SettingsStore.SaveAsync(db, SettingsStore.MailPrefix, Settings);
-        Message = "Configuration enregistrée.";
+        Message = L.T("Configuration enregistrée.");
         return RedirectToPage();
     }
 
@@ -58,7 +59,7 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
         MailSettings current = await SettingsStore.LoadAsync<MailSettings>(db, SettingsStore.MailPrefix);
         current.Password = null;
         await SettingsStore.SaveAsync(db, SettingsStore.MailPrefix, current);
-        Message = "Mot de passe SMTP effacé.";
+        Message = L.T("Mot de passe SMTP effacé.");
         return RedirectToPage();
     }
 
@@ -66,13 +67,13 @@ public class IndexModel(AppDbContext db, IDataProtectionProvider protection) : P
     {
         if (string.IsNullOrWhiteSpace(TestRecipient) || !new EmailAddressAttribute().IsValid(TestRecipient))
         {
-            Message = "Indiquez une adresse de destination valide.";
+            Message = L.T("Indiquez une adresse de destination valide.");
             MessageIsError = true;
             return RedirectToPage();
         }
         string? error = await Mailer.SendAsync(db, protection, [TestRecipient], "E-mail de test",
             $"Ceci est un e-mail de test envoyé par {SettingsStore.Server.SiteTitle} à la demande de {User.Identity?.Name}.\n\nLa messagerie est correctement configurée.");
-        Message = error is null ? $"E-mail de test envoyé à {TestRecipient}." : $"Échec de l'envoi : {error}";
+        Message = error is null ? L.T("E-mail de test envoyé à {0}.", TestRecipient) : L.T("Échec de l'envoi : {0}", error);
         MessageIsError = error is not null;
         return RedirectToPage();
     }

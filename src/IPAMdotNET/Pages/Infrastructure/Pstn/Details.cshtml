@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Infrastructure.Pstn.DetailsModel
 @{
-    ViewData["Title"] = $"Préfixe {Model.Prefix.Prefix}";
+    ViewData["Title"] = L.T("Préfixe {0}", Model.Prefix.Prefix);
     bool admin = User.IsInRole("Admin");
     long capacity = Model.Prefix.Stop - Model.Prefix.Start + 1;
 }
@@ -21,7 +21,7 @@
         <dt class="col-sm-4 col-xl-3">@L.T("Plage")</dt>
         <dd class="col-sm-8 col-xl-9 font-monospace">@Model.Prefix.Start – @Model.Prefix.Stop</dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Utilisation")</dt>
-        <dd class="col-sm-8 col-xl-9">@Model.NumberCount / @capacity.ToString("N0") numéros</dd>
+        <dd class="col-sm-8 col-xl-9">@L.T("{0} / {1} numéros", Model.NumberCount, capacity.ToString("N0"))</dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Équipement")</dt>
         <dd class="col-sm-8 col-xl-9">@if (Model.Prefix.Device is null) { <text>—</text> } else { <a asp-page="/Infrastructure/Devices/Details" asp-route-id="@Model.Prefix.Device.Id">@Model.Prefix.Device.Hostname</a> }</dd>
         <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -42,7 +43,7 @@ public class EditModel(AppDbContext db) : PageModel
         Validate();
         if (await db.AuthMethods.AnyAsync(a => a.Name == Method.Name && a.Id != Method.Id))
         {
-            ModelState.AddModelError("Method.Name", "Une méthode porte déjà ce nom.");
+            ModelState.AddModelError("Method.Name", L.T("Une méthode porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {
@@ -72,11 +73,12 @@ public class EditModel(AppDbContext db) : PageModel
         TestSucceeded = result == LdapResult.Success;
         TestResult = result switch
         {
-            LdapResult.Success when string.IsNullOrWhiteSpace(Method.SearchBase) => "Connexion réussie : l'annuaire a accepté ces identifiants.",
-            LdapResult.Success when entry is null => "Connexion réussie, mais le compte est introuvable avec cette base et ce filtre de recherche (pas de nom, d'e-mail ni de groupes).",
-            LdapResult.Success => $"Connexion réussie. Compte trouvé : {entry!.DisplayName ?? "(sans nom)"}, {entry.Email ?? "(sans e-mail)"} ; groupes : {(entry.Groups.Count == 0 ? "aucun" : string.Join(", ", entry.Groups))}.",
-            LdapResult.InvalidCredentials => "L'annuaire répond, mais refuse ces identifiants (ou le modèle d'identifiant ne correspond pas).",
-            _ => $"Annuaire injoignable : {error}",
+            LdapResult.Success when string.IsNullOrWhiteSpace(Method.SearchBase) => L.T("Connexion réussie : l'annuaire a accepté ces identifiants."),
+            LdapResult.Success when entry is null => L.T("Connexion réussie, mais le compte est introuvable avec cette base et ce filtre de recherche (pas de nom, d'e-mail ni de groupes)."),
+            LdapResult.Success => L.T("Connexion réussie. Compte trouvé : {0}, {1} ; groupes : {2}.", entry!.DisplayName ?? L.T("(sans nom)"),
+                entry.Email ?? L.T("(sans e-mail)"), entry.Groups.Count == 0 ? L.T("aucun") : string.Join(", ", entry.Groups)),
+            LdapResult.InvalidCredentials => L.T("L'annuaire répond, mais refuse ces identifiants (ou le modèle d'identifiant ne correspond pas)."),
+            _ => L.T("Annuaire injoignable : {0}", error),
         };
         return Page();
     }
@@ -91,7 +93,7 @@ public class EditModel(AppDbContext db) : PageModel
         if (await db.Users.AnyAsync(u => u.AuthMethodId == id))
         {
             Method = method;
-            ModelState.AddModelError(string.Empty, "Des utilisateurs utilisent cette méthode : rattachez-les à une autre méthode avant de la supprimer.");
+            ModelState.AddModelError(string.Empty, L.T("Des utilisateurs utilisent cette méthode : rattachez-les à une autre méthode avant de la supprimer."));
             return Page();
         }
         db.AuthMethods.Remove(method);
@@ -103,15 +105,15 @@ public class EditModel(AppDbContext db) : PageModel
     {
         if ((Method.AutoCreateUsers || Method.SyncGroups) && string.IsNullOrWhiteSpace(Method.SearchBase))
         {
-            ModelState.AddModelError("Method.SearchBase", "La création des comptes et la synchronisation des groupes lisent l'annuaire : indiquez la base de recherche.");
+            ModelState.AddModelError("Method.SearchBase", L.T("La création des comptes et la synchronisation des groupes lisent l'annuaire : indiquez la base de recherche."));
         }
         if (!string.IsNullOrWhiteSpace(Method.UserFilter) && !Method.UserFilter.Contains("{0}", StringComparison.Ordinal))
         {
-            ModelState.AddModelError("Method.UserFilter", "Le filtre doit contenir {0} (remplacé par le nom d'utilisateur).");
+            ModelState.AddModelError("Method.UserFilter", L.T("Le filtre doit contenir {0} (remplacé par le nom d'utilisateur)."));
         }
         if (!Method.BindTemplate.Contains("{0}", StringComparison.Ordinal))
         {
-            ModelState.AddModelError("Method.BindTemplate", "Le modèle doit contenir {0} (remplacé par le nom d'utilisateur).");
+            ModelState.AddModelError("Method.BindTemplate", L.T("Le modèle doit contenir {0} (remplacé par le nom d'utilisateur)."));
         }
     }
 }

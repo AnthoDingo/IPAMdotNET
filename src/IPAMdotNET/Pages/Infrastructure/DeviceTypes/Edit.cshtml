@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.DeviceTypes.EditModel
 @{
-    ViewData["Title"] = Model.DeviceType.Id == 0 ? "Nouveau type d'équipement" : $"Type {Model.DeviceType.Name}";
+    ViewData["Title"] = Model.DeviceType.Id == 0 ? L.T("Nouveau type d'équipement") : L.T("Type {0}", Model.DeviceType.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -21,5 +21,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.DeviceType.Id, "ce type"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.DeviceType.Id, L.T("ce type")))" />
 </div>

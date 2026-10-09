@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Infrastructure.Pstn.Numbers.EditModel
 @{
-    ViewData["Title"] = Model.Number.Id == 0 ? $"Nouveau numéro ({Model.Prefix.Prefix})" : $"Numéro {Model.Prefix.Prefix} {Model.Number.Number}";
+    ViewData["Title"] = Model.Number.Id == 0 ? L.T("Nouveau numéro ({0})", Model.Prefix.Prefix) : L.T("Numéro {0} {1}", Model.Prefix.Prefix, Model.Number.Number);
 }
 
 <div class="ipam-panel ipam-form">
@@ -43,5 +43,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="../Details" asp-route-id="@Model.Number.PrefixId" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Number.Id, "ce numéro"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Number.Id, L.T("ce numéro")))" />
 </div>

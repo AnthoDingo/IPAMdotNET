@@ -82,7 +82,7 @@
             <div class="col-md-4">
                 <label asp-for="Settings.MaxFailedLogins" class="form-label"></label>
                 <input asp-for="Settings.MaxFailedLogins" class="form-control" min="0" max="100" />
-                <div class="form-text">0 = pas de verrouillage.</div>
+                <div class="form-text">@L.T("0 = pas de verrouillage.")</div>
                 <span asp-validation-for="Settings.MaxFailedLogins" class="text-danger"></span>
             </div>
             <div class="col-md-4">

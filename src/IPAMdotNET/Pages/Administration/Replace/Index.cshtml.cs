@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using IPAMdotNet.Data;
@@ -60,7 +61,7 @@ public class IndexModel(AppDbContext db) : PageModel
         LoadLists();
         if (string.IsNullOrEmpty(Search) || Fields.All(f => f.Value != Field))
         {
-            ModelState.AddModelError(string.Empty, "Choisissez un champ et le texte à rechercher.");
+            ModelState.AddModelError(string.Empty, L.T("Choisissez un champ et le texte à rechercher."));
             return Page();
         }
         List<(object Entity, Replacement Replacement)> changes = await ComputeAsync();
@@ -88,10 +89,10 @@ public class IndexModel(AppDbContext db) : PageModel
             return Page();
         }
         await db.SaveChangesAsync();
-        string label = $"{ChangeLog.Types[Type!].Label} / {Fields.First(f => f.Value == Field).Text}";
+        string label = $"{L.T(ChangeLog.Types[Type!].Label)} / {Fields.First(f => f.Value == Field).Text}";
         await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Remplacement « {Search} » → « {ReplaceWith} » dans {label} : {changes.Count} objet(s).",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());
-        Message = $"{changes.Count} objet(s) modifié(s) ({label}).";
+        Message = L.T("{0} objet(s) modifié(s) ({1}).", changes.Count, label);
         return RedirectToPage(new { Type, Field });
     }
 
@@ -102,7 +103,7 @@ public class IndexModel(AppDbContext db) : PageModel
     private void LoadLists()
     {
         Types = ChangeLog.Types.Where(t => !ExcludedTypes.Contains(t.Key))
-            .OrderBy(t => t.Value.Label).Select(t => new SelectListItem(t.Value.Label, t.Key)).ToList();
+            .OrderBy(t => t.Value.Label).Select(t => new SelectListItem(L.T(t.Value.Label), t.Key)).ToList();
         IEntityType? entityType = EntityType();
         Fields = entityType is null ? [] : entityType.GetProperties()
             .Where(p => p.ClrType == typeof(string) && p.PropertyInfo is not null && !ExcludedFields.Contains($"{Type}.{p.Name}"))

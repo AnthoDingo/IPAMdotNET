@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -68,11 +69,11 @@ public class BulkModel(AppDbContext db) : PageModel
         }
         if (TagId is not (Unchanged or "" or null) && !Tags.Any(t => t.Value == TagId))
         {
-            ModelState.AddModelError(nameof(TagId), "Étiquette inconnue.");
+            ModelState.AddModelError(nameof(TagId), L.T("Étiquette inconnue."));
         }
         if (DeviceId is not (Unchanged or "" or null) && !Devices.Any(d => d.Value == DeviceId))
         {
-            ModelState.AddModelError(nameof(DeviceId), "Équipement inconnu.");
+            ModelState.AddModelError(nameof(DeviceId), L.T("Équipement inconnu."));
         }
         if (!ModelState.IsValid)
         {
@@ -102,7 +103,7 @@ public class BulkModel(AppDbContext db) : PageModel
             }
         }
         await db.SaveChangesAsync();
-        Message = $"{Addresses.Count} adresse(s) modifiée(s).";
+        Message = L.T("{0} adresse(s) modifiée(s).", Addresses.Count);
         return RedirectToPage("/Network/Subnets/Details", new { id = subnetId });
     }
 
@@ -124,13 +125,13 @@ public class BulkModel(AppDbContext db) : PageModel
         db.IpAddresses.RemoveRange(Addresses);
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
-        Message = $"{Addresses.Count} adresse(s) supprimée(s).";
+        Message = L.T("{0} adresse(s) supprimée(s).", Addresses.Count);
         return RedirectToPage("/Network/Subnets/Details", new { id = subnetId });
     }
 
     private RedirectToPageResult NothingSelected(int subnetId)
     {
-        Message = "Aucune adresse sélectionnée.";
+        Message = L.T("Aucune adresse sélectionnée.");
         return RedirectToPage("/Network/Subnets/Details", new { id = subnetId });
     }
 

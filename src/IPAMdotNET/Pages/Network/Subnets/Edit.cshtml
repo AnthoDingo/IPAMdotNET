@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Network.Subnets.EditModel
 @{
-    ViewData["Title"] = Model.Subnet.Id == 0 ? "Nouveau sous-réseau" : $"Sous-réseau {Model.Cidr}";
+    ViewData["Title"] = Model.Subnet.Id == 0 ? L.T("Nouveau sous-réseau") : L.T("Sous-réseau {0}", Model.Cidr);
 }
 
 <div class="ipam-panel ipam-form">
@@ -98,7 +98,7 @@
             <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
             <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
         </form>
-        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, "ce sous-réseau et ses adresses"))" />
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.Subnet.Id, L.T("ce sous-réseau et ses adresses")))" />
         <script>
             // VLAN proposés selon la section : domaines L2 sans restriction ou ouverts à la section choisie.
             (() => {

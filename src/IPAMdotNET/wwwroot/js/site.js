@@ -1,3 +1,6 @@
+// Textes de l'interface dans la langue de l'utilisateur (attributs data-text-* de <body>, _Layout).
+const text = document.body.dataset;
+
 document.getElementById("theme-toggle")?.addEventListener("click", () => {
     const root = document.documentElement;
     const theme = root.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
@@ -24,7 +27,7 @@ document.querySelectorAll(".ipam-panel > .ipam-panel-title").forEach(title => {
     const set = collapsed => {
         panel.classList.toggle("ipam-collapsed", collapsed);
         toggle.setAttribute("aria-expanded", String(!collapsed));
-        toggle.title = collapsed ? "Déplier" : "Replier";
+        toggle.title = collapsed ? text.textExpand : text.textCollapse;
     };
     let stored = null;
     try { stored = localStorage.getItem(key); } catch { }
@@ -69,8 +72,9 @@ function fillModal(html) {
         ipamModal.className = "modal fade";
         ipamModal.tabIndex = -1;
         ipamModal.innerHTML = '<div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">'
-            + '<div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div>'
+            + '<div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>'
             + '<div class="modal-body"></div></div></div>';
+        ipamModal.querySelector(".btn-close").setAttribute("aria-label", text.textClose);
         document.body.append(ipamModal);
         ipamModal.addEventListener("shown.bs.modal", () => ipamModal.querySelector(".modal-body :is(input:not([type=hidden]), select, textarea)")?.focus());
         ipamModal.addEventListener("submit", submitModal);

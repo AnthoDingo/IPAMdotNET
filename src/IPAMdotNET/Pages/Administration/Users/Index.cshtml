@@ -20,7 +20,7 @@
                     <td>@user.DisplayName</td>
                     <td>@user.Email</td>
                     <td>@if (user.IsAdmin) { <span class="badge text-bg-primary">@L.T("Admin")</span> } else { <text>@L.T("Utilisateur")</text> }</td>
-                    <td>@(user.AuthMethod?.Name ?? "Locale")</td>
+                    <td>@(user.AuthMethod?.Name ?? L.T("Locale"))</td>
                     <td>@string.Join(", ", user.Groups.OrderBy(g => g.Name).Select(g => g.Name))</td>
                     <td>@if (user.Enabled) { <span class="badge text-bg-success">@L.T("Actif")</span> } else { <span class="badge text-bg-secondary">@L.T("Désactivé")</span> }</td>
                     <td class="text-end"><a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-outline-secondary btn-sm" title="@L.T("Modifier")"><i class="bi bi-pencil"></i></a></td>

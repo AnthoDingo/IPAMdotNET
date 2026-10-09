@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Networking;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -47,7 +48,7 @@ public static class LinkedLines
             }
             if (subnetsOnly && side.Error is null && side.SubnetId is null)
             {
-                side = side with { Error = side.Text.Contains('/') ? "Aucun sous-réseau de l'IPAM ne correspond." : "Réseau attendu (ex. 10.0.0.0/24)." };
+                side = side with { Error = side.Text.Contains('/') ? L.T("Aucun sous-réseau de l'IPAM ne correspond.") : L.T("Réseau attendu (ex. 10.0.0.0/24).") };
             }
             if (side.Error is not null)
             {

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -45,24 +46,24 @@ public class EditModel(AppDbContext db) : PageModel
             string? normalized = PstnPrefix.Normalize(Prefix.Prefix);
             if (normalized is null)
             {
-                ModelState.AddModelError("Prefix.Prefix", "Préfixe invalide : chiffres uniquement, « + » initial facultatif.");
+                ModelState.AddModelError("Prefix.Prefix", L.T("Préfixe invalide : chiffres uniquement, « + » initial facultatif."));
             }
             else
             {
                 Prefix.Prefix = normalized;
                 if (await db.PstnPrefixes.AnyAsync(p => p.Prefix == normalized && p.Id != Prefix.Id))
                 {
-                    ModelState.AddModelError("Prefix.Prefix", "Ce préfixe existe déjà.");
+                    ModelState.AddModelError("Prefix.Prefix", L.T("Ce préfixe existe déjà."));
                 }
             }
         }
         if (Prefix.Start > Prefix.Stop)
         {
-            ModelState.AddModelError("Prefix.Stop", "Le dernier numéro doit être supérieur ou égal au premier.");
+            ModelState.AddModelError("Prefix.Stop", L.T("Le dernier numéro doit être supérieur ou égal au premier."));
         }
         else if (Prefix.Id != 0 && await db.PstnNumbers.AnyAsync(n => n.PrefixId == Prefix.Id && (n.Number < Prefix.Start || n.Number > Prefix.Stop)))
         {
-            ModelState.AddModelError("Prefix.Stop", "Des numéros existants sortiraient de la plage.");
+            ModelState.AddModelError("Prefix.Stop", L.T("Des numéros existants sortiraient de la plage."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(PstnPrefix));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Network.Vlans.EditModel
 @{
-    ViewData["Title"] = Model.Vlan.Id == 0 ? "Nouveau VLAN" : $"VLAN {Model.Vlan.Number}";
+    ViewData["Title"] = Model.Vlan.Id == 0 ? L.T("Nouveau VLAN") : L.T("VLAN {0}", Model.Vlan.Number);
 }
 
 <div class="ipam-panel ipam-form">
@@ -36,5 +36,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Vlan.Id, "ce VLAN"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Vlan.Id, L.T("ce VLAN")))" />
 </div>

@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using IPAMdotNet.Data;
@@ -90,7 +91,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (!access.CanWrite(Subnet.SectionId))
         {
-            ModelState.AddModelError("Subnet.SectionId", "Vous n'avez pas le droit d'écriture sur cette section.");
+            ModelState.AddModelError("Subnet.SectionId", L.T("Vous n'avez pas le droit d'écriture sur cette section."));
         }
         if (!string.IsNullOrWhiteSpace(Cidr))
         {
@@ -100,34 +101,34 @@ public class EditModel(AppDbContext db) : PageModel
                 if (await db.Subnets.AnyAsync(s => s.SectionId == Subnet.SectionId && s.Address == Subnet.Address
                     && s.PrefixLength == Subnet.PrefixLength && s.Id != Subnet.Id))
                 {
-                    ModelState.AddModelError(nameof(Cidr), "Ce sous-réseau existe déjà dans la section.");
+                    ModelState.AddModelError(nameof(Cidr), L.T("Ce sous-réseau existe déjà dans la section."));
                 }
                 // Un sous-réseau existant ne peut pas être réduit au point d'exclure ses propres adresses.
                 int outside = (await db.IpAddresses.Where(a => a.SubnetId == Subnet.Id).Select(a => a.Address).ToListAsync())
                     .Count(bytes => !Ip.Contains(network, new IPNetwork(Ip.FromBytes(bytes), Ip.FromBytes(bytes).GetAddressBytes().Length * 8)));
                 if (outside > 0)
                 {
-                    ModelState.AddModelError(nameof(Cidr), $"{outside} adresse(s) de ce sous-réseau seraient en dehors de {network}.");
+                    ModelState.AddModelError(nameof(Cidr), L.T("{0} adresse(s) de ce sous-réseau seraient en dehors de {1}.", outside, network));
                 }
                 if (Subnet.ScanAgentId is not null && !await db.RemoteAgents.AnyAsync(a => a.Id == Subnet.ScanAgentId))
                 {
-                    ModelState.AddModelError("Subnet.ScanAgentId", "Agent de scan inconnu.");
+                    ModelState.AddModelError("Subnet.ScanAgentId", L.T("Agent de scan inconnu."));
                 }
                 // Le dernier scan est géré par l'agent, pas par le formulaire.
                 Subnet.LastScanAt = Subnet.Id == 0 ? null : await db.Subnets.Where(s => s.Id == Subnet.Id).Select(s => s.LastScanAt).SingleOrDefaultAsync();
             }
             else if (IPNetwork.TryParse(Cidr.Trim(), out IPNetwork corrected))
             {
-                ModelState.AddModelError(nameof(Cidr), $"Ce n'est pas une adresse réseau. Vouliez-vous dire {corrected} ?");
+                ModelState.AddModelError(nameof(Cidr), L.T("Ce n'est pas une adresse réseau. Vouliez-vous dire {0} ?", corrected));
             }
             else
             {
-                ModelState.AddModelError(nameof(Cidr), "Sous-réseau invalide. Format attendu : 10.0.0.0/24 ou 2001:db8::/48.");
+                ModelState.AddModelError(nameof(Cidr), L.T("Sous-réseau invalide. Format attendu : 10.0.0.0/24 ou 2001:db8::/48."));
             }
         }
         if (!await db.Sections.AnyAsync(s => s.Id == Subnet.SectionId))
         {
-            ModelState.AddModelError("Subnet.SectionId", "Section inconnue.");
+            ModelState.AddModelError("Subnet.SectionId", L.T("Section inconnue."));
         }
         // VLAN limité aux domaines L2 ouverts à la section ; un rattachement existant reste valable tant que ni le VLAN ni la section ne changent.
         (int? VlanId, int SectionId)? stored = Subnet.Id == 0 ? null
@@ -135,7 +136,7 @@ public class EditModel(AppDbContext db) : PageModel
         if (Subnet.VlanId is int vlanId && stored != (Subnet.VlanId, Subnet.SectionId)
             && !await Vlan.AvailableIn(db.Vlans, Subnet.SectionId).AnyAsync(v => v.Id == vlanId))
         {
-            ModelState.AddModelError("Subnet.VlanId", "Ce VLAN n'est pas proposé dans cette section (domaine L2 limité à d'autres sections).");
+            ModelState.AddModelError("Subnet.VlanId", L.T("Ce VLAN n'est pas proposé dans cette section (domaine L2 limité à d'autres sections)."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Subnet));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

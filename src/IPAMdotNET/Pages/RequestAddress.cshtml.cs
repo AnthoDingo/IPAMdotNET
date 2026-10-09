@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -48,7 +49,7 @@ public class RequestAddressModel(AppDbContext db, IDataProtectionProvider protec
         Subnet? subnet = await db.Subnets.FindAsync(Input.SubnetId);
         if (subnet is null || !subnet.AllowRequests)
         {
-            ModelState.AddModelError("Input.SubnetId", "Ce sous-réseau n'accepte pas les demandes.");
+            ModelState.AddModelError("Input.SubnetId", L.T("Ce sous-réseau n'accepte pas les demandes."));
         }
         if (!ModelState.IsValid)
         {

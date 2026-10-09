@@ -3,7 +3,7 @@
 @using IPAMdotNet.Maintenance
 @model IPAMdotNet.Pages.Network.Nat.EditModel
 @{
-    ViewData["Title"] = Model.Rule.Id == 0 ? "Nouvelle règle NAT" : $"NAT {Model.Rule.Name}";
+    ViewData["Title"] = Model.Rule.Id == 0 ? L.T("Nouvelle règle NAT") : L.T("NAT {0}", Model.Rule.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -57,5 +57,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Rule.Id, "cette règle"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Rule.Id, L.T("cette règle")))" />
 </div>

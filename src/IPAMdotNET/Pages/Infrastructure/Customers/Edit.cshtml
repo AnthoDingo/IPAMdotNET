@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Customers.EditModel
 @{
-    ViewData["Title"] = Model.Customer.Id == 0 ? "Nouveau client" : $"Client {Model.Customer.Name}";
+    ViewData["Title"] = Model.Customer.Id == 0 ? L.T("Nouveau client") : L.T("Client {0}", Model.Customer.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -62,5 +62,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Customer.Id, "ce client"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Customer.Id, L.T("ce client")))" />
 </div>

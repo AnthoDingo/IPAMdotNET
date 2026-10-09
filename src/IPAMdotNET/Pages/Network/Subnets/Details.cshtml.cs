@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Numerics;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -152,18 +153,18 @@ public class DetailsModel(AppDbContext db) : PageModel
         {
             // Agent distant : on ne peut pas le joindre, mais on rend le sous-réseau dû pour son prochain passage (chaque minute).
             await db.Subnets.Where(s => s.Id == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.LastScanAt, (DateTime?)null));
-            Message = "Sous-réseau confié à un agent distant : il sera scanné à son prochain passage (dans la minute s'il est actif).";
+            Message = L.T("Sous-réseau confié à un agent distant : il sera scanné à son prochain passage (dans la minute s'il est actif).");
             return RedirectToPage(new { id });
         }
         ScanSettings settings = await SettingsStore.LoadAsync<ScanSettings>(db, SettingsStore.ScanPrefix);
         if (!settings.Enabled)
         {
-            Message = "L'agent de scan est désactivé (Administration › Agents de scan).";
+            Message = L.T("L'agent de scan est désactivé (Administration › Agents de scan).");
             return RedirectToPage(new { id });
         }
         await db.Subnets.Where(s => s.Id == id).ExecuteUpdateAsync(s => s.SetProperty(x => x.LastScanAt, (DateTime?)null));
         ScanAgent.Wake(force: false);
-        Message = "Scan lancé en arrière-plan : rechargez la page dans quelques instants pour voir le résultat.";
+        Message = L.T("Scan lancé en arrière-plan : rechargez la page dans quelques instants pour voir le résultat.");
         return RedirectToPage(new { id });
     }
 

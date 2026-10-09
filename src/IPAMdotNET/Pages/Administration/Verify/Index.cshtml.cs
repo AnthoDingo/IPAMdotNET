@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -34,9 +35,9 @@ public class IndexModel(AppDbContext db) : PageModel
             await CheckRackPositionsAsync(),
             await CheckPstnNumbersAsync(),
             await CheckRequestsAsync(),
-            new CheckResult("Valeurs de champs personnalisés orphelines",
-                "Valeurs dont l'objet porteur n'existe plus.",
-                (await FindOrphansAsync()).Select(v => $"Valeur n°{v.Id} (objet n°{v.EntityId}) : « {v.Value} »").ToList(),
+            new CheckResult(L.T("Valeurs de champs personnalisés orphelines"),
+                L.T("Valeurs dont l'objet porteur n'existe plus."),
+                (await FindOrphansAsync()).Select(v => L.T("Valeur n°{0} (objet n°{1}) : « {2} »", v.Id, v.EntityId, v.Value)).ToList(),
                 "DeleteOrphans"),
             await CheckCustomValuesAsync(),
         ];
@@ -49,7 +50,7 @@ public class IndexModel(AppDbContext db) : PageModel
         await db.SaveChangesAsync();
         await db.LogAsync(LogSeverity.Info, LogEntry.Maintenance, $"Vérification de la base : {orphans.Count} valeur(s) orpheline(s) supprimée(s).",
             User.Identity?.Name, HttpContext.Connection.RemoteIpAddress?.ToString());
-        Message = $"{orphans.Count} valeur(s) orpheline(s) supprimée(s).";
+        Message = L.T("{0} valeur(s) orpheline(s) supprimée(s).", orphans.Count);
         return RedirectToPage();
     }
 
@@ -62,17 +63,17 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             if (subnet.Address.Length != 16)
             {
-                problems.Add($"Sous-réseau n°{subnet.Id} ({subnet.Section?.Name}) : adresse stockée invalide.");
+                problems.Add(L.T("Sous-réseau n°{0} ({1}) : adresse stockée invalide.", subnet.Id, subnet.Section?.Name));
                 continue;
             }
             IPAddress address = Ip.FromBytes(subnet.Address);
             int maxPrefix = address.GetAddressBytes().Length * 8;
             if (subnet.PrefixLength < 0 || subnet.PrefixLength > maxPrefix || !Ip.TryParseNetwork($"{address}/{subnet.PrefixLength}", out _))
             {
-                problems.Add($"Sous-réseau n°{subnet.Id} ({subnet.Section?.Name}) : {address}/{subnet.PrefixLength} n'est pas une adresse réseau valide.");
+                problems.Add(L.T("Sous-réseau n°{0} ({1}) : {2}/{3} n'est pas une adresse réseau valide.", subnet.Id, subnet.Section?.Name, address, subnet.PrefixLength));
             }
         }
-        return new CheckResult("Sous-réseaux", "Adresses réseau valides et alignées sur leur préfixe.", problems);
+        return new CheckResult(L.T("Sous-réseaux"), L.T("Adresses réseau valides et alignées sur leur préfixe."), problems);
     }
 
     /// <summary>Adresses comprises dans leur sous-réseau (un import ou une modification en base peut les en faire sortir).</summary>
@@ -84,16 +85,16 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             if (address.Address.Length != 16)
             {
-                problems.Add($"Adresse n°{address.Id} : valeur stockée invalide.");
+                problems.Add(L.T("Adresse n°{0} : valeur stockée invalide.", address.Id));
                 continue;
             }
             IPNetwork network = address.Subnet!.Network;
             if (!Ip.Contains(network, new IPNetwork(address.Value, address.Value.GetAddressBytes().Length * 8)))
             {
-                problems.Add($"{address.Value} : hors de son sous-réseau {network}.");
+                problems.Add(L.T("{0} : hors de son sous-réseau {1}.", address.Value, network));
             }
         }
-        return new CheckResult("Adresses IP", "Adresses comprises dans leur sous-réseau.", problems);
+        return new CheckResult(L.T("Adresses IP"), L.T("Adresses comprises dans leur sous-réseau."), problems);
     }
 
     private async Task<CheckResult> CheckRackPositionsAsync()
@@ -104,19 +105,19 @@ public class IndexModel(AppDbContext db) : PageModel
         {
             if (device.RackId is null && (device.RackStart is not null || device.RackSize is not null))
             {
-                problems.Add($"{device.Hostname} : position renseignée sans rack.");
+                problems.Add(L.T("{0} : position renseignée sans rack.", device.Hostname));
             }
             else if (device.Rack is not null && (device.RackStart is null || device.RackSize is null))
             {
-                problems.Add($"{device.Hostname} : dans le rack {device.Rack.Name} sans position.");
+                problems.Add(L.T("{0} : dans le rack {1} sans position.", device.Hostname, device.Rack.Name));
             }
             else if (device.Rack is not null && device.RackFace == RackFace.Back && !device.Rack.HasBack)
             {
-                problems.Add($"{device.Hostname} : en face arrière du rack {device.Rack.Name}, qui n'en a pas.");
+                problems.Add(L.T("{0} : en face arrière du rack {1}, qui n'en a pas.", device.Hostname, device.Rack.Name));
             }
             else if (device.Rack is not null && device.RackEnd > device.Rack.Size)
             {
-                problems.Add($"{device.Hostname} : dépasse le rack {device.Rack.Name} ({device.Rack.Size} U).");
+                problems.Add(L.T("{0} : dépasse le rack {1} ({2} U).", device.Hostname, device.Rack.Name, device.Rack.Size));
             }
         }
         foreach (IGrouping<(int?, RackFace), Device> rack in devices.Where(d => d.RackId is not null && d.RackStart is not null && d.RackSize is not null).GroupBy(d => (d.RackId, d.RackFace)))
@@ -126,20 +127,20 @@ public class IndexModel(AppDbContext db) : PageModel
             {
                 if (placed[i].RackStart <= placed[i - 1].RackEnd)
                 {
-                    problems.Add($"{placed[i - 1].Hostname} et {placed[i].Hostname} se chevauchent dans le rack {placed[i].Rack?.Name}.");
+                    problems.Add(L.T("{0} et {1} se chevauchent dans le rack {2}.", placed[i - 1].Hostname, placed[i].Hostname, placed[i].Rack?.Name));
                 }
             }
         }
-        return new CheckResult("Positions en rack", "Équipements positionnés dans leur rack, sans chevauchement.", problems);
+        return new CheckResult(L.T("Positions en rack"), L.T("Équipements positionnés dans leur rack, sans chevauchement."), problems);
     }
 
     private async Task<CheckResult> CheckPstnNumbersAsync()
     {
         List<string> problems = (await db.PstnNumbers.Include(n => n.Prefix)
                 .Where(n => n.Number < n.Prefix!.Start || n.Number > n.Prefix!.Stop).ToListAsync())
-            .Select(n => $"{n.Prefix?.Prefix} {n.Number} : hors de la plage {n.Prefix?.Start} – {n.Prefix?.Stop}.")
+            .Select(n => L.T("{0} {1} : hors de la plage {2} – {3}.", n.Prefix?.Prefix, n.Number, n.Prefix?.Start, n.Prefix?.Stop))
             .ToList();
-        return new CheckResult("Numéros RTC", "Numéros compris dans la plage de leur préfixe.", problems);
+        return new CheckResult(L.T("Numéros RTC"), L.T("Numéros compris dans la plage de leur préfixe."), problems);
     }
 
     private async Task<CheckResult> CheckRequestsAsync()
@@ -153,12 +154,12 @@ public class IndexModel(AppDbContext db) : PageModel
                 || request.Subnet.Address.Length != 16
                 || !Ip.Contains(request.Subnet.Network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
             {
-                problems.Add($"Demande n°{request.Id} : adresse attribuée « {request.AssignedAddress} » hors de son sous-réseau.");
+                problems.Add(L.T("Demande n°{0} : adresse attribuée « {1} » hors de son sous-réseau.", request.Id, request.AssignedAddress));
             }
         }
         problems.AddRange(approved.GroupBy(r => (r.SubnetId, r.AssignedAddress)).Where(g => g.Count() > 1)
             .Select(g => $"{g.Key.AssignedAddress} attribuée par {g.Count()} demandes ({string.Join(", ", g.Select(r => $"n°{r.Id}"))})."));
-        return new CheckResult("Demandes d'adresses", "Adresses attribuées comprises dans leur sous-réseau et uniques.", problems);
+        return new CheckResult(L.T("Demandes d'adresses"), L.T("Adresses attribuées comprises dans leur sous-réseau et uniques."), problems);
     }
 
     /// <summary>Valeurs qui ne respectent plus le type du champ (type changé, choix de liste retiré…).</summary>
@@ -167,9 +168,9 @@ public class IndexModel(AppDbContext db) : PageModel
         List<CustomFieldValue> values = await db.CustomFieldValues.Include(v => v.Field).ToListAsync();
         List<string> problems = values
             .Where(v => !CustomFieldForm.TryNormalize(v.Field!, v.Value, out string? normalized) || normalized != v.Value)
-            .Select(v => $"{ChangeLog.Types[v.Field!.EntityType].Label} n°{v.EntityId}, champ « {v.Field.Name} » : « {v.Value} » ne correspond plus au type {v.Field.Type}.")
+            .Select(v => L.T("{0} n°{1}, champ « {2} » : « {3} » ne correspond plus au type {4}.", L.T(ChangeLog.Types[v.Field!.EntityType].Label), v.EntityId, v.Field.Name, v.Value, v.Field.Type))
             .ToList();
-        return new CheckResult("Valeurs de champs personnalisés", "Valeurs conformes au type actuel de leur champ (à corriger dans la fiche de l'objet).", problems);
+        return new CheckResult(L.T("Valeurs de champs personnalisés"), L.T("Valeurs conformes au type actuel de leur champ (à corriger dans la fiche de l'objet)."), problems);
     }
 
     private async Task<List<CustomFieldValue>> FindOrphansAsync()

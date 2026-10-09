@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +40,7 @@ public class EditModel(AppDbContext db) : PageModel
         Vrf.Id = id ?? 0;
         if (await db.Vrfs.AnyAsync(v => v.Name == Vrf.Name && v.Id != Vrf.Id))
         {
-            ModelState.AddModelError("Vrf.Name", "Une VRF porte déjà ce nom.");
+            ModelState.AddModelError("Vrf.Name", L.T("Une VRF porte déjà ce nom."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Vrf));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

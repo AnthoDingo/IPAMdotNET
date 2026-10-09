@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Net;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
@@ -61,7 +62,7 @@ public class EditModel(AppDbContext db) : PageModel
             }
             else
             {
-                ModelState.AddModelError("Device.IpAddress", "Adresse IP invalide.");
+                ModelState.AddModelError("Device.IpAddress", L.T("Adresse IP invalide."));
             }
         }
         else
@@ -117,25 +118,25 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (Device.RackStart is null || Device.RackSize is null)
         {
-            ModelState.AddModelError("Device.RackStart", "Position et hauteur requises pour placer l'équipement dans un rack.");
+            ModelState.AddModelError("Device.RackStart", L.T("Position et hauteur requises pour placer l'équipement dans un rack."));
             return;
         }
         Rack? rack = await db.Racks.FindAsync(Device.RackId);
         if (rack is null)
         {
-            ModelState.AddModelError("Device.RackId", "Rack inconnu.");
+            ModelState.AddModelError("Device.RackId", L.T("Rack inconnu."));
             return;
         }
         if (Device.RackFace == RackFace.Back && !rack.HasBack)
         {
-            ModelState.AddModelError("Device.RackFace", "Ce rack n'a pas de face arrière.");
+            ModelState.AddModelError("Device.RackFace", L.T("Ce rack n'a pas de face arrière."));
             return;
         }
         int start = Device.RackStart.Value;
         int end = start + Device.RackSize.Value - 1;
         if (end > rack.Size)
         {
-            ModelState.AddModelError("Device.RackStart", $"L'équipement dépasse du rack ({rack.Size} U).");
+            ModelState.AddModelError("Device.RackStart", L.T("L'équipement dépasse du rack ({0} U).", rack.Size));
             return;
         }
         Device? overlap = await db.Devices
@@ -144,7 +145,7 @@ public class EditModel(AppDbContext db) : PageModel
             .FirstOrDefaultAsync();
         if (overlap is not null)
         {
-            ModelState.AddModelError("Device.RackStart", $"Ces unités sont déjà occupées par {overlap.Hostname}.");
+            ModelState.AddModelError("Device.RackStart", L.T("Ces unités sont déjà occupées par {0}.", overlap.Hostname));
         }
     }
 

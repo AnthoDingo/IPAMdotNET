@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +36,7 @@ public class IndexModel(AppDbContext db, IWebHostEnvironment environment, IHostA
         await LoadReleasesAsync(cancellationToken);
         if (Releases.FirstOrDefault(r => r.Tag == tag)?.Asset is not { } asset)
         {
-            Error = ReleasesError ?? $"Aucune archive {SelfUpdate.Rid} pour la release {tag}.";
+            Error = ReleasesError ?? L.T("Aucune archive {0} pour la release {1}.", SelfUpdate.Rid, tag);
             return Page();
         }
         return await InstallAsync(() => SelfUpdate.InstallAsync(asset, cancellationToken), $"release {tag}", cancellationToken);
@@ -49,7 +50,7 @@ public class IndexModel(AppDbContext db, IWebHostEnvironment environment, IHostA
         }
         if (archive is null || archive.Length == 0)
         {
-            Error = "Choisissez l'archive de release à installer.";
+            Error = L.T("Choisissez l'archive de release à installer.");
             await LoadReleasesAsync(cancellationToken);
             return Page();
         }
@@ -104,7 +105,7 @@ public class IndexModel(AppDbContext db, IWebHostEnvironment environment, IHostA
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
         {
-            ReleasesError = $"GitHub injoignable ({exception.Message}) : téléchargez l'archive depuis un autre poste et envoyez-la ci-dessous.";
+            ReleasesError = L.T("GitHub injoignable ({0}) : téléchargez l'archive depuis un autre poste et envoyez-la ci-dessous.", exception.Message);
         }
     }
 }

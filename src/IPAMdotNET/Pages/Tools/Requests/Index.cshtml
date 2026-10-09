@@ -8,7 +8,7 @@
 
 <div class="ipam-panel mb-3">
     <div class="ipam-panel-title d-flex align-items-center">
-        <span><i class="bi bi-inbox"></i> @(admin ? "Demandes en attente" : "Mes demandes en attente")</span>
+        <span><i class="bi bi-inbox"></i> @(admin ? L.T("Demandes en attente") : L.T("Mes demandes en attente"))</span>
         <a asp-page="New" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg"></i> @L.T("Nouvelle demande")</a>
     </div>
     @if (Model.Pending.Count == 0)

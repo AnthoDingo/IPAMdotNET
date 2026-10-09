@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -48,7 +49,7 @@ public class EditModel(AppDbContext db) : PageModel
         }
         if (await db.Groups.AnyAsync(g => g.Name == Group.Name && g.Id != (id ?? 0)))
         {
-            ModelState.AddModelError("Group.Name", "Un groupe porte déjà ce nom.");
+            ModelState.AddModelError("Group.Name", L.T("Un groupe porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {

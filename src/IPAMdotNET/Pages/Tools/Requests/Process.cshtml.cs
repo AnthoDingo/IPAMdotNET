@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Numerics;
@@ -73,7 +74,7 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
             if (!IPAddress.TryParse(text, out IPAddress? address)
                 || !Ip.Contains(subnet.Network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
             {
-                errors.Add($"{text} : adresse invalide ou hors de {subnet.Network}.");
+                errors.Add(L.T("{0} : adresse invalide ou hors de {1}.", text, subnet.Network));
                 continue;
             }
             (BigInteger first, BigInteger last) = Ip.UsableRange(subnet.Network);
@@ -81,21 +82,21 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
             byte[] bytes = Ip.ToBytes(address);
             if (subnet.IsIPv4 && (value < first || value > last))
             {
-                errors.Add($"{address} : l'adresse réseau et l'adresse de diffusion ne sont pas attribuables.");
+                errors.Add(L.T("{0} : l'adresse réseau et l'adresse de diffusion ne sont pas attribuables.", address));
             }
             else if (addresses.Any(a => a.Equals(address)))
             {
-                errors.Add($"{address} : adresse en double.");
+                errors.Add(L.T("{0} : adresse en double.", address));
             }
             else if (await db.IpAddresses.AnyAsync(a => a.SubnetId == IpRequest.SubnetId && a.Address == bytes))
             {
-                errors.Add($"{address} : déjà utilisée dans le sous-réseau.");
+                errors.Add(L.T("{0} : déjà utilisée dans le sous-réseau.", address));
             }
             addresses.Add(address);
         }
         if (errors.Count == 0 && (addresses.Count == 0 || addresses.Count > IpRequest.Count))
         {
-            errors.Add($"Indiquez entre 1 et {IpRequest.Count} adresse(s).");
+            errors.Add(L.T("Indiquez entre 1 et {0} adresse(s).", IpRequest.Count));
         }
         if (errors.Count > 0)
         {
@@ -116,7 +117,7 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
         }
         if (string.IsNullOrWhiteSpace(AdminComment))
         {
-            ModelState.AddModelError(nameof(AdminComment), "Indiquez le motif du refus.");
+            ModelState.AddModelError(nameof(AdminComment), L.T("Indiquez le motif du refus."));
             return Page();
         }
         return await CloseAsync(IpRequestState.Rejected, []);

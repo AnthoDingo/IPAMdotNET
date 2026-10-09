@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,7 @@ public class EditModel(AppDbContext db) : PageModel
         Domain.Name = Domain.Name.Trim();
         if (await db.VlanDomains.AnyAsync(d => d.Name == Domain.Name && d.Id != Domain.Id))
         {
-            ModelState.AddModelError("Domain.Name", "Un domaine L2 porte déjà ce nom.");
+            ModelState.AddModelError("Domain.Name", L.T("Un domaine L2 porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {
@@ -79,7 +80,7 @@ public class EditModel(AppDbContext db) : PageModel
 
     /// <summary>Motif de refus de suppression (aussi appliqué par l'API), ou null.</summary>
     public static async Task<string?> DeleteRefusalAsync(AppDbContext db, int id) =>
-        id == await Vlan.DefaultDomainIdAsync(db) ? "Le domaine par défaut ne peut pas être supprimé."
-        : await db.Vlans.AnyAsync(v => v.DomainId == id) ? "Impossible de supprimer un domaine L2 qui contient des VLAN."
+        id == await Vlan.DefaultDomainIdAsync(db) ? L.T("Le domaine par défaut ne peut pas être supprimé.")
+        : await db.Vlans.AnyAsync(v => v.DomainId == id) ? L.T("Impossible de supprimer un domaine L2 qui contient des VLAN.")
         : null;
 }

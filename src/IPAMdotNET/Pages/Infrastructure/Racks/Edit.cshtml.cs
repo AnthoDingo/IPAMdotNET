@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -47,11 +48,11 @@ public class EditModel(AppDbContext db) : PageModel
             .Select(d => (int?)(d.RackStart + d.RackSize - 1)).MaxAsync() ?? 0;
         if (Rack.Size < highestUnit)
         {
-            ModelState.AddModelError("Rack.Size", $"Un équipement occupe l'unité {highestUnit} : la hauteur ne peut pas être inférieure.");
+            ModelState.AddModelError("Rack.Size", L.T("Un équipement occupe l'unité {0} : la hauteur ne peut pas être inférieure.", highestUnit));
         }
         if (!Rack.HasBack && Rack.Id != 0 && await db.Devices.AnyAsync(d => d.RackId == Rack.Id && d.RackFace == RackFace.Back))
         {
-            ModelState.AddModelError("Rack.HasBack", "Des équipements sont placés en face arrière : déplacez-les d'abord.");
+            ModelState.AddModelError("Rack.HasBack", L.T("Des équipements sont placés en face arrière : déplacez-les d'abord."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Rack));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

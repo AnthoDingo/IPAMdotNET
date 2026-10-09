@@ -2,7 +2,7 @@
 @using IPAMdotNet.Data
 @model IPAMdotNet.Pages.Administration.Users.EditModel
 @{
-    ViewData["Title"] = Model.UserId == 0 ? "Nouvel utilisateur" : $"Utilisateur {Model.Input.UserName}";
+    ViewData["Title"] = Model.UserId == 0 ? L.T("Nouvel utilisateur") : L.T("Utilisateur {0}", Model.Input.UserName);
 }
 
 <div class="ipam-panel ipam-form">
@@ -35,7 +35,7 @@
             <div class="col-md-6">
                 <label asp-for="Input.Password" class="form-label"></label>
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
-                <div class="form-text">Comptes locaux uniquement@(Model.UserId == 0 ? "" : " ; laisser vide pour ne pas le changer"). @EditModel.MinPasswordLength caractères minimum.</div>
+                <div class="form-text">@(Model.UserId == 0 ? L.T("Comptes locaux uniquement. {0} caractères minimum.", EditModel.MinPasswordLength) : L.T("Comptes locaux uniquement ; laisser vide pour ne pas le changer. {0} caractères minimum.", EditModel.MinPasswordLength))</div>
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
             <div class="col-md-6">
@@ -73,7 +73,7 @@
     </form>
     @if (!Model.IsSelf)
     {
-        <partial name="_DeleteForm" model="@(new DeleteForm(Model.UserId, "cet utilisateur"))" />
+        <partial name="_DeleteForm" model="@(new DeleteForm(Model.UserId, L.T("cet utilisateur")))" />
     }
 </div>
 

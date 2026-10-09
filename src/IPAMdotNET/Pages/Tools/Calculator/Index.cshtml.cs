@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
@@ -25,7 +26,7 @@ public class IndexModel : PageModel
             return;
         }
         Result = Calculate(Q.Trim());
-        Error = Result is null ? "Saisie invalide. Exemples : 192.168.1.10/24, 10.0.0.0/8, 2001:db8::1/64, 172.16.5.4" : null;
+        Error = Result is null ? L.T("Saisie invalide. Exemples : 192.168.1.10/24, 10.0.0.0/8, 2001:db8::1/64, 172.16.5.4") : null;
     }
 
     /// <summary>Accepte « adresse/préfixe » (bits d'hôte autorisés : c'est un calculateur) ou une adresse seule (/32, /128).</summary>
@@ -49,9 +50,9 @@ public class IndexModel : PageModel
         IPAddress last = Ip.LastAddress(network);
         List<(string, string)> rows =
         [
-            ("Adresse", address.ToString()),
-            ("Réseau", network.ToString()),
-            ("Type", Ip.Classify(network)),
+            (L.T("Adresse"), address.ToString()),
+            (L.T("Réseau"), network.ToString()),
+            (L.T("Type"), L.T(Ip.Classify(network))),
         ];
 
         if (ipv4)
@@ -63,23 +64,23 @@ public class IndexModel : PageModel
             IPAddress firstHost = pointToPoint ? network.BaseAddress : Offset(network.BaseAddress, 1);
             IPAddress lastHost = pointToPoint ? last : Offset(last, -1);
             BigInteger hosts = pointToPoint ? count : count - 2;
-            rows.Add(("Masque", $"{mask} (/{prefix})"));
-            rows.Add(("Masque inverse", wildcard.ToString()));
-            rows.Add(("Adresse de diffusion", pointToPoint ? "—" : last.ToString()));
-            rows.Add(("Première adresse utilisable", firstHost.ToString()));
-            rows.Add(("Dernière adresse utilisable", lastHost.ToString()));
-            rows.Add(("Adresses utilisables", hosts.ToString("N0", CultureInfo.CurrentCulture)));
+            rows.Add((L.T("Masque"), $"{mask} (/{prefix})"));
+            rows.Add((L.T("Masque inverse"), wildcard.ToString()));
+            rows.Add((L.T("Adresse de diffusion"), pointToPoint ? "—" : last.ToString()));
+            rows.Add((L.T("Première adresse utilisable"), firstHost.ToString()));
+            rows.Add((L.T("Dernière adresse utilisable"), lastHost.ToString()));
+            rows.Add((L.T("Adresses utilisables"), hosts.ToString("N0", CultureInfo.CurrentCulture)));
         }
         else
         {
-            rows.Add(("Préfixe", $"/{prefix}"));
-            rows.Add(("Première adresse", network.BaseAddress.ToString()));
-            rows.Add(("Dernière adresse", last.ToString()));
-            rows.Add(("Adresse développée", Expand(address)));
+            rows.Add((L.T("Préfixe"), $"/{prefix}"));
+            rows.Add((L.T("Première adresse"), network.BaseAddress.ToString()));
+            rows.Add((L.T("Dernière adresse"), last.ToString()));
+            rows.Add((L.T("Adresse développée"), Expand(address)));
         }
-        rows.Add(("Nombre d'adresses", count.ToString("N0", CultureInfo.CurrentCulture)));
-        rows.Add(("Bits d'hôte", (bits - prefix).ToString(CultureInfo.InvariantCulture)));
-        rows.Add(("Zone DNS inverse", Ip.ReverseZone(network)));
+        rows.Add((L.T("Nombre d'adresses"), count.ToString("N0", CultureInfo.CurrentCulture)));
+        rows.Add((L.T("Bits d'hôte"), (bits - prefix).ToString(CultureInfo.InvariantCulture)));
+        rows.Add((L.T("Zone DNS inverse"), Ip.ReverseZone(network)));
         return new CalculatorResult(address, network, rows);
     }
 

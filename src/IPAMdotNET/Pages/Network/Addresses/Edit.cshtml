@@ -2,7 +2,7 @@
 @model IPAMdotNet.Pages.Network.Addresses.EditModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = Model.Entry.Id == 0 ? "Nouvelle adresse" : $"Adresse {Model.Ip}";
+    ViewData["Title"] = Model.Entry.Id == 0 ? L.T("Nouvelle adresse") : L.T("Adresse {0}", Model.Ip);
 }
 
 @section Breadcrumb {
@@ -65,7 +65,7 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="/Network/Subnets/Details" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Entry.Id, "cette adresse"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Entry.Id, L.T("cette adresse")))" />
 </div>
 
 @if (Model.Entry.Id != 0)

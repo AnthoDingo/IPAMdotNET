@@ -4,6 +4,7 @@ using System.Security.Claims;
 using IPAMdotNet.Localization;
 using IPAMdotNet.Navigation;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Localization;
 using AnthoDingo.Setup;
 using AnthoDingo.Update;
@@ -118,6 +119,21 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Account/Login");
     options.Conventions.AllowAnonymousToPage("/RequestAddress");
     options.Conventions.AllowAnonymousToPage("/Error");
+}).AddMvcOptions(options =>
+{
+    // Erreurs de liaison (texte dans un champ numérique…) : anglaises par défaut, traduites comme le reste.
+    DefaultModelBindingMessageProvider messages = options.ModelBindingMessageProvider;
+    messages.SetAttemptedValueIsInvalidAccessor((value, field) => L.T("« {0} » n'est pas une valeur valide pour {1}.", value, field));
+    messages.SetNonPropertyAttemptedValueIsInvalidAccessor(value => L.T("« {0} » n'est pas une valeur valide.", value));
+    messages.SetUnknownValueIsInvalidAccessor(field => L.T("Valeur invalide pour {0}.", field));
+    messages.SetNonPropertyUnknownValueIsInvalidAccessor(() => L.T("Valeur invalide."));
+    messages.SetValueIsInvalidAccessor(value => L.T("« {0} » n'est pas une valeur valide.", value));
+    messages.SetValueMustBeANumberAccessor(field => L.T("{0} doit être un nombre.", field));
+    messages.SetNonPropertyValueMustBeANumberAccessor(() => L.T("La valeur doit être un nombre."));
+    messages.SetValueMustNotBeNullAccessor(value => L.T("Une valeur est requise."));
+    messages.SetMissingBindRequiredValueAccessor(field => L.T("{0} est requis.", field));
+    messages.SetMissingKeyOrValueAccessor(() => L.T("Une valeur est requise."));
+    messages.SetMissingRequestBodyRequiredValueAccessor(() => L.T("Le corps de la requête est requis."));
 }).AddDataAnnotationsLocalization();
 
 WebApplication app = builder.Build();

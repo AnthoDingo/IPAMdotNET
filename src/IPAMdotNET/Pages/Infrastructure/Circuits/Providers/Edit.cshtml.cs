@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,7 @@ public class EditModel(AppDbContext db) : PageModel
         Provider.Id = id ?? 0;
         if (await db.CircuitProviders.AnyAsync(p => p.Name == Provider.Name && p.Id != Provider.Id))
         {
-            ModelState.AddModelError("Provider.Name", "Un fournisseur porte déjà ce nom.");
+            ModelState.AddModelError("Provider.Name", L.T("Un fournisseur porte déjà ce nom."));
         }
         if (!ModelState.IsValid)
         {
@@ -53,7 +54,7 @@ public class EditModel(AppDbContext db) : PageModel
         if (await db.Circuits.AnyAsync(c => c.ProviderId == id))
         {
             Provider = provider;
-            ModelState.AddModelError(string.Empty, "Impossible de supprimer un fournisseur qui a des circuits.");
+            ModelState.AddModelError(string.Empty, L.T("Impossible de supprimer un fournisseur qui a des circuits."));
             return Page();
         }
         db.CircuitProviders.Remove(provider);

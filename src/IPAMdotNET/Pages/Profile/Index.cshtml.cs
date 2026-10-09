@@ -70,20 +70,20 @@ public class IndexModel(AppDbContext db) : PageModel
             PasswordHasher<User> hasher = new();
             if (!IsLocal)
             {
-                ModelState.AddModelError(nameof(NewPassword), "Le mot de passe de ce compte est géré par l'annuaire.");
+                ModelState.AddModelError(nameof(NewPassword), L.T("Le mot de passe de ce compte est géré par l'annuaire."));
             }
             else if (string.IsNullOrEmpty(CurrentPassword)
                 || Passwords.Verify(Account, Account.PasswordHash, CurrentPassword) == PasswordVerificationResult.Failed)
             {
-                ModelState.AddModelError(nameof(CurrentPassword), "Mot de passe actuel incorrect.");
+                ModelState.AddModelError(nameof(CurrentPassword), L.T("Mot de passe actuel incorrect."));
             }
             else if (NewPassword!.Length < EditModel.MinPasswordLength)
             {
-                ModelState.AddModelError(nameof(NewPassword), $"Le mot de passe doit faire au moins {EditModel.MinPasswordLength} caractères.");
+                ModelState.AddModelError(nameof(NewPassword), L.T("Le mot de passe doit faire au moins {0} caractères.", EditModel.MinPasswordLength));
             }
             else if (NewPassword != NewPasswordConfirm)
             {
-                ModelState.AddModelError(nameof(NewPasswordConfirm), "Les deux mots de passe ne correspondent pas.");
+                ModelState.AddModelError(nameof(NewPasswordConfirm), L.T("Les deux mots de passe ne correspondent pas."));
             }
             else
             {
@@ -99,7 +99,7 @@ public class IndexModel(AppDbContext db) : PageModel
         Account.MacFormat = MacFormat;
         Account.Language = string.IsNullOrEmpty(Language) ? null : Language;
         await db.SaveChangesAsync();
-        Message = changePassword ? "Profil et mot de passe enregistrés." : "Profil enregistré.";
+        Message = changePassword ? L.T("Profil et mot de passe enregistrés.") : L.T("Profil enregistré.");
         return RedirectToPage();
     }
 

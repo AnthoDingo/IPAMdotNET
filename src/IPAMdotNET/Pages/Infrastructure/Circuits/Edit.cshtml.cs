@@ -1,3 +1,4 @@
+using IPAMdotNet.Localization;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using Microsoft.AspNetCore.Authorization;
@@ -47,7 +48,7 @@ public class EditModel(AppDbContext db) : PageModel
         Circuit.Id = id ?? 0;
         if (await db.Circuits.AnyAsync(c => c.ProviderId == Circuit.ProviderId && c.Cid == Circuit.Cid && c.Id != Circuit.Id))
         {
-            ModelState.AddModelError("Circuit.Cid", "Ce fournisseur a déjà un circuit avec cet identifiant.");
+            ModelState.AddModelError("Circuit.Cid", L.T("Ce fournisseur a déjà un circuit avec cet identifiant."));
         }
         List<CustomField> customFields = await CustomFieldForm.DefinitionsAsync(db, nameof(Circuit));
         Dictionary<int, string?> customValues = CustomFieldForm.Validate(customFields, Custom, ModelState);

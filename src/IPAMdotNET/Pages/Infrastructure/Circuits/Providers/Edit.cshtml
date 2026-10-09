@@ -1,7 +1,7 @@
 @page "{id:int?}"
 @model IPAMdotNet.Pages.Infrastructure.Circuits.Providers.EditModel
 @{
-    ViewData["Title"] = Model.Provider.Id == 0 ? "Nouveau fournisseur" : $"Fournisseur {Model.Provider.Name}";
+    ViewData["Title"] = Model.Provider.Id == 0 ? L.T("Nouveau fournisseur") : L.T("Fournisseur {0}", Model.Provider.Name);
 }
 
 <div class="ipam-panel ipam-form">
@@ -26,5 +26,5 @@
         <button type="submit" class="btn btn-primary">@L.T("Enregistrer")</button>
         <a asp-page="Index" class="btn btn-outline-secondary">@L.T("Annuler")</a>
     </form>
-    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Provider.Id, "ce fournisseur"))" />
+    <partial name="_DeleteForm" model="@(new DeleteForm(Model.Provider.Id, L.T("ce fournisseur")))" />
 </div>
