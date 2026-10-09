@@ -737,8 +737,11 @@ namespace IPAMdotNet.Migrations.Postgres
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("AssignedAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -766,8 +769,12 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("RequestedById")
+                    b.Property<int?>("RequestedById")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RequesterEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("State")
                         .HasColumnType("integer");
@@ -1729,8 +1736,7 @@ namespace IPAMdotNet.Migrations.Postgres
                     b.HasOne("IPAMdotNet.Data.User", "RequestedBy")
                         .WithMany()
                         .HasForeignKey("RequestedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("IPAMdotNet.Data.Subnet", "Subnet")
                         .WithMany()

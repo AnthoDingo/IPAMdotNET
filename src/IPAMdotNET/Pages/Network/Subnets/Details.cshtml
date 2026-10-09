@@ -31,96 +31,6 @@
     <div class="alert alert-info">@Model.Message</div>
 }
 
-<div class="ipam-panel mb-3">
-    <div class="ipam-panel-title d-flex align-items-center">
-        <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
-        <form method="post" asp-page-handler="ToggleFavorite" asp-route-id="@Model.Subnet.Id" class="ms-auto me-2">
-            <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? "Retirer des favoris" : "Ajouter aux favoris")">
-                <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>@L.T("Favori")
-            </button>
-        </form>
-        @if (Model.CanWrite)
-        {
-            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> @L.T("Modifier")</a>
-        }
-    </div>
-    <dl class="row mb-0 ipam-details">
-        <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>
-        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Description ?? "—")</dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Adresse réseau")</dt>
-        <dd class="col-sm-8 col-xl-9 font-monospace">@network.BaseAddress</dd>
-        @if (Model.Subnet.IsIPv4)
-        {
-            <dt class="col-sm-4 col-xl-3">@L.T("Masque")</dt>
-            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.Ipv4Mask(network.PrefixLength) (/@network.PrefixLength)</dd>
-            <dt class="col-sm-4 col-xl-3">@L.T("Diffusion")</dt>
-            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
-        }
-        else
-        {
-            <dt class="col-sm-4 col-xl-3">@L.T("Dernière adresse")</dt>
-            <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
-        }
-        <dt class="col-sm-4 col-xl-3">@L.T("Nombre d'adresses")</dt>
-        <dd class="col-sm-8 col-xl-9">@Ip.AddressCount(network).ToString("N0")</dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Utilisation")</dt>
-        <dd class="col-sm-8 col-xl-9"><div style="max-width: 24rem"><partial name="_UsageBar" model="(Model.AddressCount, Ip.UsableCount(network))" /></div></dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Scan")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (!Model.Subnet.PingCheck && !Model.Subnet.Discover)
-            {
-                <text>@L.T("Désactivé pour ce sous-réseau")</text>
-            }
-            else
-            {
-                @string.Join(" + ", new[] { Model.Subnet.PingCheck ? "état des hôtes" : null, Model.Subnet.Discover ? "découverte" : null }.Where(s => s is not null))
-                <span class="text-body-secondary">— @(Model.Subnet.ScanAgent is null ? "agent intégré" : $"agent « {Model.Subnet.ScanAgent.Name} »"), dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
-                @if (!Model.ScanEnabled)
-                {
-                    <span class="badge text-bg-warning">@L.T("agent désactivé")</span>
-                }
-            }
-        </dd>
-        <dt class="col-sm-4 col-xl-3">VLAN</dt>
-        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vlan is null ? "—" : $"{Model.Subnet.Vlan.Number} – {Model.Subnet.Vlan.Name}")</dd>
-        <dt class="col-sm-4 col-xl-3">VRF</dt>
-        <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vrf?.Name ?? "—")</dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Serveurs de noms")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (Model.Subnet.Nameserver is null)
-            {
-                <text>—</text>
-            }
-            else
-            {
-                @Model.Subnet.Nameserver.Name <span class="font-monospace text-body-secondary">(@Model.Subnet.Nameserver.Servers.Replace(";", ", "))</span>
-            }
-        </dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Emplacement")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (Model.Subnet.Location is null) { <text>—</text> }
-            else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@Model.Subnet.Location.Id">@Model.Subnet.Location.Name</a> }
-        </dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Demandes d'adresses")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (Model.Subnet.AllowRequests && IPAMdotNet.Maintenance.SettingsStore.Server.EnableIpRequests)
-            {
-                <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>@L.T("Demander une adresse")</a>
-            }
-            else
-            {
-                <text>@L.T("Fermé")</text>
-            }
-        </dd>
-        <dt class="col-sm-4 col-xl-3">@L.T("Client")</dt>
-        <dd class="col-sm-8 col-xl-9">
-            @if (Model.Subnet.Customer is null) { <text>—</text> }
-            else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@Model.Subnet.Customer.Id">@Model.Subnet.Customer.Name</a> }
-        </dd>
-        <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
-    </dl>
-</div>
-
 @{
     // Graphique d'utilisation (comme phpIPAM) : une part par étiquette, le reste est libre.
     System.Numerics.BigInteger usable = Ip.UsableCount(network);
@@ -139,20 +49,110 @@
     }
 }
 <div class="ipam-panel mb-3">
-    <div class="ipam-panel-title"><i class="bi bi-pie-chart"></i> @L.T("Utilisation")</div>
-    <div class="d-flex flex-wrap align-items-center gap-4">
-        <div class="ipam-usage-chart" style="background: conic-gradient(@string.Join(", ", stops))" role="img"
-             aria-label="@L.T("{0} adresse(s) utilisée(s) sur {1}", Model.AddressCount.ToString("N0"), usable.ToString("N0"))"></div>
-        <ul class="list-unstyled mb-0 small">
-            @foreach ((string Label, string Color, double Percent, string Count) slice in slices)
-            {
-                <li>
-                    <span class="ipam-usage-swatch" style="background: @slice.Color"></span>
-                    @slice.Label : @slice.Count
-                    <span class="text-body-secondary">(@(slice.Percent > 0 && slice.Percent < 0.1 ? "< " + 0.1.ToString("0.#") : slice.Percent.ToString("0.#")) %)</span>
-                </li>
-            }
-        </ul>
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span class="font-monospace"><i class="bi bi-diagram-3"></i> @network</span>
+        <form method="post" asp-page-handler="ToggleFavorite" asp-route-id="@Model.Subnet.Id" class="ms-auto me-2">
+            <button type="submit" class="btn btn-outline-secondary btn-sm" title="@(Model.IsFavorite ? "Retirer des favoris" : "Ajouter aux favoris")">
+                <i class="bi @(Model.IsFavorite ? "bi-star-fill text-warning" : "bi-star")"></i>@L.T("Favori")
+            </button>
+        </form>
+        @if (Model.CanWrite)
+        {
+            <a asp-page="Edit" asp-route-id="@Model.Subnet.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> @L.T("Modifier")</a>
+        }
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-8 col-xxl-9">
+            <dl class="row mb-0 ipam-details">
+                <dt class="col-sm-4 col-xl-3">@L.T("Description")</dt>
+                <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Description ?? "—")</dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Adresse réseau")</dt>
+                <dd class="col-sm-8 col-xl-9 font-monospace">@network.BaseAddress</dd>
+                @if (Model.Subnet.IsIPv4)
+                {
+                    <dt class="col-sm-4 col-xl-3">@L.T("Masque")</dt>
+                    <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.Ipv4Mask(network.PrefixLength) (/@network.PrefixLength)</dd>
+                    <dt class="col-sm-4 col-xl-3">@L.T("Diffusion")</dt>
+                    <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
+                }
+                else
+                {
+                    <dt class="col-sm-4 col-xl-3">@L.T("Dernière adresse")</dt>
+                    <dd class="col-sm-8 col-xl-9 font-monospace">@Ip.LastAddress(network)</dd>
+                }
+                <dt class="col-sm-4 col-xl-3">@L.T("Nombre d'adresses")</dt>
+                <dd class="col-sm-8 col-xl-9">@Ip.AddressCount(network).ToString("N0")</dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Utilisation")</dt>
+                <dd class="col-sm-8 col-xl-9"><div style="max-width: 24rem"><partial name="_UsageBar" model="(Model.AddressCount, Ip.UsableCount(network))" /></div></dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Scan")</dt>
+                <dd class="col-sm-8 col-xl-9">
+                    @if (!Model.Subnet.PingCheck && !Model.Subnet.Discover)
+                    {
+                        <text>@L.T("Désactivé pour ce sous-réseau")</text>
+                    }
+                    else
+                    {
+                        @string.Join(" + ", new[] { Model.Subnet.PingCheck ? "état des hôtes" : null, Model.Subnet.Discover ? "découverte" : null }.Where(s => s is not null))
+                        <span class="text-body-secondary">— @(Model.Subnet.ScanAgent is null ? "agent intégré" : $"agent « {Model.Subnet.ScanAgent.Name} »"), dernier scan : @(Model.Subnet.LastScanAt?.ToLocalTime().ToString("g") ?? "jamais")</span>
+                        @if (!Model.ScanEnabled)
+                        {
+                            <span class="badge text-bg-warning">@L.T("agent désactivé")</span>
+                        }
+                    }
+                </dd>
+                <dt class="col-sm-4 col-xl-3">VLAN</dt>
+                <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vlan is null ? "—" : $"{Model.Subnet.Vlan.Number} – {Model.Subnet.Vlan.Name}")</dd>
+                <dt class="col-sm-4 col-xl-3">VRF</dt>
+                <dd class="col-sm-8 col-xl-9">@(Model.Subnet.Vrf?.Name ?? "—")</dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Serveurs de noms")</dt>
+                <dd class="col-sm-8 col-xl-9">
+                    @if (Model.Subnet.Nameserver is null)
+                    {
+                        <text>—</text>
+                    }
+                    else
+                    {
+                        @Model.Subnet.Nameserver.Name <span class="font-monospace text-body-secondary">(@Model.Subnet.Nameserver.Servers.Replace(";", ", "))</span>
+                    }
+                </dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Emplacement")</dt>
+                <dd class="col-sm-8 col-xl-9">
+                    @if (Model.Subnet.Location is null) { <text>—</text> }
+                    else { <a asp-page="/Infrastructure/Locations/Details" asp-route-id="@Model.Subnet.Location.Id">@Model.Subnet.Location.Name</a> }
+                </dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Demandes d'adresses")</dt>
+                <dd class="col-sm-8 col-xl-9">
+                    @if (Model.Subnet.AllowRequests && IPAMdotNet.Maintenance.SettingsStore.Server.EnableIpRequests)
+                    {
+                        <a asp-page="/Tools/Requests/New" asp-route-subnetId="@Model.Subnet.Id"><i class="bi bi-inbox"></i>@L.T("Demander une adresse")</a>
+                    }
+                    else
+                    {
+                        <text>@L.T("Fermé")</text>
+                    }
+                </dd>
+                <dt class="col-sm-4 col-xl-3">@L.T("Client")</dt>
+                <dd class="col-sm-8 col-xl-9">
+                    @if (Model.Subnet.Customer is null) { <text>—</text> }
+                    else { <a asp-page="/Infrastructure/Customers/Details" asp-route-id="@Model.Subnet.Customer.Id">@Model.Subnet.Customer.Name</a> }
+                </dd>
+                <partial name="_CustomFieldsDisplay" model="Model.CustomFieldValues" />
+            </dl>
+        </div>
+        <div class="col-lg-4 col-xxl-3 d-flex flex-column align-items-center gap-3">
+            <div class="ipam-usage-chart" style="background: conic-gradient(@string.Join(", ", stops))" role="img"
+                 aria-label="@L.T("{0} adresse(s) utilisée(s) sur {1}", Model.AddressCount.ToString("N0"), usable.ToString("N0"))"></div>
+            <ul class="list-unstyled mb-0 small">
+                @foreach ((string Label, string Color, double Percent, string Count) slice in slices)
+                {
+                    <li>
+                        <span class="ipam-usage-swatch" style="background: @slice.Color"></span>
+                        @slice.Label : @slice.Count
+                        <span class="text-body-secondary">(@(slice.Percent > 0 && slice.Percent < 0.1 ? "< " + 0.1.ToString("0.#") : slice.Percent.ToString("0.#")) %)</span>
+                    </li>
+                }
+            </ul>
+        </div>
     </div>
 </div>
 

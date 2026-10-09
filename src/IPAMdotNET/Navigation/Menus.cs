@@ -62,6 +62,7 @@ public static class Menus
             new("Langues", "translate"),
             new("Widgets", "grid", "/Administration/Widgets/Index"),
             new("Étiquettes", "tags", "/Administration/Tags/Index"),
+            new("Mise à jour", "cloud-arrow-down", "/Administration/Update/Index"),
         ]),
         new("Gestion IP",
         [

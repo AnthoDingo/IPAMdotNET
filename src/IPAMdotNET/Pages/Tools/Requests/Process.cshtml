@@ -8,15 +8,22 @@
     <div class="ipam-panel-title">@ViewData["Title"]</div>
     <dl class="row ipam-details">
         <dt class="col-sm-4">@L.T("Demandeur")</dt>
-        <dd class="col-sm-8">@(Model.IpRequest.RequestedBy?.DisplayName ?? Model.IpRequest.RequestedBy?.UserName), le @Model.IpRequest.RequestedAt.ToLocalTime().ToString("g")</dd>
+        <dd class="col-sm-8">@Model.IpRequest.RequesterName, le @Model.IpRequest.RequestedAt.ToLocalTime().ToString("g")</dd>
         <dt class="col-sm-4">@L.T("Sous-réseau")</dt>
         <dd class="col-sm-8"><span class="font-monospace">@Model.IpRequest.Subnet?.Network</span> (@Model.IpRequest.Subnet?.Section?.Name)</dd>
         <dt class="col-sm-4">@L.T("Adresse souhaitée")</dt>
         <dd class="col-sm-8 font-monospace">@(Model.IpRequest.RequestedAddress ?? "—")</dd>
+        <dt class="col-sm-4">@L.T("Nombre d'adresses")</dt>
+        <dd class="col-sm-8">@Model.IpRequest.Count</dd>
         <dt class="col-sm-4">@L.T("Nom d'hôte")</dt>
         <dd class="col-sm-8">@(Model.IpRequest.Hostname ?? "—")</dd>
         <dt class="col-sm-4">@L.T("Propriétaire")</dt>
         <dd class="col-sm-8">@(Model.IpRequest.Owner ?? "—")</dd>
+        @if (Model.IpRequest.RequesterEmail is not null)
+        {
+            <dt class="col-sm-4">@L.T("E-mail du demandeur")</dt>
+            <dd class="col-sm-8"><a href="mailto:@Model.IpRequest.RequesterEmail">@Model.IpRequest.RequesterEmail</a> <span class="badge text-bg-secondary">@L.T("sans compte")</span></dd>
+        }
         <dt class="col-sm-4">@L.T("Motif")</dt>
         <dd class="col-sm-8">@Model.IpRequest.Description</dd>
     </dl>
@@ -24,19 +31,16 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         <div class="mb-3">
             <label asp-for="AssignedAddress" class="form-label"></label>
-            <input asp-for="AssignedAddress" class="form-control font-monospace" />
+            <textarea asp-for="AssignedAddress" class="form-control font-monospace" rows="@Math.Min(Model.IpRequest.Count, 8)"></textarea>
+            <div class="form-text">@L.T("Une adresse par ligne, au plus {0}.", Model.IpRequest.Count)</div>
             <span asp-validation-for="AssignedAddress" class="text-danger"></span>
             @if (Model.RequestedTaken)
             {
-                <div class="form-text text-warning">@L.T("L'adresse demandée est déjà utilisée : la première adresse libre est proposée.")</div>
+                <div class="form-text text-warning">@L.T("L'adresse demandée est déjà utilisée : les premières adresses libres sont proposées.")</div>
             }
-            else if (Model.IpRequest.RequestedAddress is null && Model.FirstFree is not null)
+            @if (Model.NotEnoughFree)
             {
-                <div class="form-text">@L.T("Aucune adresse demandée : la première adresse libre est proposée.")</div>
-            }
-            else if (Model.FirstFree is null && Model.IpRequest.RequestedAddress is null)
-            {
-                <div class="form-text text-warning">@L.T("Le sous-réseau n'a plus d'adresse libre.")</div>
+                <div class="form-text text-warning">@L.T("Le sous-réseau n'a pas assez d'adresses libres pour toute la demande.")</div>
             }
         </div>
         <div class="mb-3">

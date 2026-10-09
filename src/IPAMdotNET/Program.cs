@@ -16,6 +16,9 @@ using IPAMdotNet.Setup;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 
+// Fichiers .old laissés par la dernière mise à jour (Administration › Mise à jour).
+SelfUpdate.CleanUp();
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Écrit par l'assistant /setup (moteur + chaîne de connexion).
@@ -113,6 +116,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/");
     options.Conventions.AuthorizeFolder("/Administration", "Admin");
     options.Conventions.AllowAnonymousToPage("/Account/Login");
+    options.Conventions.AllowAnonymousToPage("/RequestAddress");
     options.Conventions.AllowAnonymousToPage("/Error");
 }).AddDataAnnotationsLocalization();
 

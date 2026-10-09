@@ -1,0 +1,57 @@
+@page
+@model IPAMdotNet.Pages.RequestAddressModel
+@{
+    ViewData["Title"] = L.T("Demande d'adresse IP");
+}
+
+<div class="row justify-content-center">
+    <div class="col-sm-10 col-md-8 col-lg-6 mt-4">
+        <div class="ipam-panel">
+            <div class="ipam-panel-title"><i class="bi bi-inbox"></i> @ViewData["Title"]</div>
+            @if (Model.Sent)
+            {
+                <div class="alert alert-success">@L.T("Votre demande a été envoyée. La réponse vous parviendra par e-mail.")</div>
+                <a asp-page="/Account/Login" class="btn btn-outline-secondary">@L.T("Retour à la connexion")</a>
+            }
+            else if (Model.Subnets.Count == 0)
+            {
+                <p class="ipam-empty">@L.T("Aucun sous-réseau n'est ouvert aux demandes.")</p>
+                <a asp-page="/Account/Login" class="btn btn-outline-secondary">@L.T("Retour à la connexion")</a>
+            }
+            else
+            {
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <input asp-for="Input.Email" class="form-control" autocomplete="email" autofocus />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-8">
+                            <label asp-for="Input.SubnetId" class="form-label"></label>
+                            <select asp-for="Input.SubnetId" asp-items="Model.Subnets" class="form-select"></select>
+                            <span asp-validation-for="Input.SubnetId" class="text-danger"></span>
+                        </div>
+                        <div class="col-sm-4">
+                            <label asp-for="Input.Count" class="form-label"></label>
+                            <input asp-for="Input.Count" class="form-control" min="1" max="@IPAMdotNet.Data.IpRequest.MaxCount" />
+                            <span asp-validation-for="Input.Count" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Description" class="form-label"></label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Input.Description" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">@L.T("Envoyer la demande")</button>
+                    <a asp-page="/Account/Login" class="btn btn-outline-secondary">@L.T("Annuler")</a>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

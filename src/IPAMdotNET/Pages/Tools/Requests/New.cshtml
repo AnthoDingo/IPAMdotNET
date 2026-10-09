@@ -25,11 +25,16 @@
                     <input asp-for="IpRequest.RequestedAddress" class="form-control font-monospace" placeholder="@L.T("Facultatif")" />
                     <span asp-validation-for="IpRequest.RequestedAddress" class="text-danger"></span>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label asp-for="IpRequest.Count" class="form-label"></label>
+                    <input asp-for="IpRequest.Count" class="form-control" min="1" max="@IPAMdotNet.Data.IpRequest.MaxCount" />
+                    <span asp-validation-for="IpRequest.Count" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
                     <label asp-for="IpRequest.Hostname" class="form-label"></label>
                     <input asp-for="IpRequest.Hostname" class="form-control" />
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label asp-for="IpRequest.Owner" class="form-label"></label>
                     <input asp-for="IpRequest.Owner" class="form-control" />
                 </div>

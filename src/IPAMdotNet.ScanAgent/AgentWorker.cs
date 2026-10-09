@@ -96,7 +96,7 @@ public sealed class AgentWorker(IOptions<AgentOptions> options, IHostApplication
             Dictionary<string, string> hostnames = names.ToDictionary(p => p.Key.ToString(), p => p.Value);
             Dictionary<string, string> macs = online.Where(arp.ContainsKey).ToDictionary(a => a.ToString(), a => arp[a]);
 
-            AgentResult result = new(task.SubnetId, [.. check.Concat(discover).Select(a => a.ToString())], [.. online.Select(a => a.ToString())], hostnames);
+            AgentResult result = new(task.SubnetId, [.. check.Concat(discover).Select(a => a.ToString())], [.. online.Select(a => a.ToString())], hostnames, macs);
             using HttpResponseMessage response = await http.PostAsJsonAsync("api/agent/results", result, cancellationToken);
             response.EnsureSuccessStatusCode();
             logger.LogInformation("{Network} : {Online}/{Count} en ligne.", task.Network, online.Count, check.Count + discover.Count);

@@ -10,6 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Réglages de développement : jamais publiés (release). -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AnthoDingo.Setup" Version="2.1.3" />
     <PackageReference Include="AnthoDingo.Update" Version="1.0.0" />
     <PackageReference Include="Markdig" Version="1.4.0" />

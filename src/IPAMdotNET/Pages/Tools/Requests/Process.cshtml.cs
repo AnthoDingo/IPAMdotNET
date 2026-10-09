@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Numerics;
 using IPAMdotNet.Data;
 using IPAMdotNet.Maintenance;
 using IPAMdotNet.Navigation;
@@ -18,16 +19,17 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
 {
     public IpRequest IpRequest { get; private set; } = new();
 
-    [BindProperty, MaxLength(45), Display(Name = "Adresse attribuée")]
+    /// <summary>Adresses attribuées, une par ligne (ou séparées par des virgules), au plus <see cref="IpRequest.Count"/>.</summary>
+    [BindProperty, MaxLength(2000), Display(Name = "Adresses attribuées")]
     public string? AssignedAddress { get; set; }
 
     [BindProperty, MaxLength(500), Display(Name = "Commentaire")]
     public string? AdminComment { get; set; }
 
-    /// <summary>Première adresse attribuable libre du sous-réseau (null si plein).</summary>
-    public IPAddress? FirstFree { get; private set; }
+    /// <summary>Le sous-réseau n'a pas assez d'adresses libres pour toute la demande.</summary>
+    public bool NotEnoughFree { get; private set; }
 
-    /// <summary>L'adresse demandée est déjà utilisée (attribuée entre-temps) : la première libre est proposée à la place.</summary>
+    /// <summary>L'adresse demandée est déjà utilisée (attribuée entre-temps) : les premières libres sont proposées à la place.</summary>
     public bool RequestedTaken { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
@@ -36,13 +38,24 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
         {
             return NotFound();
         }
-        // Adresse demandée si elle est encore libre, sinon la première libre du sous-réseau (comme phpIPAM).
-        HashSet<System.Numerics.BigInteger> used = (await db.IpAddresses.Where(a => a.SubnetId == IpRequest.SubnetId).Select(a => a.Address).ToListAsync())
+        // Adresse demandée si elle est encore libre, puis les premières libres du sous-réseau (comme phpIPAM).
+        HashSet<BigInteger> used = (await db.IpAddresses.Where(a => a.SubnetId == IpRequest.SubnetId).Select(a => a.Address).ToListAsync())
             .Select(bytes => Ip.ToNumber(Ip.FromBytes(bytes))).ToHashSet();
-        FirstFree = Ip.FirstFree(IpRequest.Subnet!.Network, used);
+        List<IPAddress> proposed = [];
         bool requestedFree = IPAddress.TryParse(IpRequest.RequestedAddress, out IPAddress? requested) && !used.Contains(Ip.ToNumber(requested));
         RequestedTaken = IpRequest.RequestedAddress is not null && !requestedFree;
-        AssignedAddress = requestedFree ? IpRequest.RequestedAddress : FirstFree?.ToString();
+        if (requestedFree)
+        {
+            proposed.Add(requested!);
+            used.Add(Ip.ToNumber(requested!));
+        }
+        while (proposed.Count < IpRequest.Count && Ip.FirstFree(IpRequest.Subnet!.Network, used) is { } free)
+        {
+            proposed.Add(free);
+            used.Add(Ip.ToNumber(free));
+        }
+        NotEnoughFree = proposed.Count < IpRequest.Count;
+        AssignedAddress = string.Join("\n", proposed);
         return Page();
     }
 
@@ -52,31 +65,47 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
         {
             return NotFound();
         }
-        if (!IPAddress.TryParse(AssignedAddress?.Trim(), out IPAddress? address)
-            || !Ip.Contains(IpRequest.Subnet!.Network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
+        Subnet subnet = IpRequest.Subnet!;
+        List<IPAddress> addresses = [];
+        List<string> errors = [];
+        foreach (string text in (AssignedAddress ?? "").Split([',', ';', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries))
         {
-            ModelState.AddModelError(nameof(AssignedAddress), $"Adresse invalide ou hors de {IpRequest.Subnet!.Network}.");
-        }
-        else
-        {
-            AssignedAddress = address.ToString();
-            byte[] bytes = Ip.ToBytes(address);
-            (System.Numerics.BigInteger first, System.Numerics.BigInteger last) = Ip.UsableRange(IpRequest.Subnet!.Network);
-            System.Numerics.BigInteger value = Ip.ToNumber(address);
-            if (IpRequest.Subnet.IsIPv4 && (value < first || value > last))
+            if (!IPAddress.TryParse(text, out IPAddress? address)
+                || !Ip.Contains(subnet.Network, new IPNetwork(address, address.GetAddressBytes().Length * 8)))
             {
-                ModelState.AddModelError(nameof(AssignedAddress), "L'adresse réseau et l'adresse de diffusion ne sont pas attribuables.");
+                errors.Add($"{text} : adresse invalide ou hors de {subnet.Network}.");
+                continue;
+            }
+            (BigInteger first, BigInteger last) = Ip.UsableRange(subnet.Network);
+            BigInteger value = Ip.ToNumber(address);
+            byte[] bytes = Ip.ToBytes(address);
+            if (subnet.IsIPv4 && (value < first || value > last))
+            {
+                errors.Add($"{address} : l'adresse réseau et l'adresse de diffusion ne sont pas attribuables.");
+            }
+            else if (addresses.Any(a => a.Equals(address)))
+            {
+                errors.Add($"{address} : adresse en double.");
             }
             else if (await db.IpAddresses.AnyAsync(a => a.SubnetId == IpRequest.SubnetId && a.Address == bytes))
             {
-                ModelState.AddModelError(nameof(AssignedAddress), "Cette adresse est déjà utilisée dans le sous-réseau.");
+                errors.Add($"{address} : déjà utilisée dans le sous-réseau.");
             }
+            addresses.Add(address);
+        }
+        if (errors.Count == 0 && (addresses.Count == 0 || addresses.Count > IpRequest.Count))
+        {
+            errors.Add($"Indiquez entre 1 et {IpRequest.Count} adresse(s).");
+        }
+        if (errors.Count > 0)
+        {
+            ModelState.AddModelError(nameof(AssignedAddress), string.Join(" ", errors));
         }
         if (!ModelState.IsValid)
         {
             return Page();
         }
-        return await CloseAsync(IpRequestState.Approved);
+        return await CloseAsync(IpRequestState.Approved, addresses);
     }
 
     public async Task<IActionResult> OnPostRejectAsync(int id)
@@ -90,40 +119,43 @@ public class ProcessModel(AppDbContext db, IDataProtectionProvider protection) :
             ModelState.AddModelError(nameof(AdminComment), "Indiquez le motif du refus.");
             return Page();
         }
-        AssignedAddress = null;
-        return await CloseAsync(IpRequestState.Rejected);
+        return await CloseAsync(IpRequestState.Rejected, []);
     }
 
-    private async Task<IActionResult> CloseAsync(IpRequestState state)
+    private async Task<IActionResult> CloseAsync(IpRequestState state, List<IPAddress> addresses)
     {
         IpRequest.State = state;
-        IpRequest.AssignedAddress = AssignedAddress;
+        IpRequest.AssignedAddress = addresses.Count == 0 ? null : string.Join(", ", addresses);
         IpRequest.AdminComment = string.IsNullOrWhiteSpace(AdminComment) ? null : AdminComment.Trim();
         IpRequest.ProcessedById = User.UserId();
         IpRequest.ProcessedAt = DateTime.UtcNow;
-        if (state == IpRequestState.Approved && IPAddress.TryParse(AssignedAddress, out IPAddress? address))
+        if (addresses.Count > 0)
         {
-            // L'adresse acceptée est créée dans le sous-réseau, avec les informations de la demande.
-            db.IpAddresses.Add(new IpAddress
+            // Les adresses acceptées sont créées dans le sous-réseau, avec les informations de la demande.
+            int? usedTag = await db.Tags.Where(t => t.SystemKey == Tag.UsedKey).Select(t => (int?)t.Id).SingleOrDefaultAsync();
+            foreach (IPAddress address in addresses)
             {
-                SubnetId = IpRequest.SubnetId,
-                Address = Ip.ToBytes(address),
-                Hostname = IpRequest.Hostname,
-                Owner = IpRequest.Owner,
-                Description = IpRequest.Description.Length > 500 ? IpRequest.Description[..500] : IpRequest.Description,
-                TagId = await db.Tags.Where(t => t.SystemKey == Tag.UsedKey).Select(t => (int?)t.Id).SingleOrDefaultAsync(),
-            });
+                db.IpAddresses.Add(new IpAddress
+                {
+                    SubnetId = IpRequest.SubnetId,
+                    Address = Ip.ToBytes(address),
+                    Hostname = IpRequest.Hostname,
+                    Owner = IpRequest.Owner ?? IpRequest.RequesterEmail,
+                    Description = IpRequest.Description.Length > 500 ? IpRequest.Description[..500] : IpRequest.Description,
+                    TagId = usedTag,
+                });
+            }
         }
         await db.SaveChangesAsync();
-        if (IpRequest.RequestedBy?.Email is { } email)
+        if ((IpRequest.RequestedBy?.Email ?? IpRequest.RequesterEmail) is { } email)
         {
             string outcome = state == IpRequestState.Approved
-                ? $"a été acceptée : l'adresse {IpRequest.AssignedAddress} vous est attribuée"
+                ? $"a été acceptée : {(addresses.Count > 1 ? "les adresses" : "l'adresse")} {IpRequest.AssignedAddress} vous {(addresses.Count > 1 ? "sont attribuées" : "est attribuée")}"
                 : "a été refusée";
             await Mailer.SendAsync(db, protection, [email], $"Demande d'adresse {(state == IpRequestState.Approved ? "acceptée" : "refusée")}",
                 $"Votre demande d'adresse dans {IpRequest.Subnet?.Network} ({IpRequest.Description}) {outcome}." +
                 (IpRequest.AdminComment is null ? "" : $"\n\nCommentaire : {IpRequest.AdminComment}") +
-                $"\n\nVos demandes : {Mailer.Link("/Tools/Requests")}");
+                (IpRequest.RequestedBy is null ? "" : $"\n\nVos demandes : {Mailer.Link("/Tools/Requests")}"));
         }
         return RedirectToPage("Index");
     }

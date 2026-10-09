@@ -77,13 +77,22 @@ public static class HostProbe
         }
     }
 
-    /// <summary>Nom DNS inverse (100 caractères au plus), avec un délai court ; null si aucun nom.</summary>
+    /// <summary>Recherches de noms simultanées au plus (voir <see cref="ResolveAsync"/>).</summary>
+    private const int ResolveParallelism = 32;
+
+    /// <summary>
+    /// Nom DNS inverse (100 caractères au plus) ; null si aucun nom. Résolveur du système (DNS, fichier hosts, NetBIOS / LLMNR
+    /// sous Windows) : appel bloquant, jusqu'à une dizaine de secondes pour une adresse sans nom. Il s'exécute donc sur un thread
+    /// dédié et le délai court à partir de son début : lancées toutes ensemble sur le pool de threads, les recherches lentes
+    /// l'affamaient et le délai écartait aussi les adresses qui avaient un nom.
+    /// </summary>
     public static async Task<string?> ResolveAsync(IPAddress address)
     {
         try
         {
-            Task<IPHostEntry> lookup = Dns.GetHostEntryAsync(address);
-            if (await Task.WhenAny(lookup, Task.Delay(2000)) != lookup)
+            Task<IPHostEntry> lookup = Task.Factory.StartNew(() => Dns.GetHostEntry(address), CancellationToken.None,
+                TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            if (await Task.WhenAny(lookup, Task.Delay(TimeSpan.FromSeconds(15))) != lookup)
             {
                 return null;
             }
@@ -99,7 +108,19 @@ public static class HostProbe
     /// <summary>Noms DNS inverses résolus en parallèle ; seules les adresses qui ont un nom figurent dans le résultat.</summary>
     public static async Task<Dictionary<IPAddress, string>> ResolveAllAsync(IEnumerable<IPAddress> addresses)
     {
-        (IPAddress Address, string? Name)[] names = await Task.WhenAll(addresses.Select(async a => (a, await ResolveAsync(a))));
+        using SemaphoreSlim slots = new(ResolveParallelism);
+        (IPAddress Address, string? Name)[] names = await Task.WhenAll(addresses.Select(async a =>
+        {
+            await slots.WaitAsync();
+            try
+            {
+                return (a, await ResolveAsync(a));
+            }
+            finally
+            {
+                slots.Release();
+            }
+        }));
         return names.Where(n => n.Name is not null).ToDictionary(n => n.Address, n => n.Name!);
     }
 

@@ -700,8 +700,11 @@ namespace IPAMdotNet.Migrations.MySql
                         .HasColumnType("varchar(500)");
 
                     b.Property<string>("AssignedAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -729,8 +732,12 @@ namespace IPAMdotNet.Migrations.MySql
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("RequestedById")
+                    b.Property<int?>("RequestedById")
                         .HasColumnType("int");
+
+                    b.Property<string>("RequesterEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<int>("State")
                         .HasColumnType("int");
@@ -1656,8 +1663,7 @@ namespace IPAMdotNet.Migrations.MySql
                     b.HasOne("IPAMdotNet.Data.User", "RequestedBy")
                         .WithMany()
                         .HasForeignKey("RequestedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("IPAMdotNet.Data.Subnet", "Subnet")
                         .WithMany()

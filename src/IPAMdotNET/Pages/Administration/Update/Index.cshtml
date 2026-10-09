@@ -1,0 +1,110 @@
+@page
+@using IPAMdotNet.Maintenance
+@model IPAMdotNet.Pages.Administration.Update.IndexModel
+@{
+    ViewData["Title"] = L.T("Mise à jour");
+    bool disabled = Model.Unavailable is not null;
+}
+
+@if (Model.Installed is not null)
+{
+    @* Rechargement une fois l'application relancée : /update prend la main s'il reste des migrations à appliquer. *@
+    <script>setTimeout(() => location.href = "@Url.Content("~/")", 20000);</script>
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i>
+        @L.T("Version {0} installée. L'application redémarre : cette page se rechargera dans 20 secondes.", Model.Installed)
+    </div>
+}
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-cloud-arrow-down"></i> @L.T("Mise à jour")</div>
+    <dl class="row ipam-details">
+        <dt class="col-sm-4 col-xl-3">@L.T("Version installée")</dt>
+        <dd class="col-sm-8 col-xl-9 font-monospace">@SelfUpdate.Version</dd>
+        <dt class="col-sm-4 col-xl-3">@L.T("Plateforme")</dt>
+        <dd class="col-sm-8 col-xl-9 font-monospace">@SelfUpdate.Rid</dd>
+    </dl>
+    @if (disabled)
+    {
+        <div class="alert alert-warning mb-0">@Model.Unavailable</div>
+    }
+    else
+    {
+        <p class="small text-body-secondary mb-0">
+            @L.T("Les fichiers de l'application sont remplacés (appsettings*.json et web.config sont conservés), puis l'application s'arrête pour être relancée : automatiquement sous IIS, avec Restart=on-failure sous systemd, ou avec les actions de récupération d'un service Windows (« activer les actions pour les arrêts avec erreurs »). Les migrations de la base sont ensuite proposées par la page de mise à niveau. En conteneur, mettez plutôt à jour l'image.")
+        </p>
+    }
+</div>
+
+<div class="ipam-panel mb-3">
+    <div class="ipam-panel-title"><i class="bi bi-github"></i> @L.T("Versions publiées")</div>
+    @if (Model.ReleasesError is not null)
+    {
+        <div class="alert alert-warning mb-0">@Model.ReleasesError</div>
+    }
+    else if (Model.Releases.Count == 0)
+    {
+        <p class="ipam-empty">@L.T("Aucune version publiée.")</p>
+    }
+    else
+    {
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr><th>@L.T("Version")</th><th>@L.T("Publiée le")</th><th>@L.T("Notes")</th><th></th></tr></thead>
+            <tbody>
+                @foreach (ReleaseInfo release in Model.Releases)
+                {
+                    int compare = SelfUpdate.CompareVersions(release.Version, SelfUpdate.Version);
+                    <tr>
+                        <td class="font-monospace">
+                            @release.Tag
+                            @if (release.Prerelease) { <span class="badge text-bg-warning ms-1">@L.T("pré-version")</span> }
+                            @if (compare == 0) { <span class="badge text-bg-success ms-1">@L.T("installée")</span> }
+                        </td>
+                        <td class="text-nowrap">@release.Published?.ToLocalTime().ToString("g")</td>
+                        <td><a href="@release.Url" target="_blank" rel="noopener">@L.T("Notes de version")</a></td>
+                        <td class="text-end">
+                            @if (compare <= 0)
+                            {
+                                <span class="small text-body-secondary">—</span>
+                            }
+                            else if (release.Asset is null)
+                            {
+                                <span class="small text-body-secondary">@L.T("Pas d'archive {0}", SelfUpdate.Rid)</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Install" class="d-inline"
+                                      data-ipam-confirm="@L.T("Installer la version {0} ? L'application va redémarrer.", release.Tag)"
+                                      onsubmit="this.querySelector('button').disabled = true;">
+                                    <input type="hidden" name="tag" value="@release.Tag" />
+                                    <button type="submit" class="btn btn-primary btn-sm" disabled="@disabled">
+                                        <i class="bi bi-download"></i> @L.T("Installer")
+                                        <span class="opacity-75">(@((release.Asset.Size / 1048576.0).ToString("0")) Mo)</span>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title"><i class="bi bi-upload"></i> @L.T("Installer une archive")</div>
+    <p class="small text-body-secondary">
+        @L.T("Sans accès à Internet : téléchargez depuis un autre poste l'archive de la release pour cette plateforme ({0}), puis envoyez-la ici.", $"IPAMdotNet-<version>-{SelfUpdate.Rid}{(OperatingSystem.IsWindows() ? ".zip" : ".tar.gz")}")
+        <a href="https://github.com/@SelfUpdate.Repository/releases" target="_blank" rel="noopener">@L.T("Releases sur GitHub")</a>
+    </p>
+    <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="d-flex flex-wrap gap-2"
+          data-ipam-confirm="@L.T("Installer cette archive ? L'application va redémarrer.")"
+          onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+        <input type="file" name="archive" class="form-control" style="max-width: 32rem" accept=".zip,.tar.gz,.tgz" required disabled="@disabled" aria-label="@L.T("Archive de release")" />
+        <button type="submit" class="btn btn-primary" disabled="@disabled"><i class="bi bi-upload"></i> @L.T("Installer")</button>
+    </form>
+</div>
