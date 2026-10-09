@@ -1,0 +1,45 @@
+@page
+@model IPAMdotNet.Pages.Administration.Languages.IndexModel
+@{
+    ViewData["Title"] = L.T("Langues");
+}
+
+<div class="ipam-panel">
+    <div class="ipam-panel-title d-flex align-items-center">
+        <span><i class="bi bi-translate"></i> @L.T("Langues de l'interface")</span>
+        <a asp-page="/Administration/Settings/Index" class="btn btn-outline-secondary btn-sm ms-auto"><i class="bi bi-gear"></i> @L.T("Langue par défaut")</a>
+    </div>
+    <p class="text-body-secondary">@L.T("La langue par défaut se règle dans les paramètres du serveur ; chaque utilisateur peut choisir la sienne dans « Mon compte ». Un texte non traduit s'affiche en anglais.")</p>
+    <table class="table table-sm table-hover align-middle mb-0">
+        <thead><tr><th>@L.T("Langue")</th><th>@L.T("Code")</th><th style="width: 30%">@L.T("Traduction")</th><th class="text-end">@L.T("Utilisateurs")</th></tr></thead>
+        <tbody>
+            @foreach (IPAMdotNet.Pages.Administration.Languages.LanguageRow language in Model.Languages)
+            {
+                <tr>
+                    <td>
+                        @language.Name
+                        @if (language.IsDefault) { <span class="badge text-bg-primary ms-1">@L.T("par défaut")</span> }
+                    </td>
+                    <td class="font-monospace">@language.Code</td>
+                    <td>
+                        @if (language.Coverage is double coverage)
+                        {
+                            int percent = (int)Math.Floor(coverage * 100);
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: .5rem" role="progressbar" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100" aria-label="@L.T("Traduction")">
+                                    <div class="progress-bar @(percent >= 90 ? "bg-success" : "bg-warning")" style="width: @percent%"></div>
+                                </div>
+                                <span class="small text-body-secondary text-nowrap">@percent %</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="small text-body-secondary">@L.T("Langue source")</span>
+                        }
+                    </td>
+                    <td class="text-end">@language.Users</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
